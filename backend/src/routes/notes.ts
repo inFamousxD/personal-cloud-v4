@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
 import { ObjectId } from 'mongodb';
-import { db } from '../main.js';
+import { db } from '../db.js';
 import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 import { Note, CreateNoteInput, UpdateNoteInput } from '../models/Note.js';
 
