@@ -3,7 +3,7 @@ import { writeFileSync } from 'fs';
 import { MongoClient, Db } from 'mongodb';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import notesRouter from './routes/notes';
+import notesRouter from './routes/notes.js';
 
 dotenv.config();
 

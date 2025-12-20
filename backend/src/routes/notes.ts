@@ -1,8 +1,8 @@
 import { Router, Response } from 'express';
 import { ObjectId } from 'mongodb';
-import { db } from '../main';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
-import { Note, CreateNoteInput, UpdateNoteInput } from '../models/Note';
+import { db } from '../main.js';
+import { authenticateToken, AuthRequest } from '../middleware/auth.js';
+import { Note, CreateNoteInput, UpdateNoteInput } from '../models/Note.js';
 
 const router = Router();
 
