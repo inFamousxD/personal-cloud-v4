@@ -1,11 +1,16 @@
 import { Route, Routes } from 'react-router-dom'
 import DashboardLayout from './layouts/DashboardLayout'
+import ProtectedRoute from '../../ProtectedRoute'
+import Notes from '../notes/Notes'
 
 const RootScreen = () => {
     return (
-        <Routes>
-            <Route path="/" element={<DashboardLayout />} />
-        </Routes>
+        <ProtectedRoute>
+            <Routes>
+                <Route path="/" element={<DashboardLayout />} />
+                <Route path="/notes" element={<Notes />} />
+            </Routes>
+        </ProtectedRoute>
     )
 }
 
