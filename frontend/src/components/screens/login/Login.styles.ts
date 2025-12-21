@@ -23,7 +23,6 @@ export const LoginCard = styled.div`
 
 export const LoginTitle = styled.h1`
     color: ${darkTheme.accent};
-    font-family: 'Sora', sans-serif;
     font-size: 32px;
     font-weight: 600;
     margin: 0;
@@ -31,7 +30,6 @@ export const LoginTitle = styled.h1`
 
 export const LoginDescription = styled.p`
     color: ${darkTheme.accent}cc;
-    font-family: 'Sora', sans-serif;
     font-size: 16px;
     margin: 0;
     text-align: center;

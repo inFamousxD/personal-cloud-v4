@@ -7,12 +7,12 @@ import Login from "./components/screens/login/Login";
 function App() {
     return (
         <GoogleAuthWrapper>
-            <BrowserRouter>
-                <Routes>
-                    <Route path="/login" element={<Login />} />
-                    <Route path="*" element={<RootScreen />} />
-                </Routes>
-            </BrowserRouter>
+                <BrowserRouter>
+                    <Routes>
+                        <Route path="/login" element={<Login />} />
+                        <Route path="*" element={<RootScreen />} />
+                    </Routes>
+                </BrowserRouter>
         </GoogleAuthWrapper>
     );
 }

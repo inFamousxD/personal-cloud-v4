@@ -5,12 +5,12 @@ const mainDockInitialState = {
     dockTopOptions: [
         {
             id: "notes",
-            icon: "folder",
+            icon: "notes",
             navigatesTo: "/notes"
         },
         {
             id: "tbd1",
-            icon: "bookmark",
+            icon: "event_note",
             navigatesTo: "/tbd1"
         },
         {

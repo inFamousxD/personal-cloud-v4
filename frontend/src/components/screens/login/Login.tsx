@@ -21,12 +21,12 @@ const Login = () => {
     return (
         <LoginContainer>
             <LoginCard>
-                <LoginTitle>Welcome to Notes</LoginTitle>
+                <LoginTitle>Welcome</LoginTitle>
                 <LoginDescription>Sign in with your Google account to continue</LoginDescription>
                 <GoogleLogin
                     onSuccess={handleSuccess}
                     onError={handleError}
-                    theme="filled_black"
+                    theme="filled_blue"
                     size="large"
                     shape="rectangular"
                 />
