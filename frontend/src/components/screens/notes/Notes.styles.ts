@@ -1,11 +1,12 @@
 import styled from 'styled-components';
-import { theme } from '../../../themes/dark.theme';
+import { darkTheme } from '../../../theme/dark.colors';
 
 export const NotesContainer = styled.div`
     display: flex;
     flex-direction: column;
     height: 100vh;
-    background-color: ${theme.background};
+    background-color: ${darkTheme.backgroundDarker};
+    width: 100%;
 `;
 
 export const NotesHeader = styled.header`
@@ -13,13 +14,13 @@ export const NotesHeader = styled.header`
     justify-content: space-between;
     align-items: center;
     padding: 24px 32px;
-    background-color: ${theme.background_secondary};
-    border-bottom: 1px solid ${theme.primary}33;
+    background-color: ${darkTheme.backgroundDarkest};
+    border-bottom: 1px solid ${darkTheme.accent}33;
 `;
 
 export const NotesTitle = styled.h1`
-    color: ${theme.primary};
-    font-family: 'Sora', sans-serif;
+    color: ${darkTheme.accent};
+    font-family: JetBrains Mono;
     font-size: 28px;
     font-weight: 600;
     margin: 0;
@@ -35,28 +36,28 @@ export const UserAvatar = styled.img`
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    border: 2px solid ${theme.primary}33;
+    border: 2px solid ${darkTheme.accent}33;
 `;
 
 export const UserName = styled.span`
-    color: ${theme.primary};
-    font-family: 'Sora', sans-serif;
+    color: ${darkTheme.accent};
+    font-family: JetBrains Mono;
     font-size: 16px;
 `;
 
 export const LogoutButton = styled.button`
     background-color: transparent;
-    border: 1px solid ${theme.primary}66;
-    color: ${theme.primary};
+    border: 1px solid ${darkTheme.accent}66;
+    color: ${darkTheme.accent};
     padding: 8px 16px;
     border-radius: 6px;
     cursor: pointer;
-    font-family: 'Sora', sans-serif;
+    font-family: JetBrains Mono;
     transition: all 0.2s;
 
     &:hover {
-        background-color: ${theme.primary}11;
-        border-color: ${theme.primary};
+        background-color: ${darkTheme.accent}11;
+        border-color: ${darkTheme.accent};
     }
 `;
 
@@ -68,8 +69,8 @@ export const NotesContent = styled.div`
 `;
 
 export const NotesList = styled.div`
-    background-color: ${theme.background_secondary};
-    border-right: 1px solid ${theme.primary}33;
+    background-color: ${darkTheme.backgroundDarkest};
+    border-right: 1px solid ${darkTheme.accent}33;
     overflow-y: auto;
     padding: 16px;
     display: flex;
@@ -78,13 +79,13 @@ export const NotesList = styled.div`
 `;
 
 export const CreateNoteButton = styled.button`
-    background-color: ${theme.primary};
-    color: ${theme.background};
+    background-color: ${darkTheme.accent};
+    color: ${darkTheme.backgroundDarker};
     border: none;
     padding: 12px 16px;
     border-radius: 8px;
     cursor: pointer;
-    font-family: 'Sora', sans-serif;
+    font-family: JetBrains Mono;
     font-size: 16px;
     font-weight: 600;
     transition: all 0.2s;
@@ -97,9 +98,9 @@ export const CreateNoteButton = styled.button`
 
 export const NoteCard = styled.div<{ $isSelected?: boolean }>`
     background-color: ${(props) =>
-        props.$isSelected ? theme.primary + '11' : theme.background};
+        props.$isSelected ? darkTheme.accent + '11' : darkTheme.backgroundDarker};
     border: 1px solid
-        ${(props) => (props.$isSelected ? theme.primary : theme.primary + '33')};
+        ${(props) => (props.$isSelected ? darkTheme.accent : darkTheme.accent + '33')};
     border-radius: 8px;
     padding: 16px;
     cursor: pointer;
@@ -107,7 +108,7 @@ export const NoteCard = styled.div<{ $isSelected?: boolean }>`
     position: relative;
 
     &:hover {
-        border-color: ${theme.primary};
+        border-color: ${darkTheme.accent};
         transform: translateX(2px);
     }
 `;
@@ -119,8 +120,8 @@ export const NoteCardActions = styled.div`
 `;
 
 export const NoteTitle = styled.h3`
-    color: ${theme.primary};
-    font-family: 'Sora', sans-serif;
+    color: ${darkTheme.accent};
+    font-family: JetBrains Mono;
     font-size: 18px;
     font-weight: 600;
     margin: 0 0 8px 0;
@@ -130,8 +131,8 @@ export const NoteTitle = styled.h3`
 `;
 
 export const NotePreview = styled.p`
-    color: ${theme.primary}99;
-    font-family: 'Sora', sans-serif;
+    color: ${darkTheme.accent}99;
+    font-family: JetBrains Mono;
     font-size: 14px;
     margin: 0 0 8px 0;
     overflow: hidden;
@@ -142,8 +143,8 @@ export const NotePreview = styled.p`
 `;
 
 export const NoteDate = styled.span`
-    color: ${theme.primary}66;
-    font-family: 'Sora', sans-serif;
+    color: ${darkTheme.accent}66;
+    font-family: JetBrains Mono;
     font-size: 12px;
 `;
 
@@ -156,31 +157,31 @@ export const NoteEditor = styled.div`
 `;
 
 export const EditorInput = styled.input`
-    background-color: ${theme.background_secondary};
-    border: 1px solid ${theme.primary}33;
+    background-color: ${darkTheme.backgroundDarkest};
+    border: 1px solid ${darkTheme.accent}33;
     border-radius: 8px;
-    color: ${theme.primary};
-    font-family: 'Sora', sans-serif;
+    color: ${darkTheme.accent};
+    font-family: JetBrains Mono;
     font-size: 24px;
     font-weight: 600;
     padding: 16px;
     outline: none;
 
     &:focus {
-        border-color: ${theme.primary};
+        border-color: ${darkTheme.accent};
     }
 
     &::placeholder {
-        color: ${theme.primary}66;
+        color: ${darkTheme.accent}66;
     }
 `;
 
 export const EditorTextarea = styled.textarea`
-    background-color: ${theme.background_secondary};
-    border: 1px solid ${theme.primary}33;
+    background-color: ${darkTheme.backgroundDarkest};
+    border: 1px solid ${darkTheme.accent}33;
     border-radius: 8px;
-    color: ${theme.primary};
-    font-family: 'Sora', sans-serif;
+    color: ${darkTheme.accent};
+    font-family: JetBrains Mono;
     font-size: 16px;
     padding: 16px;
     outline: none;
@@ -189,11 +190,11 @@ export const EditorTextarea = styled.textarea`
     min-height: 400px;
 
     &:focus {
-        border-color: ${theme.primary};
+        border-color: ${darkTheme.accent};
     }
 
     &::placeholder {
-        color: ${theme.primary}66;
+        color: ${darkTheme.accent}66;
     }
 `;
 
@@ -204,13 +205,13 @@ export const EditorActions = styled.div`
 `;
 
 export const SaveButton = styled.button`
-    background-color: ${theme.primary};
-    color: ${theme.background};
+    background-color: ${darkTheme.accent};
+    color: ${darkTheme.backgroundDarker};
     border: none;
     padding: 12px 24px;
     border-radius: 8px;
     cursor: pointer;
-    font-family: 'Sora', sans-serif;
+    font-family: JetBrains Mono;
     font-size: 16px;
     font-weight: 600;
     transition: all 0.2s;
@@ -222,18 +223,18 @@ export const SaveButton = styled.button`
 
 export const CancelButton = styled.button`
     background-color: transparent;
-    border: 1px solid ${theme.primary}66;
-    color: ${theme.primary};
+    border: 1px solid ${darkTheme.accent}66;
+    color: ${darkTheme.accent};
     padding: 12px 24px;
     border-radius: 8px;
     cursor: pointer;
-    font-family: 'Sora', sans-serif;
+    font-family: JetBrains Mono;
     font-size: 16px;
     transition: all 0.2s;
 
     &:hover {
-        background-color: ${theme.primary}11;
-        border-color: ${theme.primary};
+        background-color: ${darkTheme.accent}11;
+        border-color: ${darkTheme.accent};
     }
 `;
 
@@ -244,13 +245,13 @@ export const DeleteButton = styled.button`
     padding: 6px 12px;
     border-radius: 6px;
     cursor: pointer;
-    font-family: 'Sora', sans-serif;
+    font-family: JetBrains Mono;
     font-size: 13px;
     transition: all 0.2s;
 
     &:hover {
         background-color: #ff6b6b;
-        color: ${theme.background};
+        color: ${darkTheme.backgroundDarker};
     }
 `;
 
@@ -259,8 +260,8 @@ export const EmptyState = styled.div`
     justify-content: center;
     align-items: center;
     height: 100%;
-    color: ${theme.primary}66;
-    font-family: 'Sora', sans-serif;
+    color: ${darkTheme.accent}66;
+    font-family: JetBrains Mono;
     font-size: 16px;
     text-align: center;
     padding: 32px;

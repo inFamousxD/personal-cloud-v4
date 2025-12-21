@@ -4,19 +4,19 @@ const mainDockInitialState = {
     selected: null,
     dockTopOptions: [
         {
-            id: "explorer",
+            id: "notes",
             icon: "folder",
-            navigatesTo: "/explorer"
+            navigatesTo: "/notes"
         },
         {
-            id: "bookmarks",
+            id: "tbd1",
             icon: "bookmark",
-            navigatesTo: "/bookmarks"
+            navigatesTo: "/tbd1"
         },
         {
-            id: "search",
+            id: "tbd2",
             icon: "search",
-            navigatesTo: "/search"
+            navigatesTo: "/tbd2"
         }
     ],
     dockBottomOptions: [
