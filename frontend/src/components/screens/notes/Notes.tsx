@@ -1,6 +1,9 @@
 // import { useAuth } from '../../../contexts/AuthContext';
 import {
-    NotesContainer
+    NotesBody,
+    NotesContainer,
+    NotesTitle,
+    Seperator
 } from './Notes.styles';
 
 const Notes = () => {
@@ -8,6 +11,11 @@ const Notes = () => {
 
     return (
         <NotesContainer>
+            <NotesTitle>Notes</NotesTitle>
+            <Seperator />
+            <NotesBody>
+                
+            </NotesBody>
         </NotesContainer>
     );
 };
