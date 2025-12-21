@@ -4,11 +4,12 @@ import { NoteCardStyled, NoteCardTitle, NoteCardContent, NoteCardFooter, NoteCar
 
 interface NoteCardProps {
     note: Note;
+    onView: (note: Note) => void;
     onEdit: (note: Note) => void;
     onDelete: (id: string) => void;
 }
 
-const NoteCard: React.FC<NoteCardProps> = ({ note, onEdit, onDelete }) => {
+const NoteCard: React.FC<NoteCardProps> = ({ note, onView, onEdit, onDelete }) => {
     const formatDate = (date: Date) => {
         return new Date(date).toLocaleDateString('en-US', { 
             month: 'short', 
@@ -46,8 +47,26 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onEdit, onDelete }) => {
         return linesPerRowSpan[rowSpan as keyof typeof linesPerRowSpan] || 3;
     }, [rowSpan]);
 
+    const handleCardClick = (e: React.MouseEvent) => {
+        // Don't open viewer if clicking on action buttons
+        if ((e.target as HTMLElement).closest('.material-symbols-outlined')) {
+            return;
+        }
+        onView(note);
+    };
+
+    const handleEdit = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        onEdit(note);
+    };
+
+    const handleDelete = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        onDelete(note._id!);
+    };
+
     return (
-        <NoteCardStyled $rowSpan={rowSpan}>
+        <NoteCardStyled $rowSpan={rowSpan} onClick={handleCardClick}>
             <NoteCardTitle>{note.title || 'Untitled Note'}</NoteCardTitle>
             <NoteCardContent style={{ WebkitLineClamp: lineClamp }}>
                 {note.content}
@@ -57,14 +76,14 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onEdit, onDelete }) => {
                 <NoteCardActions>
                     <span 
                         className="material-symbols-outlined"
-                        onClick={() => onEdit(note)}
+                        onClick={handleEdit}
                         title="Edit note"
                     >
                         edit
                     </span>
                     <span 
                         className="material-symbols-outlined"
-                        onClick={() => onDelete(note._id!)}
+                        onClick={handleDelete}
                         title="Delete note"
                     >
                         delete

@@ -8,45 +8,21 @@ export const EditorOverlay = styled.div`
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(4px);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
-    animation: fadeIn 0.2s ease;
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-        to {
-            opacity: 1;
-        }
-    }
 `;
 
 export const EditorModal = styled.div`
     background: ${darkTheme.backgroundDarkest};
-    border: 1px solid ${darkTheme.accent}40;
-    border-radius: 12px;
+    border: 1px solid ${darkTheme.border};
+    border-radius: 4px;
     width: 90%;
     max-width: 700px;
     max-height: 85vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    animation: slideIn 0.3s ease;
-
-    @keyframes slideIn {
-        from {
-            transform: translateY(-20px);
-            opacity: 0;
-        }
-        to {
-            transform: translateY(0);
-            opacity: 1;
-        }
-    }
 
     @media (max-width: 768px) {
         width: 95%;
@@ -58,28 +34,16 @@ export const EditorHeader = styled.div`
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 24px;
+    padding: 8px 12px;
     border-bottom: 1px solid ${darkTheme.border};
-    background: linear-gradient(135deg, ${darkTheme.backgroundDarkest} 0%, #252830 100%);
-    border-radius: 12px 12px 0 0;
+    background: ${darkTheme.backgroundDarkest};
 `;
 
 export const EditorTitle = styled.h2`
     color: ${darkTheme.accent};
-    font-size: 20px;
+    font-size: 14px;
     font-weight: 600;
     margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    &::before {
-        content: '';
-        width: 4px;
-        height: 24px;
-        background: ${darkTheme.accent};
-        border-radius: 2px;
-    }
 `;
 
 export const CloseButton = styled.button`
@@ -87,28 +51,26 @@ export const CloseButton = styled.button`
     border: none;
     color: ${darkTheme.text.color};
     cursor: pointer;
-    padding: 8px;
-    border-radius: 6px;
+    padding: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    opacity: 0.5;
 
     &:hover {
-        background: ${darkTheme.accent}20;
-        color: ${darkTheme.accent};
+        opacity: 1;
     }
 
     .material-symbols-outlined {
-        font-size: 24px;
+        font-size: 20px;
     }
 `;
 
 export const EditorBody = styled.div`
-    padding: 24px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     flex: 1;
     overflow-y: auto;
 
@@ -118,7 +80,6 @@ export const EditorBody = styled.div`
 
     &::-webkit-scrollbar-track {
         background: ${darkTheme.backgroundDarker};
-        border-radius: 4px;
     }
 
     &::-webkit-scrollbar-thumb {
@@ -133,48 +94,46 @@ export const EditorBody = styled.div`
 
 export const EditorInput = styled.input`
     background: ${darkTheme.backgroundDarker};
-    border: 2px solid ${darkTheme.border};
-    border-radius: 8px;
+    border: 1px solid ${darkTheme.border};
+    border-radius: 4px;
     color: ${darkTheme.accent};
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 600;
-    padding: 14px 16px;
+    padding: 8px 10px;
     outline: none;
-    transition: all 0.2s ease;
     font-family: inherit;
 
     &::placeholder {
-        color: ${darkTheme.text.color}60;
+        color: ${darkTheme.text.color};
+        opacity: 0.4;
         font-weight: 400;
     }
 
     &:focus {
         border-color: ${darkTheme.accent};
-        box-shadow: 0 0 0 3px ${darkTheme.accent}20;
     }
 `;
 
 export const EditorTextarea = styled.textarea`
     background: ${darkTheme.backgroundDarker};
-    border: 2px solid ${darkTheme.border};
-    border-radius: 8px;
+    border: 1px solid ${darkTheme.border};
+    border-radius: 4px;
     color: ${darkTheme.text.color};
-    font-size: 14px;
-    padding: 14px 16px;
+    font-size: 13px;
+    padding: 10px;
     outline: none;
     resize: vertical;
     min-height: 250px;
-    line-height: 1.6;
-    transition: all 0.2s ease;
+    line-height: 1.5;
     font-family: inherit;
 
     &::placeholder {
-        color: ${darkTheme.text.color}60;
+        color: ${darkTheme.text.color};
+        opacity: 0.4;
     }
 
     &:focus {
         border-color: ${darkTheme.accent};
-        box-shadow: 0 0 0 3px ${darkTheme.accent}20;
     }
 
     &::-webkit-scrollbar {
@@ -183,7 +142,6 @@ export const EditorTextarea = styled.textarea`
 
     &::-webkit-scrollbar-track {
         background: transparent;
-        border-radius: 4px;
     }
 
     &::-webkit-scrollbar-thumb {
@@ -201,19 +159,19 @@ export const EditorTextarea = styled.textarea`
 `;
 
 export const CharacterCount = styled.div`
-    color: ${darkTheme.text.color}60;
-    font-size: 12px;
+    color: ${darkTheme.text.color};
+    opacity: 0.4;
+    font-size: 11px;
     text-align: right;
 `;
 
 export const EditorFooter = styled.div`
     display: flex;
     justify-content: flex-end;
-    gap: 12px;
-    padding: 16px 24px;
+    gap: 8px;
+    padding: 8px 12px;
     border-top: 1px solid ${darkTheme.border};
     background: ${darkTheme.backgroundDarkest};
-    border-radius: 0 0 12px 12px;
 
     @media (max-width: 768px) {
         flex-direction: column-reverse;
@@ -225,15 +183,14 @@ interface EditorButtonProps {
 }
 
 export const EditorButton = styled.button<EditorButtonProps>`
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 14px;
+    padding: 6px 16px;
+    border-radius: 4px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
     border: none;
     font-family: inherit;
 
@@ -242,9 +199,7 @@ export const EditorButton = styled.button<EditorButtonProps>`
         color: white;
 
         &:hover:not(:disabled) {
-            background: ${darkTheme.accent}dd;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px ${darkTheme.accent}40;
+            opacity: 0.9;
         }
 
         &:disabled {
@@ -258,12 +213,11 @@ export const EditorButton = styled.button<EditorButtonProps>`
 
         &:hover {
             background: ${darkTheme.backgroundDarker};
-            border-color: ${darkTheme.accent};
         }
     `}
 
     .material-symbols-outlined {
-        font-size: 18px;
+        font-size: 16px;
     }
 
     @media (max-width: 768px) {

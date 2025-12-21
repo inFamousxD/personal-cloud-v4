@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { notesApi, Note, CreateNoteInput } from '../../../services/notesApi';
 import NoteCard from './NoteCard';
 import NoteEditor from './NoteEditor';
+import NoteViewer from './NoteViewer';
 import {
     NotesContainer,
     NotesHeader,
@@ -22,6 +23,8 @@ const Notes = () => {
     const [notes, setNotes] = useState<Note[]>([]);
     const [loading, setLoading] = useState(true);
     const [isEditorOpen, setIsEditorOpen] = useState(false);
+    const [isViewerOpen, setIsViewerOpen] = useState(false);
+    const [viewingNote, setViewingNote] = useState<Note | null>(null);
     const [editingNote, setEditingNote] = useState<Note | null>(null);
     const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; noteId: string | null }>({
         isOpen: false,
@@ -47,6 +50,11 @@ const Notes = () => {
     const handleCreateNote = () => {
         setEditingNote(null);
         setIsEditorOpen(true);
+    };
+
+    const handleViewNote = (note: Note) => {
+        setViewingNote(note);
+        setIsViewerOpen(true);
     };
 
     const handleEditNote = (note: Note) => {
@@ -130,6 +138,7 @@ const Notes = () => {
                             <NoteCard
                                 key={note._id}
                                 note={note}
+                                onView={handleViewNote}
                                 onEdit={handleEditNote}
                                 onDelete={handleDeleteNote}
                             />
@@ -137,6 +146,17 @@ const Notes = () => {
                     </NotesGrid>
                 )}
             </NotesBody>
+
+            <NoteViewer
+                isOpen={isViewerOpen}
+                onClose={() => {
+                    setIsViewerOpen(false);
+                    setViewingNote(null);
+                }}
+                onEdit={handleEditNote}
+                onDelete={handleDeleteNote}
+                note={viewingNote}
+            />
 
             <NoteEditor
                 isOpen={isEditorOpen}
