@@ -1,8 +1,8 @@
 import React from 'react';
-import {NavigationDockStyled} from "./NavigationDock.styles";
-import {useNavigate} from "react-router-dom";
-import {useDispatch, useSelector} from "react-redux";
-import {AppDispatch, RootState} from "../../../redux/store";
+import { NavigationDockStyled } from "./Navigation.styles";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../../../redux/store";
 import mainDock from "../../../redux/slices/application/mainDock";
 
 const NavigationDock: React.FC = () => {

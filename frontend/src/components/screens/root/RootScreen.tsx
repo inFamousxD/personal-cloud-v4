@@ -1,17 +1,20 @@
-import { Route, Routes } from 'react-router-dom'
-import DashboardLayout from './layouts/DashboardLayout'
-import ProtectedRoute from '../../ProtectedRoute'
-import Notes from '../notes/Notes'
+import React from "react";
+import PanelControl from "../panelControl/PanelControl";
+import NavigationContainer from "../../common/navigation/NavigationContainer";
+import BottomRibbonContainer from "../../common/ribbon/BottomRibbonContainer";
+import {Outlet} from "react-router-dom";
 
-const RootScreen = () => {
+export const RootScreen: React.FC = () => {
     return (
-        <ProtectedRoute>
-            <Routes>
-                <Route path="/" element={<DashboardLayout />} />
-                <Route path="/notes" element={<Notes />} />
-            </Routes>
-        </ProtectedRoute>
-    )
+        <div style={{ display: 'flex', flexDirection: 'column', height: "100vh" }}>
+            <div className="App" style={{ display: "flex", flexDirection: "row", flex: 1 }}>
+                {/* <NavigationContainer /> */}
+                <PanelControl />
+            </div>
+            <BottomRibbonContainer></BottomRibbonContainer>
+            <Outlet />
+        </div>
+    );
 }
 
-export default RootScreen
+export default RootScreen;

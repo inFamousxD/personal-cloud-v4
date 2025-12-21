@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import {darkTheme} from "../../../theme/dark.colors";
+import {darkTheme} from "../../theme/dark.colors";
 
 export const LoadingContainerStyled = styled.div`
   background: ${darkTheme.backgroundDarker};

@@ -1,7 +1,6 @@
 import React, {useState} from "react";
 import SplitPane, {Pane} from "split-pane-react";
 import 'split-pane-react/esm/themes/default.css';
-import ContentPanel from "../ContentPanel/ContentPanel";
 import PanelControlReducer from "./PanelControlReducer";
 
 const PanelControl: React.FC = () => {
@@ -12,7 +11,7 @@ const PanelControl: React.FC = () => {
             <Pane minSize={250}>
                 <PanelControlReducer />
             </Pane>
-            <ContentPanel />
+            <></>
         </SplitPane>
     )
 }
