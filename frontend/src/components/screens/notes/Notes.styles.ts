@@ -98,6 +98,11 @@ export const FilterBar = styled.div`
     gap: 8px;
     align-items: center;
     flex-wrap: wrap;
+
+    @media (max-width: 768px) {
+        flex-direction: column;
+        align-items: stretch;
+    }
 `;
 
 export const SearchInput = styled.input`
@@ -108,7 +113,7 @@ export const SearchInput = styled.input`
     border-radius: 4px;
     color: ${darkTheme.text.color};
     font-size: 12px;
-    padding: 6px 10px 6px 12px;
+    padding: 6px 10px 6px 32px;
     outline: none;
     font-family: inherit;
     position: relative;
@@ -123,7 +128,8 @@ export const SearchInput = styled.input`
     }
 
     @media (max-width: 768px) {
-        min-width: 93.8%;
+        min-width: 0;
+        width: 100%;
     }
 `;
 
@@ -144,7 +150,8 @@ export const SearchWrapper = styled.div`
     }
 
     @media (max-width: 768px) {
-        min-width: 100%;
+        min-width: 0;
+        width: 89.5%;
     }
 `;
 
@@ -153,6 +160,11 @@ export const FilterControls = styled.div`
     gap: 8px;
     align-items: center;
     flex-wrap: wrap;
+
+    @media (max-width: 768px) {
+        width: 100%;
+        justify-content: space-between;
+    }
 `;
 
 export const SortButton = styled.button<{ $active?: boolean }>`
@@ -259,7 +271,7 @@ export const NotesBody = styled.div`
 
     &::-webkit-scrollbar-thumb {
         background: ${darkTheme.accent}40;
-        border-radius: 4px;
+        border-radius: 0px;
 
         &:hover {
             background: ${darkTheme.accent}60;
@@ -267,7 +279,7 @@ export const NotesBody = styled.div`
     }
 
     @media (max-width: 768px) {
-        padding: 10px;
+        padding: 10px 10px 20px 10px; /* Less bottom padding since nav is at bottom */
     }
 `;
 
@@ -464,17 +476,18 @@ export const Seperator = styled.div`
 
 export const TagFilterDropdown = styled.div`
     position: absolute;
-    top: 100%;
-    right: 0;
     background: ${darkTheme.backgroundDarkest};
     border: 1px solid ${darkTheme.border};
     border-radius: 4px;
-    margin-top: 4px;
     min-width: 200px;
     max-height: 300px;
     overflow-y: auto;
     z-index: 100;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    
+    /* Default: open downward and to the right */
+    top: calc(100% + 4px);
+    right: 0;
 
     &::-webkit-scrollbar {
         width: 6px;
@@ -491,6 +504,14 @@ export const TagFilterDropdown = styled.div`
         &:hover {
             background: ${darkTheme.accent}60;
         }
+    }
+
+    @media (max-width: 768px) {
+        /* On mobile, keep it opening downward but ensure it fits */
+        max-height: 250px;
+        left: 0;
+        right: auto;
+        min-width: 180px;
     }
 `;
 

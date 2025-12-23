@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavigationDockStyled } from "./Navigation.styles";
+import { MobileNavFixed, MobileNavScrollable, MobileNavWrapper, NavigationDockStyled } from "./Navigation.styles";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../redux/store";
@@ -15,6 +15,40 @@ const NavigationDock: React.FC = () => {
     const dockOptionOnClick = (navigateTo: string, id: string) => {
         dispatch(mainDock.actions.selectFromDock({ selected: id }));
         navigate(navigateTo);
+    }
+
+    // Check if mobile
+    const isMobile = window.innerWidth <= 768;
+
+    if (isMobile) {
+        return (
+            <NavigationDockStyled>
+                <MobileNavWrapper>
+                    <MobileNavScrollable>
+                        {topOptions.map(option => (
+                            <div
+                                key={option.id}
+                                className={"material-symbols-outlined"}
+                                id={(selectedOption === option.id ? "" : "un") + "selected"}
+                                onClick={() => {dockOptionOnClick(option.navigatesTo, option.id);}}>
+                                {option.icon}
+                            </div>
+                        ))}
+                    </MobileNavScrollable>
+                    <MobileNavFixed>
+                        {bottomOptions.map(option => (
+                            <div
+                                key={option.id}
+                                className={"material-symbols-outlined"}
+                                id={(selectedOption === option.id ? "" : "un") + "selected"}
+                                onClick={() => {dockOptionOnClick(option.navigatesTo, option.id);}}>
+                                {option.icon}
+                            </div>
+                        ))}
+                    </MobileNavFixed>
+                </MobileNavWrapper>
+            </NavigationDockStyled>
+        );
     }
 
     return (

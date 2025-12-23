@@ -9,7 +9,6 @@ export const BottomRibbonStyled = styled.div`
     justify-content: flex-start;
     vertical-align: middle;
     align-items: center;
-    //margin-left: 20px;
 
     .material-symbols-outlined {
         &.box{
@@ -39,4 +38,8 @@ export const BottomRibbonContainerStyled = styled.div`
     align-items: center;
     font-family: JetBrains Mono;
     overflow: hidden;
+
+    @media (max-width: 768px) {
+        display: none;
+    }
 `;
