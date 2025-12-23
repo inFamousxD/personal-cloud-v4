@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { MobileNavFixed, MobileNavScrollable, MobileNavWrapper, NavigationDockStyled } from "./Navigation.styles";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../redux/store";
 import mainDock from "../../../redux/slices/application/mainDock";
@@ -16,6 +16,12 @@ const NavigationDock: React.FC = () => {
         dispatch(mainDock.actions.selectFromDock({ selected: id }));
         navigate(navigateTo);
     }
+
+    const location = useLocation();
+
+    useEffect(() => {
+        dispatch(mainDock.actions.selectFromDock({ selected: location.pathname.split('/')[1] }))
+    }, [location])
 
     // Check if mobile
     const isMobile = window.innerWidth <= 768;
