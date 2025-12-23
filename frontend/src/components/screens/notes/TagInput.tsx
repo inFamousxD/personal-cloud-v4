@@ -87,7 +87,6 @@ const SuggestionsDropdown = styled.div`
 
     &::-webkit-scrollbar-thumb {
         background: ${darkTheme.accent}40;
-        border-radius: 3px;
 
         &:hover {
             background: ${darkTheme.accent}60;

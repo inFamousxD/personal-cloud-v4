@@ -271,7 +271,6 @@ export const NotesBody = styled.div`
 
     &::-webkit-scrollbar-thumb {
         background: ${darkTheme.accent}40;
-        border-radius: 0px;
 
         &:hover {
             background: ${darkTheme.accent}60;
@@ -499,7 +498,6 @@ export const TagFilterDropdown = styled.div`
 
     &::-webkit-scrollbar-thumb {
         background: ${darkTheme.accent}40;
-        border-radius: 3px;
 
         &:hover {
             background: ${darkTheme.accent}60;

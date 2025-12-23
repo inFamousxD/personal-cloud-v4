@@ -84,7 +84,6 @@ export const EditorBody = styled.div`
 
     &::-webkit-scrollbar-thumb {
         background: ${darkTheme.accent}40;
-        border-radius: 4px;
 
         &:hover {
             background: ${darkTheme.accent}60;
@@ -146,7 +145,6 @@ export const EditorTextarea = styled.textarea`
 
     &::-webkit-scrollbar-thumb {
         background: ${darkTheme.accent}40;
-        border-radius: 4px;
 
         &:hover {
             background: ${darkTheme.accent}60;
