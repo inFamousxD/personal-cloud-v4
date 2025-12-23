@@ -25,6 +25,24 @@ router.get('/', async (req: AuthRequest, res: Response) => {
     }
 });
 
+// GET all unique tags for the authenticated user
+router.get('/tags', async (req: AuthRequest, res: Response) => {
+    try {
+        const notes = await db
+            .collection<Note>('notes')
+            .find({ userId: req.userId })
+            .toArray();
+
+        const allTags = notes.flatMap(note => note.tags || []);
+        const uniqueTags = [...new Set(allTags)].filter(tag => tag !== 'default').sort();
+
+        res.json(uniqueTags);
+    } catch (error) {
+        console.error('Error fetching tags:', error);
+        res.status(500).json({ error: 'Failed to fetch tags' });
+    }
+});
+
 // GET a specific note by ID
 router.get('/:id', async (req: AuthRequest, res: Response) => {
     try {
@@ -53,17 +71,20 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
 // POST create a new note
 router.post('/', async (req: AuthRequest, res: Response) => {
     try {
-        const { title, content }: CreateNoteInput = req.body;
+        const { title, content, tags }: CreateNoteInput = req.body;
 
         if (!title || !content) {
             return res.status(400).json({ error: 'Title and content are required' });
         }
 
         const now = new Date();
+        const noteTags = tags && tags.length > 0 ? tags : ['default'];
+        
         const newNote: Note = {
             userId: req.userId!,
             title,
             content,
+            tags: noteTags,
             createdAt: now,
             updatedAt: now,
         };
@@ -84,13 +105,13 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 router.put('/:id', async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
-        const { title, content }: UpdateNoteInput = req.body;
+        const { title, content, tags }: UpdateNoteInput = req.body;
 
         if (!ObjectId.isValid(id)) {
             return res.status(400).json({ error: 'Invalid note ID' });
         }
 
-        if (!title && !content) {
+        if (!title && !content && !tags) {
             return res.status(400).json({ error: 'Nothing to update' });
         }
 
@@ -100,6 +121,9 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
 
         if (title) updateData.title = title;
         if (content) updateData.content = content;
+        if (tags !== undefined) {
+            updateData.tags = tags.length > 0 ? tags : ['default'];
+        }
 
         const result = await db.collection<Note>('notes').findOneAndUpdate(
             {

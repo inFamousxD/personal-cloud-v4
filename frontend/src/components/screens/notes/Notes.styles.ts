@@ -12,16 +12,21 @@ export const NotesContainer = styled.div`
 
 export const NotesHeader = styled.div`
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 8px;
     padding: 8px 12px;
     border-bottom: 1px solid ${darkTheme.border};
     background: ${darkTheme.backgroundDarkest};
+`;
+
+export const NotesHeaderTop = styled.div`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 
     @media (max-width: 768px) {
         flex-direction: column;
         gap: 8px;
-        padding: 8px 12px;
     }
 `;
 
@@ -85,6 +90,157 @@ export const CreateButton = styled.button`
     @media (max-width: 768px) {
         width: 100%;
         justify-content: center;
+    }
+`;
+
+export const FilterBar = styled.div`
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+`;
+
+export const SearchInput = styled.input`
+    flex: 1;
+    min-width: 200px;
+    background: ${darkTheme.backgroundDarker};
+    border: 1px solid ${darkTheme.border};
+    border-radius: 4px;
+    color: ${darkTheme.text.color};
+    font-size: 12px;
+    padding: 6px 10px 6px 12px;
+    outline: none;
+    font-family: inherit;
+    position: relative;
+
+    &::placeholder {
+        color: ${darkTheme.text.color};
+        opacity: 0.4;
+    }
+
+    &:focus {
+        border-color: ${darkTheme.accent};
+    }
+
+    @media (max-width: 768px) {
+        min-width: 100%;
+    }
+`;
+
+export const SearchWrapper = styled.div`
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+
+    .material-symbols-outlined {
+        position: absolute;
+        left: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 16px;
+        color: ${darkTheme.text.color};
+        opacity: 0.4;
+        pointer-events: none;
+    }
+
+    @media (max-width: 768px) {
+        min-width: 100%;
+    }
+`;
+
+export const FilterControls = styled.div`
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+`;
+
+export const SortButton = styled.button<{ $active?: boolean }>`
+    background: ${props => props.$active ? darkTheme.accent + '20' : 'transparent'};
+    border: 1px solid ${darkTheme.border};
+    border-radius: 4px;
+    color: ${props => props.$active ? darkTheme.accent : darkTheme.text.color};
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: inherit;
+    white-space: nowrap;
+
+    &:hover {
+        background: ${darkTheme.accent}20;
+        border-color: ${darkTheme.accent};
+    }
+
+    .material-symbols-outlined {
+        font-size: 14px;
+    }
+`;
+
+export const FavoriteTags = styled.div`
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+`;
+
+export const FavoriteTagPill = styled.button<{ $active?: boolean }>`
+    background: ${props => props.$active ? darkTheme.accent : darkTheme.accent + '30'};
+    color: ${props => props.$active ? 'white' : darkTheme.accent};
+    border: none;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s;
+
+    &:hover {
+        background: ${darkTheme.accent};
+        color: white;
+    }
+
+    .material-symbols-outlined {
+        font-size: 12px;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+
+    &:hover .material-symbols-outlined {
+        opacity: 1;
+    }
+`;
+
+export const TagFilterButton = styled.button`
+    background: transparent;
+    border: 1px solid ${darkTheme.border};
+    border-radius: 4px;
+    color: ${darkTheme.text.color};
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: inherit;
+    white-space: nowrap;
+
+    &:hover {
+        background: ${darkTheme.accent}20;
+        border-color: ${darkTheme.accent};
+        color: ${darkTheme.accent};
+    }
+
+    .material-symbols-outlined {
+        font-size: 14px;
     }
 `;
 
@@ -304,4 +460,60 @@ export const DeleteConfirmActions = styled.div`
 export const Seperator = styled.div`
     border-bottom: 1px solid ${darkTheme.border};
     padding: 5px;
+`;
+
+export const TagFilterDropdown = styled.div`
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: ${darkTheme.backgroundDarkest};
+    border: 1px solid ${darkTheme.border};
+    border-radius: 4px;
+    margin-top: 4px;
+    min-width: 200px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 100;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: ${darkTheme.backgroundDarker};
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: ${darkTheme.accent}40;
+        border-radius: 3px;
+
+        &:hover {
+            background: ${darkTheme.accent}60;
+        }
+    }
+`;
+
+export const TagFilterItem = styled.div<{ $selected?: boolean }>`
+    padding: 8px 12px;
+    font-size: 12px;
+    color: ${darkTheme.text.color};
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: ${props => props.$selected ? darkTheme.accent + '20' : 'transparent'};
+
+    &:hover {
+        background: ${darkTheme.accent}30;
+    }
+
+    .material-symbols-outlined {
+        font-size: 14px;
+        color: ${darkTheme.accent};
+    }
+`;
+
+export const TagFilterWrapper = styled.div`
+    position: relative;
 `;

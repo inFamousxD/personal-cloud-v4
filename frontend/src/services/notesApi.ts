@@ -7,6 +7,7 @@ export interface Note {
     userId: string;
     title: string;
     content: string;
+    tags: string[];
     createdAt: Date;
     updatedAt: Date;
 }
@@ -14,11 +15,13 @@ export interface Note {
 export interface CreateNoteInput {
     title: string;
     content: string;
+    tags?: string[];
 }
 
 export interface UpdateNoteInput {
     title?: string;
     content?: string;
+    tags?: string[];
 }
 
 const getAuthHeader = () => {
@@ -33,6 +36,13 @@ const getAuthHeader = () => {
 export const notesApi = {
     getAllNotes: async (): Promise<Note[]> => {
         const response = await axios.get(`${API_URL}/api/notes`, {
+            headers: getAuthHeader(),
+        });
+        return response.data;
+    },
+
+    getAllTags: async (): Promise<string[]> => {
+        const response = await axios.get(`${API_URL}/api/notes/tags`, {
             headers: getAuthHeader(),
         });
         return response.data;

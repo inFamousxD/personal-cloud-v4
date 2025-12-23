@@ -1,6 +1,25 @@
 import React, { useMemo } from 'react';
 import { Note } from '../../../services/notesApi';
 import { NoteCardStyled, NoteCardTitle, NoteCardContent, NoteCardFooter, NoteCardActions } from './NoteCard.styles';
+import styled from 'styled-components';
+import { darkTheme } from '../../../theme/dark.colors';
+
+const TagsContainer = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+    flex-shrink: 0;
+`;
+
+const TagPill = styled.span`
+    background: ${darkTheme.accent}20;
+    color: ${darkTheme.accent};
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+`;
 
 interface NoteCardProps {
     note: Note;
@@ -18,16 +37,16 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onView, onEdit, onDelete }) =
         });
     };
 
+    const visibleTags = useMemo(() => {
+        return (note.tags || []).filter(tag => tag !== 'default');
+    }, [note.tags]);
+
     // Calculate row span based on content length
     const rowSpan = useMemo(() => {
         const contentLength = note.content.length;
         const titleLength = (note.title || 'Untitled Note').length;
         const totalLength = contentLength + titleLength;
 
-        // Base size: 1 row (up to 100 chars)
-        // Medium: 2 rows (100-250 chars)
-        // Large: 3 rows (250-500 chars)
-        // XLarge: 4 rows (500+ chars)
         if (totalLength <= 100) return 1;
         if (totalLength <= 250) return 2;
         if (totalLength <= 500) return 3;
@@ -36,19 +55,16 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onView, onEdit, onDelete }) =
 
     // Calculate line clamp based on row span
     const lineClamp = useMemo(() => {
-        // Approximate lines that fit in each row span
-        // 1 row: ~3 lines, 2 rows: ~8 lines, 3 rows: ~13 lines, 4 rows: ~18 lines
         const linesPerRowSpan = {
-            1: 3,
-            2: 8,
-            3: 13,
-            4: 18
+            1: visibleTags.length > 0 ? 2 : 3,
+            2: visibleTags.length > 0 ? 6 : 8,
+            3: visibleTags.length > 0 ? 11 : 13,
+            4: visibleTags.length > 0 ? 16 : 18
         };
         return linesPerRowSpan[rowSpan as keyof typeof linesPerRowSpan] || 3;
-    }, [rowSpan]);
+    }, [rowSpan, visibleTags.length]);
 
     const handleCardClick = (e: React.MouseEvent) => {
-        // Don't open viewer if clicking on action buttons
         if ((e.target as HTMLElement).closest('.material-symbols-outlined')) {
             return;
         }
@@ -68,6 +84,16 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onView, onEdit, onDelete }) =
     return (
         <NoteCardStyled $rowSpan={rowSpan} onClick={handleCardClick}>
             <NoteCardTitle>{note.title || 'Untitled Note'}</NoteCardTitle>
+            {visibleTags.length > 0 && (
+                <TagsContainer>
+                    {visibleTags.slice(0, 3).map(tag => (
+                        <TagPill key={tag}>{tag}</TagPill>
+                    ))}
+                    {visibleTags.length > 3 && (
+                        <TagPill>+{visibleTags.length - 3}</TagPill>
+                    )}
+                </TagsContainer>
+            )}
             <NoteCardContent style={{ WebkitLineClamp: lineClamp }}>
                 {note.content}
             </NoteCardContent>

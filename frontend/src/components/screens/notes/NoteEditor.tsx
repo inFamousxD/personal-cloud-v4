@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Note, CreateNoteInput } from '../../../services/notesApi';
+import TagInput from './TagInput';
 import {
     EditorOverlay,
     EditorModal,
@@ -17,21 +18,25 @@ import {
 interface NoteEditorProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (note: CreateNoteInput) => void;
-    editingNote?: Note | null;
+    onSave: (note: CreateNoteInput) => Promise<void> | void;
+    editingNote: Note | null;
+    availableTags: string[];
 }
 
-const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, onClose, onSave, editingNote }) => {
+const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, onClose, onSave, editingNote, availableTags }) => {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
+    const [tags, setTags] = useState<string[]>(['default']);
 
     useEffect(() => {
         if (editingNote) {
             setTitle(editingNote.title);
             setContent(editingNote.content);
+            setTags(editingNote.tags || ['default']);
         } else {
             setTitle('');
             setContent('');
+            setTags(['default']);
         }
     }, [editingNote, isOpen]);
 
@@ -42,16 +47,21 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, onClose, onSave, editin
 
         onSave({
             title: title.trim() || 'Untitled Note',
-            content: content.trim()
+            content: content.trim(),
+            tags: tags.filter(tag => tag !== 'default').length > 0 
+                ? tags.filter(tag => tag !== 'default') 
+                : ['default']
         });
 
         setTitle('');
         setContent('');
+        setTags(['default']);
     };
 
     const handleCancel = () => {
         setTitle('');
         setContent('');
+        setTags(['default']);
         onClose();
     };
 
@@ -85,6 +95,12 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, onClose, onSave, editin
                         onChange={(e) => setTitle(e.target.value)}
                         maxLength={100}
                         autoFocus
+                    />
+                    <TagInput
+                        tags={tags}
+                        onChange={setTags}
+                        availableTags={availableTags}
+                        placeholder="Add tags..."
                     />
                     <EditorTextarea
                         placeholder="Write your note here..."

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { notesApi, Note, CreateNoteInput } from '../../../services/notesApi';
 import NoteCard from './NoteCard';
 import NoteEditor from './NoteEditor';
@@ -6,10 +6,22 @@ import NoteViewer from './NoteViewer';
 import {
     NotesContainer,
     NotesHeader,
+    NotesHeaderTop,
     NotesHeaderLeft,
     NotesTitle,
     NotesCount,
     CreateButton,
+    FilterBar,
+    SearchWrapper,
+    SearchInput,
+    FilterControls,
+    SortButton,
+    FavoriteTags,
+    FavoriteTagPill,
+    TagFilterButton,
+    TagFilterDropdown,
+    TagFilterItem,
+    TagFilterWrapper,
     NotesBody,
     NotesGrid,
     EmptyState,
@@ -19,8 +31,11 @@ import {
     DeleteConfirmActions
 } from './Notes.styles';
 
+type SortOrder = 'newest' | 'oldest';
+
 const Notes = () => {
     const [notes, setNotes] = useState<Note[]>([]);
+    const [allTags, setAllTags] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [isViewerOpen, setIsViewerOpen] = useState(false);
@@ -31,8 +46,17 @@ const Notes = () => {
         noteId: null
     });
 
+    // Filter and sort states
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedTag, setSelectedTag] = useState<string | null>(null);
+    const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
+    const [favoriteTags, setFavoriteTags] = useState<string[]>([]);
+    const [showTagFilter, setShowTagFilter] = useState(false);
+
     useEffect(() => {
         loadNotes();
+        loadTags();
+        loadFavoriteTags();
     }, []);
 
     const loadNotes = async () => {
@@ -46,6 +70,74 @@ const Notes = () => {
             setLoading(false);
         }
     };
+
+    const loadTags = async () => {
+        try {
+            const tags = await notesApi.getAllTags();
+            setAllTags(tags);
+        } catch (error) {
+            console.error('Error loading tags:', error);
+        }
+    };
+
+    const loadFavoriteTags = () => {
+        const stored = localStorage.getItem('favoriteTags');
+        if (stored) {
+            setFavoriteTags(JSON.parse(stored));
+        }
+    };
+
+    const saveFavoriteTags = (tags: string[]) => {
+        localStorage.setItem('favoriteTags', JSON.stringify(tags));
+        setFavoriteTags(tags);
+    };
+
+    const toggleFavoriteTag = (tag: string) => {
+        const newFavorites = favoriteTags.includes(tag)
+            ? favoriteTags.filter(t => t !== tag)
+            : favoriteTags.length < 3
+                ? [...favoriteTags, tag]
+                : favoriteTags;
+        saveFavoriteTags(newFavorites);
+    };
+
+    const removeFavoriteTag = (tag: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        saveFavoriteTags(favoriteTags.filter(t => t !== tag));
+        if (selectedTag === tag) {
+            setSelectedTag(null);
+        }
+    };
+
+    const filteredAndSortedNotes = useMemo(() => {
+        let filtered = notes;
+
+        // Filter by search query
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter(note => {
+                const titleMatch = note.title.toLowerCase().includes(query);
+                const contentMatch = note.content.toLowerCase().includes(query);
+                const dateMatch = new Date(note.updatedAt).toLocaleDateString().toLowerCase().includes(query);
+                const tagsMatch = note.tags.some(tag => tag.toLowerCase().includes(query));
+                return titleMatch || contentMatch || dateMatch || tagsMatch;
+            });
+        }
+
+        // Filter by tag
+        if (selectedTag) {
+            filtered = filtered.filter(note => note.tags.includes(selectedTag));
+        }
+
+        // Sort by date
+        const sorted = [...filtered].sort((a, b) => {
+            const dateA = new Date(a.updatedAt).getTime();
+            const dateB = new Date(b.updatedAt).getTime();
+            return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+        });
+
+        return sorted;
+    }, [notes, searchQuery, selectedTag, sortOrder]);
 
     const handleCreateNote = () => {
         setEditingNote(null);
@@ -65,16 +157,15 @@ const Notes = () => {
     const handleSaveNote = async (noteInput: CreateNoteInput) => {
         try {
             if (editingNote) {
-                // Update existing note
                 const updated = await notesApi.updateNote(editingNote._id!, noteInput);
                 setNotes(notes.map(n => n._id === updated._id ? updated : n));
             } else {
-                // Create new note
                 const created = await notesApi.createNote(noteInput);
                 setNotes([created, ...notes]);
             }
             setIsEditorOpen(false);
             setEditingNote(null);
+            loadTags();
         } catch (error) {
             console.error('Error saving note:', error);
         }
@@ -91,6 +182,7 @@ const Notes = () => {
             await notesApi.deleteNote(deleteConfirm.noteId);
             setNotes(notes.filter(n => n._id !== deleteConfirm.noteId));
             setDeleteConfirm({ isOpen: false, noteId: null });
+            loadTags();
         } catch (error) {
             console.error('Error deleting note:', error);
         }
@@ -100,23 +192,126 @@ const Notes = () => {
         setDeleteConfirm({ isOpen: false, noteId: null });
     };
 
+    const toggleSortOrder = () => {
+        setSortOrder(prev => prev === 'newest' ? 'oldest' : 'newest');
+    };
+
+    const handleTagFilter = (tag: string) => {
+        setSelectedTag(selectedTag === tag ? null : tag);
+        setShowTagFilter(false);
+    };
+
+    const handleFavoriteTagClick = (tag: string) => {
+        setSelectedTag(selectedTag === tag ? null : tag);
+    };
+
     return (
         <NotesContainer>
             <NotesHeader>
-                <NotesHeaderLeft>
-                    <NotesTitle>
-                        <span className="material-symbols-outlined">notes</span>
-                        Notes
-                        <NotesCount>({notes.length})</NotesCount>
-                    </NotesTitle>
-                </NotesHeaderLeft>
-                <CreateButton onClick={handleCreateNote}>
-                    <span className="material-symbols-outlined">add</span>
-                    New Note
-                </CreateButton>
+                <NotesHeaderTop>
+                    <NotesHeaderLeft>
+                        <NotesTitle>
+                            <span className="material-symbols-outlined">notes</span>
+                            Notes
+                            <NotesCount>({filteredAndSortedNotes.length})</NotesCount>
+                        </NotesTitle>
+                    </NotesHeaderLeft>
+                    <CreateButton onClick={handleCreateNote}>
+                        <span className="material-symbols-outlined">add</span>
+                        New Note
+                    </CreateButton>
+                </NotesHeaderTop>
+
+                <FilterBar>
+                    <SearchWrapper>
+                        <span className="material-symbols-outlined">search</span>
+                        <SearchInput
+                            type="text"
+                            placeholder="Search notes"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </SearchWrapper>
+                    
+                    <FilterControls>
+                        {favoriteTags.length > 0 && (
+                            <FavoriteTags>
+                                {favoriteTags.map(tag => (
+                                    <FavoriteTagPill
+                                        key={tag}
+                                        $active={selectedTag === tag}
+                                        onClick={() => handleFavoriteTagClick(tag)}
+                                    >
+                                        {tag}
+                                        <span 
+                                            className="material-symbols-outlined"
+                                            onClick={(e) => removeFavoriteTag(tag, e)}
+                                        >
+                                            close
+                                        </span>
+                                    </FavoriteTagPill>
+                                ))}
+                            </FavoriteTags>
+                        )}
+
+                        <TagFilterWrapper>
+                            <TagFilterButton onClick={() => setShowTagFilter(!showTagFilter)}>
+                                <span className="material-symbols-outlined">label</span>
+                                {selectedTag || 'All Tags'}
+                            </TagFilterButton>
+                            {showTagFilter && (
+                                <TagFilterDropdown>
+                                    <TagFilterItem
+                                        $selected={selectedTag === null}
+                                        onClick={() => handleTagFilter(null as any)}
+                                    >
+                                        All Tags
+                                        {selectedTag === null && (
+                                            <span className="material-symbols-outlined">check</span>
+                                        )}
+                                    </TagFilterItem>
+                                    {allTags.map(tag => (
+                                        <TagFilterItem
+                                            key={tag}
+                                            $selected={selectedTag === tag}
+                                            onClick={() => handleTagFilter(tag)}
+                                        >
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                {tag}
+                                                {!favoriteTags.includes(tag) && favoriteTags.length < 3 && (
+                                                    <span 
+                                                        className="material-symbols-outlined"
+                                                        style={{ fontSize: '12px', opacity: 0.5 }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            toggleFavoriteTag(tag);
+                                                        }}
+                                                        title="Add to favorites"
+                                                    >
+                                                        star
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {selectedTag === tag && (
+                                                <span className="material-symbols-outlined">check</span>
+                                            )}
+                                        </TagFilterItem>
+                                    ))}
+                                </TagFilterDropdown>
+                            )}
+                        </TagFilterWrapper>
+
+                        <SortButton $active={sortOrder === 'newest'} onClick={toggleSortOrder}>
+                            <span className="material-symbols-outlined">
+                                {sortOrder === 'newest' ? 'arrow_downward' : 'arrow_upward'}
+                            </span>
+                            {sortOrder === 'newest' ? 'Newest' : 'Oldest'}
+                        </SortButton>
+                    </FilterControls>
+                </FilterBar>
             </NotesHeader>
 
-            <NotesBody>
+            <NotesBody onClick={() => setShowTagFilter(false)}>
                 {loading ? (
                     <LoadingState>
                         <div className="lds-ring">
@@ -126,15 +321,23 @@ const Notes = () => {
                             <div></div>
                         </div>
                     </LoadingState>
-                ) : notes.length === 0 ? (
+                ) : filteredAndSortedNotes.length === 0 ? (
                     <EmptyState>
-                        <span className="material-symbols-outlined">note_add</span>
-                        <h3>No notes yet</h3>
-                        <p>Create your first note to get started. Click the "New Note" button above.</p>
+                        <span className="material-symbols-outlined">
+                            {searchQuery || selectedTag ? 'search_off' : 'note_add'}
+                        </span>
+                        <h3>
+                            {searchQuery || selectedTag ? 'No notes found' : 'No notes yet'}
+                        </h3>
+                        <p>
+                            {searchQuery || selectedTag 
+                                ? 'Try adjusting your search or filters.'
+                                : 'Create your first note to get started. Click the "New Note" button above.'}
+                        </p>
                     </EmptyState>
                 ) : (
                     <NotesGrid>
-                        {notes.map(note => (
+                        {filteredAndSortedNotes.map(note => (
                             <NoteCard
                                 key={note._id}
                                 note={note}
@@ -166,6 +369,7 @@ const Notes = () => {
                 }}
                 onSave={handleSaveNote}
                 editingNote={editingNote}
+                availableTags={allTags}
             />
 
             {deleteConfirm.isOpen && (

@@ -1,5 +1,7 @@
 import React from 'react';
 import { Note } from '../../../services/notesApi';
+import styled from 'styled-components';
+import { darkTheme } from '../../../theme/dark.colors';
 import {
     ViewerOverlay,
     ViewerModal,
@@ -10,6 +12,22 @@ import {
     ViewerBody,
     ViewerContent
 } from './NoteViewer.styles';
+
+const TagsContainer = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+`;
+
+const TagPill = styled.span`
+    background: ${darkTheme.accent}30;
+    color: ${darkTheme.accent};
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+`;
 
 interface NoteViewerProps {
     isOpen: boolean;
@@ -31,6 +49,8 @@ const NoteViewer: React.FC<NoteViewerProps> = ({ isOpen, onClose, onEdit, onDele
             minute: '2-digit'
         });
     };
+
+    const visibleTags = (note.tags || []).filter(tag => tag !== 'default');
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Escape') {
@@ -78,11 +98,18 @@ const NoteViewer: React.FC<NoteViewerProps> = ({ isOpen, onClose, onEdit, onDele
                     <div style={{ 
                         fontSize: '11px', 
                         opacity: 0.5, 
-                        marginBottom: '16px',
+                        marginBottom: '8px',
                         color: 'inherit'
                     }}>
                         Last updated: {formatDate(note.updatedAt)}
                     </div>
+                    {visibleTags.length > 0 && (
+                        <TagsContainer>
+                            {visibleTags.map(tag => (
+                                <TagPill key={tag}>{tag}</TagPill>
+                            ))}
+                        </TagsContainer>
+                    )}
                     <ViewerContent>{note.content}</ViewerContent>
                 </ViewerBody>
             </ViewerModal>
