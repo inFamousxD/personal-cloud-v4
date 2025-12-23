@@ -235,7 +235,7 @@ export const DeleteConfirmModal = styled.div`
 export const DeleteConfirmContent = styled.div`
     background: ${darkTheme.backgroundDarkest};
     border: 1px solid ${darkTheme.accent}40;
-    border-radius: 12px;
+    border-radius: 4px;
     padding: 24px;
     max-width: 400px;
     width: 90%;
@@ -264,7 +264,7 @@ export const DeleteConfirmActions = styled.div`
 
     button {
         padding: 10px 20px;
-        border-radius: 8px;
+        border-radius: 4px;
         font-size: 14px;
         font-weight: 600;
         cursor: pointer;
