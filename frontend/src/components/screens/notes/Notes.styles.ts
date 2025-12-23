@@ -123,7 +123,7 @@ export const SearchInput = styled.input`
     }
 
     @media (max-width: 768px) {
-        min-width: 100%;
+        min-width: 93.8%;
     }
 `;
 
