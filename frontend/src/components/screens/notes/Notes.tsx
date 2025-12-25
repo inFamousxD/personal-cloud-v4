@@ -31,6 +31,8 @@ import {
     DeleteConfirmActions,
     RefreshButton
 } from './Notes.styles';
+import { useSelector } from 'react-redux';
+import { RootState } from "../../../redux/store";
 
 type SortOrder = 'newest' | 'oldest';
 
@@ -56,6 +58,7 @@ const Notes = () => {
 
     // Ref for click-outside detection
     const tagFilterRef = useRef<HTMLDivElement>(null);
+    const topOptions = useSelector((state: RootState) => state.mainDock.dockTopOptions);
 
     useEffect(() => {
         loadNotes();
@@ -234,7 +237,7 @@ const Notes = () => {
                 <NotesHeaderTop>
                     <NotesHeaderLeft>
                         <NotesTitle>
-                            <span className="material-symbols-outlined">notes</span>
+                            <span className="material-symbols-outlined">{topOptions.find(o => o.id === "notes")?.icon}</span>
                             Notes
                             <NotesCount>({filteredAndSortedNotes.length})</NotesCount>
                             <RefreshButton onClick={() => loadNotes()}>
