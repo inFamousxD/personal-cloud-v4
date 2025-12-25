@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { notesApi, Note, CreateNoteInput } from '../../../services/notesApi';
 import NoteCard from './NoteCard';
 import NoteEditor from './NoteEditor';
@@ -28,7 +28,8 @@ import {
     LoadingState,
     DeleteConfirmModal,
     DeleteConfirmContent,
-    DeleteConfirmActions
+    DeleteConfirmActions,
+    RefreshButton
 } from './Notes.styles';
 
 type SortOrder = 'newest' | 'oldest';
@@ -53,11 +54,33 @@ const Notes = () => {
     const [favoriteTags, setFavoriteTags] = useState<string[]>([]);
     const [showTagFilter, setShowTagFilter] = useState(false);
 
+    // Ref for click-outside detection
+    const tagFilterRef = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
         loadNotes();
         loadTags();
         loadFavoriteTags();
     }, []);
+
+    // Click-outside detection for tag filter dropdown
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (tagFilterRef.current && !tagFilterRef.current.contains(event.target as Node)) {
+                setShowTagFilter(false);
+            }
+        };
+
+        // Only add listener if dropdown is open
+        if (showTagFilter) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        // Cleanup
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showTagFilter]);
 
     const loadNotes = async () => {
         try {
@@ -214,6 +237,10 @@ const Notes = () => {
                             <span className="material-symbols-outlined">notes</span>
                             Notes
                             <NotesCount>({filteredAndSortedNotes.length})</NotesCount>
+                            <RefreshButton onClick={() => loadNotes()}>
+                                <span className="material-symbols-outlined">refresh</span>
+                                Refresh
+                            </RefreshButton>
                         </NotesTitle>
                     </NotesHeaderLeft>
                     <CreateButton onClick={handleCreateNote}>
@@ -254,7 +281,7 @@ const Notes = () => {
                             </FavoriteTags>
                         )}
 
-                        <TagFilterWrapper>
+                        <TagFilterWrapper ref={tagFilterRef}>
                             <TagFilterButton onClick={() => setShowTagFilter(!showTagFilter)}>
                                 <span className="material-symbols-outlined">label</span>
                                 {selectedTag || 'All Tags'}
@@ -311,7 +338,7 @@ const Notes = () => {
                 </FilterBar>
             </NotesHeader>
 
-            <NotesBody onClick={() => setShowTagFilter(false)}>
+            <NotesBody>
                 {loading ? (
                     <LoadingState>
                         <div className="lds-ring">

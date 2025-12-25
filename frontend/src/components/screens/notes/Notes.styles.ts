@@ -93,6 +93,36 @@ export const CreateButton = styled.button`
     }
 `;
 
+export const RefreshButton = styled.div`
+    user-select: none;
+    cursor: pointer;
+    background: transparent;
+    color: ${darkTheme.text.color};
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: inherit;
+
+    &:hover {
+        opacity: 0.9;
+    }
+
+    .material-symbols-outlined {
+        font-size: 16px;
+    }
+
+    @media (max-width: 768px) {
+        width: 100%;
+        justify-content: center;
+    }
+`;
+
 export const FilterBar = styled.div`
     display: flex;
     gap: 8px;
