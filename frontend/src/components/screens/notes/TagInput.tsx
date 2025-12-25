@@ -154,7 +154,10 @@ const TagInput: React.FC<TagInputProps> = ({ tags, onChange, availableTags, plac
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
+            // Always prevent default to stop form submission and focus shifting
             e.preventDefault();
+            e.stopPropagation();
+            
             if (showSuggestions && suggestions.length > 0) {
                 addTag(suggestions[selectedSuggestionIndex]);
             } else if (inputValue.trim()) {
@@ -205,6 +208,8 @@ const TagInput: React.FC<TagInputProps> = ({ tags, onChange, availableTags, plac
                         onFocus={() => inputValue && setShowSuggestions(true)}
                         onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                         placeholder={filteredTags.length === 0 ? placeholder : ''}
+                        // Prevent mobile keyboard from adding newlines or triggering form submit
+                        enterKeyHint="done"
                     />
                 </TagsWrapper>
                 {showSuggestions && suggestions.length > 0 && (
