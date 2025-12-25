@@ -4,6 +4,8 @@ import NavigationContainer from "../../common/navigation/NavigationContainer";
 import BottomRibbonContainer from "../../common/ribbon/BottomRibbonContainer";
 import {Outlet, Route, Routes} from "react-router-dom";
 import Notes from "../notes/Notes";
+import Server from "../server/Server";
+import Settings from "../settings/Settings";
 import ProtectedRoute from "../../ProtectedRoute";
 import styled from "styled-components";
 
@@ -45,6 +47,8 @@ export const RootScreen: React.FC = () => {
                         <Routes>
                             {/* <Route index element={<PanelControlEmpty />} /> */}
                             <Route path="/notes" element={<Notes />} />
+                            <Route path="/server" element={<Server />} />
+                            <Route path="/settings" element={<Settings />} />
                         </Routes>
                     </ContentArea>
                     <BottomRibbonContainer />

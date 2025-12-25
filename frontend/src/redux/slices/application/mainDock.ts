@@ -21,9 +21,9 @@ const mainDockInitialState = {
     ],
     dockBottomOptions: [
         {
-            id: "network_ping",
-            icon: "network_ping",
-            navigatesTo: "/network_ping"
+            id: "server",
+            icon: "dns",
+            navigatesTo: "/server"
         },
         {
             id: "settings",

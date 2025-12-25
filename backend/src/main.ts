@@ -3,6 +3,7 @@ import { writeFileSync } from 'fs';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import notesRouter from './routes/notes.js';
+import serverRouter from './routes/server.js';
 import { client, connectDB } from './db.js';
 
 dotenv.config();
@@ -33,6 +34,9 @@ app.post('/post-test', (req: Request, res: Response) => {
 
 // Mount notes routes
 app.use('/api/notes', notesRouter);
+
+// Mount server routes
+app.use('/api/server', serverRouter);
 
 
 process.on('SIGINT', async () => {
