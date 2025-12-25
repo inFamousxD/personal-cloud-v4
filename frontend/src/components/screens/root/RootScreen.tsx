@@ -1,10 +1,10 @@
 import React from "react";
-// import PanelControl from "../panelControl/PanelControl";
 import NavigationContainer from "../../common/navigation/NavigationContainer";
 import BottomRibbonContainer from "../../common/ribbon/BottomRibbonContainer";
 import {Outlet, Route, Routes} from "react-router-dom";
 import Notes from "../notes/Notes";
 import Journal from "../journal/Journal";
+import Lists from "../lists/Lists";
 import Server from "../server/Server";
 import Settings from "../settings/Settings";
 import ProtectedRoute from "../../ProtectedRoute";
@@ -44,12 +44,12 @@ export const RootScreen: React.FC = () => {
                 <NavigationContainer />
                 <MainContent>
                     <ContentArea>
-                        {/* <PanelControl /> */}
                         <Routes>
-                            {/* <Route index element={<PanelControlEmpty />} /> */}
                             <Route path="/notes" element={<Notes />} />
                             <Route path="/journal" element={<Journal />} />
                             <Route path="/journal/:journalId" element={<Journal />} />
+                            <Route path="/lists" element={<Lists />} />
+                            <Route path="/lists/:listId" element={<Lists />} />
                             <Route path="/server" element={<Server />} />
                             <Route path="/settings" element={<Settings />} />
                         </Routes>

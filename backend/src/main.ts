@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import notesRouter from './routes/notes.js';
 import journalsRouter from './routes/journals.js';
+import listsRouter from './routes/lists.js';
 import serverRouter from './routes/server.js';
 import { client, connectDB } from './db.js';
 
@@ -38,6 +39,9 @@ app.use('/api/notes', notesRouter);
 
 // Mount journals routes
 app.use('/api/journals', journalsRouter);
+
+// Mount lists routes
+app.use('/api/lists', listsRouter);
 
 // Mount server routes
 app.use('/api/server', serverRouter);
