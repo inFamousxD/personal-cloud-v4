@@ -171,7 +171,7 @@ export const JournalsList = styled.div<{ $nested?: boolean }>`
 
 export const JournalItem = styled.div<{ $selected?: boolean, $nested?: boolean }>`
     padding: 6px 12px;
-    padding-left: ${props => props.$nested ? '48px' : '0'};
+    padding-left: ${props => props.$nested ? '48px' : '12px'};
     display: flex;
     flex-direction: column;
     gap: 2px;
