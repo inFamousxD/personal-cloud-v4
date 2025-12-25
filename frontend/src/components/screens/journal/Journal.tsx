@@ -1,0 +1,494 @@
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { journalsApi, Journal, Folder, CreateJournalInput } from '../../../services/journalsApi';
+import {
+    JournalContainer,
+    JournalSidebar,
+    SidebarHeader,
+    SidebarTitle,
+    SidebarActions,
+    IconButton,
+    SidebarBody,
+    FolderItem,
+    FolderHeader,
+    FolderName,
+    FolderActions,
+    JournalsList,
+    JournalItem,
+    JournalItemHeader,
+    JournalTitle,
+    JournalSubtitle,
+    JournalContent,
+    ContentHeader,
+    ToggleSidebarButton,
+    ContentActions,
+    ActionButton,
+    EditorContainer,
+    MarkdownEditor,
+    EmptyState,
+    LoadingState,
+    ModalOverlay,
+    ModalContent,
+    ModalInput,
+    ModalActions,
+    SidebarOverlay
+} from './Journal.styles';
+
+const Journals = () => {
+    const { journalId } = useParams<{ journalId?: string }>();
+    const navigate = useNavigate();
+
+    const [journals, setJournals] = useState<Journal[]>([]);
+    const [folders, setFolders] = useState<Folder[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+
+    // Current journal state
+    const [currentJournal, setCurrentJournal] = useState<Journal | null>(null);
+    const [title, setTitle] = useState('');
+    const [subtitle, setSubtitle] = useState('');
+    const [content, setContent] = useState('');
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+    // Modal states
+    const [createFolderModal, setCreateFolderModal] = useState(false);
+    const [newFolderName, setNewFolderName] = useState('');
+    const [deleteConfirm, setDeleteConfirm] = useState<{ 
+        isOpen: boolean; 
+        type: 'journal' | 'folder' | null;
+        id: string | null;
+        name: string;
+    }>({ isOpen: false, type: null, id: null, name: '' });
+
+    useEffect(() => {
+        loadData();
+        console.log(title, subtitle);
+    }, []);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ctrl+S or Cmd+S to save
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                if (currentJournal && hasUnsavedChanges) {
+                    handleSaveJournal();
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [currentJournal, hasUnsavedChanges, content]);
+
+    useEffect(() => {
+        if (journalId && journals.length > 0) {
+            const journal = journals.find(j => j._id === journalId);
+            if (journal) {
+                loadJournal(journal);
+            }
+        } else if (!journalId) {
+            setCurrentJournal(null);
+            setTitle('');
+            setSubtitle('');
+            setContent('');
+            setHasUnsavedChanges(false);
+        }
+    }, [journalId, journals]);
+
+    const loadData = async () => {
+        try {
+            setLoading(true);
+            const [journalsData, foldersData] = await Promise.all([
+                journalsApi.getAllJournals(),
+                journalsApi.getAllFolders()
+            ]);
+            setJournals(journalsData);
+            setFolders(foldersData);
+        } catch (error) {
+            console.error('Error loading data:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const loadJournal = (journal: Journal) => {
+        setCurrentJournal(journal);
+        setTitle(journal.title);
+        setSubtitle(journal.subtitle);
+        setContent(journal.content);
+        setHasUnsavedChanges(false);
+    };
+
+    const handleCreateJournal = async (folderId?: string | null) => {
+        const defaultDate = new Date().toLocaleDateString('en-US', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+
+        const initialContent = `# Untitled Journal
+
+${defaultDate}
+
+Start writing your thoughts here...`;
+
+        const newJournalInput: CreateJournalInput = {
+            title: 'Untitled Journal',
+            subtitle: defaultDate,
+            content: initialContent,
+            folderId: folderId || null
+        };
+
+        try {
+            const created = await journalsApi.createJournal(newJournalInput);
+            setJournals([created, ...journals]);
+            navigate(`/journal/${created._id}`);
+        } catch (error) {
+            console.error('Error creating journal:', error);
+        }
+    };
+
+    const handleSaveJournal = async () => {
+        if (!currentJournal || !currentJournal._id) return;
+
+        // Parse title and subtitle from content
+        const lines = content.split('\n');
+        let parsedTitle = 'Untitled Journal';
+        let parsedSubtitle = new Date().toLocaleDateString('en-US', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+
+        // First line is the title (remove # if present)
+        if (lines.length > 0 && lines[0].trim()) {
+            parsedTitle = lines[0].trim().replace(/^#\s*/, '') || 'Untitled Journal';
+        }
+
+        // Second populated line (ignoring blank lines) is the subtitle
+        let foundTitle = false;
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (line) {
+                if (!foundTitle) {
+                    foundTitle = true; // First non-empty line is title
+                } else {
+                    // Second non-empty line is subtitle
+                    parsedSubtitle = line.replace(/^#\s*/, '');
+                    break;
+                }
+            }
+        }
+
+        try {
+            const updated = await journalsApi.updateJournal(currentJournal._id, {
+                title: parsedTitle,
+                subtitle: parsedSubtitle,
+                content
+            });
+            setJournals(journals.map(j => j._id === updated._id ? updated : j));
+            setCurrentJournal(updated);
+            setTitle(parsedTitle);
+            setSubtitle(parsedSubtitle);
+            setHasUnsavedChanges(false);
+        } catch (error) {
+            console.error('Error saving journal:', error);
+        }
+    };
+
+    const handleDeleteJournal = async () => {
+        if (!deleteConfirm.id) return;
+
+        try {
+            await journalsApi.deleteJournal(deleteConfirm.id);
+            setJournals(journals.filter(j => j._id !== deleteConfirm.id));
+            setDeleteConfirm({ isOpen: false, type: null, id: null, name: '' });
+            navigate('/journal');
+        } catch (error) {
+            console.error('Error deleting journal:', error);
+        }
+    };
+
+    const handleCreateFolder = async () => {
+        if (!newFolderName.trim()) return;
+
+        try {
+            const created = await journalsApi.createFolder({ name: newFolderName.trim() });
+            setFolders([...folders, created]);
+            setCreateFolderModal(false);
+            setNewFolderName('');
+            if (created._id) {
+                setExpandedFolders(new Set([...expandedFolders, created._id]));
+            }
+        } catch (error) {
+            console.error('Error creating folder:', error);
+        }
+    };
+
+    const handleDeleteFolder = async () => {
+        if (!deleteConfirm.id) return;
+
+        try {
+            await journalsApi.deleteFolder(deleteConfirm.id);
+            setFolders(folders.filter(f => f._id !== deleteConfirm.id));
+            setDeleteConfirm({ isOpen: false, type: null, id: null, name: '' });
+        } catch (error: any) {
+            console.error('Error deleting folder:', error);
+            if (error.response?.status === 400) {
+                alert(error.response.data.error);
+            }
+        }
+    };
+
+    const toggleFolder = (folderId: string) => {
+        const newExpanded = new Set(expandedFolders);
+        if (newExpanded.has(folderId)) {
+            newExpanded.delete(folderId);
+        } else {
+            newExpanded.add(folderId);
+        }
+        setExpandedFolders(newExpanded);
+    };
+
+    const handleContentChange = (value: string) => {
+        setContent(value);
+        setHasUnsavedChanges(true);
+    };
+
+    const rootJournals = useMemo(() => {
+        return journals.filter(j => !j.folderId);
+    }, [journals]);
+
+    const getJournalsByFolder = (folderId: string) => {
+        return journals.filter(j => j.folderId === folderId);
+    };
+
+    if (loading) {
+        return (
+            <JournalContainer>
+                <LoadingState>
+                    <div className="lds-ring">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                    </div>
+                </LoadingState>
+            </JournalContainer>
+        );
+    }
+
+    return (
+        <JournalContainer>
+            {!sidebarCollapsed && (
+                <SidebarOverlay onClick={() => setSidebarCollapsed(true)} />
+            )}
+
+            <JournalSidebar $collapsed={sidebarCollapsed}>
+                <SidebarHeader>
+                    <SidebarTitle>
+                        <span className="material-symbols-outlined">history_edu</span>
+                        Journals
+                    </SidebarTitle>
+                    <SidebarActions>
+                        <IconButton onClick={() => setCreateFolderModal(true)} title="New folder">
+                            <span className="material-symbols-outlined">create_new_folder</span>
+                        </IconButton>
+                        <IconButton onClick={() => handleCreateJournal()} title="New journal">
+                            <span className="material-symbols-outlined">add</span>
+                        </IconButton>
+                    </SidebarActions>
+                </SidebarHeader>
+
+                <SidebarBody>
+                    {/* Root journals */}
+                    <JournalsList>
+                        {rootJournals.map(journal => (
+                            <JournalItem
+                                key={journal._id}
+                                $selected={currentJournal?._id === journal._id}
+                                onClick={() => navigate(`/journal/${journal._id}`)}
+                            >
+                                <JournalItemHeader>
+                                    <span className="material-symbols-outlined">article</span>
+                                    <JournalTitle>{journal.title}</JournalTitle>
+                                </JournalItemHeader>
+                                <JournalSubtitle>{journal.subtitle}</JournalSubtitle>
+                            </JournalItem>
+                        ))}
+                    </JournalsList>
+
+                    {/* Folders with journals */}
+                    {folders.map(folder => (
+                        <FolderItem key={folder._id} $expanded={expandedFolders.has(folder._id!)}>
+                            <FolderHeader onClick={() => toggleFolder(folder._id!)}>
+                                <span 
+                                    className="material-symbols-outlined chevron"
+                                    style={{ 
+                                        transform: expandedFolders.has(folder._id!) 
+                                            ? 'rotate(90deg)' 
+                                            : 'rotate(0deg)' 
+                                    }}
+                                >
+                                    chevron_right
+                                </span>
+                                <span className="material-symbols-outlined">folder</span>
+                                <FolderName>{folder.name}</FolderName>
+                                <FolderActions onClick={(e) => e.stopPropagation()}>
+                                    <span 
+                                        className="material-symbols-outlined"
+                                        onClick={() => handleCreateJournal(folder._id)}
+                                        title="Add journal to folder"
+                                    >
+                                        add
+                                    </span>
+                                    <span 
+                                        className="material-symbols-outlined"
+                                        onClick={() => setDeleteConfirm({
+                                            isOpen: true,
+                                            type: 'folder',
+                                            id: folder._id!,
+                                            name: folder.name
+                                        })}
+                                        title="Delete folder"
+                                    >
+                                        delete
+                                    </span>
+                                </FolderActions>
+                            </FolderHeader>
+                            {expandedFolders.has(folder._id!) && (
+                                <JournalsList $nested>
+                                    {getJournalsByFolder(folder._id!).map(journal => (
+                                        <JournalItem $nested
+                                            key={journal._id}
+                                            $selected={currentJournal?._id === journal._id}
+                                            onClick={() => navigate(`/journal/${journal._id}`)}
+                                        >
+                                            <JournalItemHeader>
+                                                <span className="material-symbols-outlined">article</span>
+                                                <JournalTitle>{journal.title}</JournalTitle>
+                                            </JournalItemHeader>
+                                            <JournalSubtitle>{journal.subtitle}</JournalSubtitle>
+                                        </JournalItem>
+                                    ))}
+                                </JournalsList>
+                            )}
+                        </FolderItem>
+                    ))}
+                </SidebarBody>
+            </JournalSidebar>
+
+            <JournalContent $sidebarCollapsed={sidebarCollapsed}>
+                <ContentHeader>
+                    <ToggleSidebarButton onClick={() => setSidebarCollapsed(!sidebarCollapsed)}>
+                        <span className="material-symbols-outlined">
+                            {sidebarCollapsed ? 'menu' : 'menu_open'}
+                        </span>
+                    </ToggleSidebarButton>
+
+                    {currentJournal && (
+                        <ContentActions>
+                            <ActionButton onClick={handleSaveJournal} $variant="primary" disabled={!hasUnsavedChanges}>
+                                <span className="material-symbols-outlined">save</span>
+                                {hasUnsavedChanges ? 'Save' : 'Saved'}
+                            </ActionButton>
+                            <ActionButton 
+                                onClick={() => setDeleteConfirm({
+                                    isOpen: true,
+                                    type: 'journal',
+                                    id: currentJournal._id!,
+                                    name: currentJournal.title
+                                })}
+                                $variant="danger"
+                            >
+                                <span className="material-symbols-outlined">delete</span>
+                                Delete
+                            </ActionButton>
+                        </ContentActions>
+                    )}
+                </ContentHeader>
+
+                {currentJournal ? (
+                    <EditorContainer>
+                        <MarkdownEditor
+                            value={content}
+                            onChange={(e) => handleContentChange(e.target.value)}
+                            placeholder="# Title
+
+Subtitle
+
+Write your thoughts in markdown..."
+                        />
+                    </EditorContainer>
+                ) : (
+                    <EmptyState>
+                        <span className="material-symbols-outlined">history_edu</span>
+                        <h3>No journal selected</h3>
+                        <p>Select a journal from the sidebar or create a new one to start writing.</p>
+                    </EmptyState>
+                )}
+            </JournalContent>
+
+            {/* Create Folder Modal */}
+            {createFolderModal && (
+                <ModalOverlay onClick={() => setCreateFolderModal(false)}>
+                    <ModalContent onClick={(e) => e.stopPropagation()}>
+                        <h3>Create New Folder</h3>
+                        <ModalInput
+                            value={newFolderName}
+                            onChange={(e) => setNewFolderName(e.target.value)}
+                            placeholder="Folder name..."
+                            autoFocus
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleCreateFolder();
+                                if (e.key === 'Escape') setCreateFolderModal(false);
+                            }}
+                        />
+                        <ModalActions>
+                            <ActionButton onClick={() => setCreateFolderModal(false)}>
+                                Cancel
+                            </ActionButton>
+                            <ActionButton 
+                                onClick={handleCreateFolder} 
+                                $variant="primary"
+                                disabled={!newFolderName.trim()}
+                            >
+                                Create
+                            </ActionButton>
+                        </ModalActions>
+                    </ModalContent>
+                </ModalOverlay>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {deleteConfirm.isOpen && (
+                <ModalOverlay onClick={() => setDeleteConfirm({ isOpen: false, type: null, id: null, name: '' })}>
+                    <ModalContent onClick={(e) => e.stopPropagation()}>
+                        <h3>Delete {deleteConfirm.type === 'journal' ? 'Journal' : 'Folder'}?</h3>
+                        <p>
+                            Are you sure you want to delete "{deleteConfirm.name}"? 
+                            {deleteConfirm.type === 'folder' && ' The folder must be empty to delete it.'}
+                            {' '}This action cannot be undone.
+                        </p>
+                        <ModalActions>
+                            <ActionButton onClick={() => setDeleteConfirm({ isOpen: false, type: null, id: null, name: '' })}>
+                                Cancel
+                            </ActionButton>
+                            <ActionButton 
+                                onClick={deleteConfirm.type === 'journal' ? handleDeleteJournal : handleDeleteFolder}
+                                $variant="danger"
+                            >
+                                Delete
+                            </ActionButton>
+                        </ModalActions>
+                    </ModalContent>
+                </ModalOverlay>
+            )}
+        </JournalContainer>
+    );
+};
+
+export default Journals;

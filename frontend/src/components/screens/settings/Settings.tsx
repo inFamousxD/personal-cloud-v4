@@ -177,11 +177,11 @@ const Settings = () => {
                 </SettingsSection>
 
                 {/* Danger Zone */}
-                <SettingsSection>
-                    <SectionTitle>
+                {/* <SettingsSection> */}
+                    {/* <SectionTitle>
                         <span className="material-symbols-outlined">warning</span>
                         Danger Zone
-                    </SectionTitle>
+                    </SectionTitle> */}
 
                     <DangerZone>
                         <DangerZoneTitle>
@@ -197,7 +197,7 @@ const Settings = () => {
                             Sign Out
                         </LogoutButton>
                     </DangerZone>
-                </SettingsSection>
+                {/* </SettingsSection> */}
             </SettingsBody>
         </SettingsContainer>
     );
