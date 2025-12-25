@@ -10,8 +10,8 @@ export const JournalContainer = styled.div`
 `;
 
 export const JournalSidebar = styled.div<{ $collapsed: boolean }>`
-    width: ${props => props.$collapsed ? '0' : '280px'};
-    min-width: ${props => props.$collapsed ? '0' : '280px'};
+    width: ${props => props.$collapsed ? '0' : '320px'};
+    min-width: ${props => props.$collapsed ? '0' : '320px'};
     background: ${darkTheme.backgroundDarkest};
     border-right: 0.5px solid ${darkTheme.border};
     display: flex;
@@ -24,7 +24,7 @@ export const JournalSidebar = styled.div<{ $collapsed: boolean }>`
         left: 0;
         top: 0;
         bottom: 3rem;
-        width: ${props => props.$collapsed ? '0' : '280px'};
+        width: ${props => props.$collapsed ? '0' : '320px'};
         z-index: 100;
         box-shadow: ${props => props.$collapsed ? 'none' : '2px 0 8px rgba(0, 0, 0, 0.3)'};
     }
@@ -171,7 +171,7 @@ export const JournalsList = styled.div<{ $nested?: boolean }>`
 
 export const JournalItem = styled.div<{ $selected?: boolean, $nested?: boolean }>`
     padding: 6px 12px;
-    padding-left: ${props => props.$nested ? '48px' : '12px'};
+    padding-left: ${props => props.$nested ? '37px' : '14.5px'};
     display: flex;
     flex-direction: column;
     gap: 2px;
