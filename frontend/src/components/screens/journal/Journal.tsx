@@ -269,14 +269,16 @@ Start writing your thoughts here...`;
     if (loading) {
         return (
             <JournalContainer>
-                <LoadingState>
-                    <div className="lds-ring">
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                    </div>
-                </LoadingState>
+                <JournalContent $sidebarCollapsed={true}>
+                    <LoadingState>
+                        <div className="lds-ring">
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                        </div>
+                    </LoadingState>
+                </JournalContent>
             </JournalContainer>
         );
     }

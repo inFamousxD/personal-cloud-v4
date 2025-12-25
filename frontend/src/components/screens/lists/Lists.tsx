@@ -355,14 +355,16 @@ const Lists = () => {
     if (loading) {
         return (
             <ListsContainer>
-                <LoadingState>
-                    <div className="lds-ring">
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                    </div>
-                </LoadingState>
+                <ListContent $sidebarCollapsed={true}>
+                    <LoadingState>
+                        <div className="lds-ring">
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                        </div>
+                    </LoadingState>
+                </ListContent>
             </ListsContainer>
         );
     }
