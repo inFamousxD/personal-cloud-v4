@@ -11,6 +11,8 @@ import {
     NotesTitle,
     NotesCount,
     CreateButton,
+    CreateButtonGroup,
+    HiddenNoteButton,
     FilterBar,
     SearchWrapper,
     SearchInput,
@@ -22,6 +24,7 @@ import {
     TagFilterDropdown,
     TagFilterItem,
     TagFilterWrapper,
+    SelectedTagsDisplay,
     NotesBody,
     NotesGrid,
     EmptyState,
@@ -48,10 +51,11 @@ const Notes = () => {
         isOpen: false,
         noteId: null
     });
+    const [isCreatingHidden, setIsCreatingHidden] = useState(false);
 
     // Filter and sort states
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedTag, setSelectedTag] = useState<string | null>(null);
+    const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
     const [favoriteTags, setFavoriteTags] = useState<string[]>([]);
     const [showTagFilter, setShowTagFilter] = useState(false);
@@ -100,7 +104,9 @@ const Notes = () => {
     const loadTags = async () => {
         try {
             const tags = await notesApi.getAllTags();
-            setAllTags(tags);
+            // Always include 'hidden' in the tags list
+            const uniqueTags = Array.from(new Set([...tags, 'hidden']));
+            setAllTags(uniqueTags);
         } catch (error) {
             console.error('Error loading tags:', error);
         }
@@ -130,13 +136,24 @@ const Notes = () => {
     const removeFavoriteTag = (tag: string, e: React.MouseEvent) => {
         e.stopPropagation();
         saveFavoriteTags(favoriteTags.filter(t => t !== tag));
-        if (selectedTag === tag) {
-            setSelectedTag(null);
+        if (selectedTags.includes(tag)) {
+            setSelectedTags(selectedTags.filter(t => t !== tag));
         }
     };
 
     const filteredAndSortedNotes = useMemo(() => {
         let filtered = notes;
+
+        // Handle hidden notes filtering
+        const hasHiddenFilter = selectedTags.includes('hidden');
+        
+        if (hasHiddenFilter) {
+            // If 'hidden' tag is selected, ONLY show notes with 'hidden' tag
+            filtered = filtered.filter(note => note.tags.includes('hidden'));
+        } else {
+            // If 'hidden' tag is NOT selected, exclude all notes with 'hidden' tag
+            filtered = filtered.filter(note => !note.tags.includes('hidden'));
+        }
 
         // Filter by search query
         if (searchQuery.trim()) {
@@ -150,9 +167,12 @@ const Notes = () => {
             });
         }
 
-        // Filter by tag
-        if (selectedTag) {
-            filtered = filtered.filter(note => note.tags.includes(selectedTag));
+        // Filter by other selected tags (excluding 'hidden' which is already handled)
+        const otherSelectedTags = selectedTags.filter(tag => tag !== 'hidden');
+        if (otherSelectedTags.length > 0) {
+            filtered = filtered.filter(note => 
+                otherSelectedTags.some(tag => note.tags.includes(tag))
+            );
         }
 
         // Sort by date
@@ -163,10 +183,17 @@ const Notes = () => {
         });
 
         return sorted;
-    }, [notes, searchQuery, selectedTag, sortOrder]);
+    }, [notes, searchQuery, selectedTags, sortOrder]);
 
     const handleCreateNote = () => {
         setEditingNote(null);
+        setIsCreatingHidden(false);
+        setIsEditorOpen(true);
+    };
+
+    const handleCreateHiddenNote = () => {
+        setEditingNote(null);
+        setIsCreatingHidden(true);
         setIsEditorOpen(true);
     };
 
@@ -177,6 +204,7 @@ const Notes = () => {
 
     const handleEditNote = (note: Note) => {
         setEditingNote(note);
+        setIsCreatingHidden(false); // Reset this when editing
         setIsEditorOpen(true);
     };
 
@@ -191,6 +219,7 @@ const Notes = () => {
             }
             setIsEditorOpen(false);
             setEditingNote(null);
+            setIsCreatingHidden(false);
             loadTags();
         } catch (error) {
             console.error('Error saving note:', error);
@@ -223,12 +252,30 @@ const Notes = () => {
     };
 
     const handleTagFilter = (tag: string) => {
-        setSelectedTag(selectedTag === tag ? null : tag);
+        if (selectedTags.includes(tag)) {
+            setSelectedTags(selectedTags.filter(t => t !== tag));
+        } else {
+            setSelectedTags([...selectedTags, tag]);
+        }
+    };
+
+    const clearAllTags = () => {
+        setSelectedTags([]);
         setShowTagFilter(false);
     };
 
     const handleFavoriteTagClick = (tag: string) => {
-        setSelectedTag(selectedTag === tag ? null : tag);
+        if (selectedTags.includes(tag)) {
+            setSelectedTags(selectedTags.filter(t => t !== tag));
+        } else {
+            setSelectedTags([...selectedTags, tag]);
+        }
+    };
+
+    const getTagFilterButtonText = () => {
+        if (selectedTags.length === 0) return 'All Tags';
+        if (selectedTags.length === 1) return selectedTags[0];
+        return `${selectedTags.length} Tags`;
     };
 
     return (
@@ -246,10 +293,15 @@ const Notes = () => {
                             </RefreshButton>
                         </NotesTitle>
                     </NotesHeaderLeft>
-                    <CreateButton onClick={handleCreateNote}>
-                        <span className="material-symbols-outlined">add</span>
-                        New Note
-                    </CreateButton>
+                    <CreateButtonGroup>
+                        <HiddenNoteButton onClick={handleCreateHiddenNote} title="Create hidden note">
+                            <span className="material-symbols-outlined">add</span>
+                        </HiddenNoteButton>
+                        <CreateButton onClick={handleCreateNote}>
+                            <span className="material-symbols-outlined">add</span>
+                            New Note
+                        </CreateButton>
+                    </CreateButtonGroup>
                 </NotesHeaderTop>
 
                 <FilterBar>
@@ -269,7 +321,7 @@ const Notes = () => {
                                 {favoriteTags.map(tag => (
                                     <FavoriteTagPill
                                         key={tag}
-                                        $active={selectedTag === tag}
+                                        $active={selectedTags.includes(tag)}
                                         onClick={() => handleFavoriteTagClick(tag)}
                                     >
                                         {tag}
@@ -287,28 +339,30 @@ const Notes = () => {
                         <TagFilterWrapper ref={tagFilterRef}>
                             <TagFilterButton onClick={() => setShowTagFilter(!showTagFilter)}>
                                 <span className="material-symbols-outlined">label</span>
-                                {selectedTag || 'All Tags'}
+                                <SelectedTagsDisplay>
+                                    <span>{getTagFilterButtonText()}</span>
+                                </SelectedTagsDisplay>
                             </TagFilterButton>
                             {showTagFilter && (
                                 <TagFilterDropdown>
                                     <TagFilterItem
-                                        $selected={selectedTag === null}
-                                        onClick={() => handleTagFilter(null as any)}
+                                        $selected={selectedTags.length === 0}
+                                        onClick={clearAllTags}
                                     >
                                         All Tags
-                                        {selectedTag === null && (
+                                        {selectedTags.length === 0 && (
                                             <span className="material-symbols-outlined">check</span>
                                         )}
                                     </TagFilterItem>
                                     {allTags.map(tag => (
                                         <TagFilterItem
                                             key={tag}
-                                            $selected={selectedTag === tag}
+                                            $selected={selectedTags.includes(tag)}
                                             onClick={() => handleTagFilter(tag)}
                                         >
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                 {tag}
-                                                {!favoriteTags.includes(tag) && favoriteTags.length < 3 && (
+                                                {!favoriteTags.includes(tag) && favoriteTags.length < 3 && tag !== 'hidden' && (
                                                     <span 
                                                         className="material-symbols-outlined"
                                                         style={{ fontSize: '12px', opacity: 0.5 }}
@@ -322,7 +376,7 @@ const Notes = () => {
                                                     </span>
                                                 )}
                                             </div>
-                                            {selectedTag === tag && (
+                                            {selectedTags.includes(tag) && (
                                                 <span className="material-symbols-outlined">check</span>
                                             )}
                                         </TagFilterItem>
@@ -354,13 +408,13 @@ const Notes = () => {
                 ) : filteredAndSortedNotes.length === 0 ? (
                     <EmptyState>
                         <span className="material-symbols-outlined">
-                            {searchQuery || selectedTag ? 'search_off' : 'note_add'}
+                            {searchQuery || selectedTags.length > 0 ? 'search_off' : 'note_add'}
                         </span>
                         <h3>
-                            {searchQuery || selectedTag ? 'No notes found' : 'No notes yet'}
+                            {searchQuery || selectedTags.length > 0 ? 'No notes found' : 'No notes yet'}
                         </h3>
                         <p>
-                            {searchQuery || selectedTag 
+                            {searchQuery || selectedTags.length > 0
                                 ? 'Try adjusting your search or filters.'
                                 : 'Create your first note to get started. Click the "New Note" button above.'}
                         </p>
@@ -396,10 +450,12 @@ const Notes = () => {
                 onClose={() => {
                     setIsEditorOpen(false);
                     setEditingNote(null);
+                    setIsCreatingHidden(false);
                 }}
                 onSave={handleSaveNote}
                 editingNote={editingNote}
                 availableTags={allTags}
+                initialHiddenTag={isCreatingHidden}
             />
 
             {deleteConfirm.isOpen && (

@@ -21,9 +21,17 @@ interface NoteEditorProps {
     onSave: (note: CreateNoteInput) => Promise<void> | void;
     editingNote: Note | null;
     availableTags: string[];
+    initialHiddenTag?: boolean;
 }
 
-const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, onClose, onSave, editingNote, availableTags }) => {
+const NoteEditor: React.FC<NoteEditorProps> = ({ 
+    isOpen, 
+    onClose, 
+    onSave, 
+    editingNote, 
+    availableTags,
+    initialHiddenTag = false
+}) => {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [tags, setTags] = useState<string[]>(['default']);
@@ -33,12 +41,17 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, onClose, onSave, editin
             setTitle(editingNote.title);
             setContent(editingNote.content);
             setTags(editingNote.tags || ['default']);
+        } else if (initialHiddenTag) {
+            // When creating a new hidden note, pre-populate with 'hidden' tag
+            setTitle('');
+            setContent('');
+            setTags(['hidden']);
         } else {
             setTitle('');
             setContent('');
             setTags(['default']);
         }
-    }, [editingNote, isOpen]);
+    }, [editingNote, isOpen, initialHiddenTag]);
 
     const handleSave = () => {
         if (!title.trim() && !content.trim()) {
@@ -80,7 +93,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, onClose, onSave, editin
             <EditorModal onClick={(e) => e.stopPropagation()} onKeyDown={handleKeyDown}>
                 <EditorHeader>
                     <EditorTitle>
-                        {editingNote ? 'Edit Note' : 'Create New Note'}
+                        {editingNote ? 'Edit Note' : initialHiddenTag ? 'Create Hidden Note' : 'Create New Note'}
                     </EditorTitle>
                     <CloseButton onClick={handleCancel}>
                         <span className="material-symbols-outlined">close</span>

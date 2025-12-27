@@ -88,8 +88,57 @@ export const CreateButton = styled.button`
     }
 
     @media (max-width: 768px) {
-        width: 100%;
+        flex: 1;
         justify-content: center;
+    }
+`;
+
+export const CreateButtonGroup = styled.div`
+    display: flex;
+    gap: 8px;
+    align-items: center;
+
+    @media (max-width: 768px) {
+        width: 100%;
+    }
+`;
+
+export const HiddenNoteButton = styled.button`
+    background: repeating-linear-gradient(
+        45deg,
+        ${darkTheme.accent}40,
+        ${darkTheme.accent}40 10px,
+        ${darkTheme.accent}20 10px,
+        ${darkTheme.accent}20 20px
+    );
+    color: ${darkTheme.accent};
+    border: 1px solid ${darkTheme.accent};
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+
+    &:hover {
+        background: repeating-linear-gradient(
+            45deg,
+            ${darkTheme.accent}60,
+            ${darkTheme.accent}60 10px,
+            ${darkTheme.accent}40 10px,
+            ${darkTheme.accent}40 20px
+        );
+    }
+
+    .material-symbols-outlined {
+        font-size: 16px;
+    }
+
+    @media (max-width: 768px) {
+        flex-shrink: 0;
     }
 `;
 
@@ -569,4 +618,28 @@ export const TagFilterItem = styled.div<{ $selected?: boolean }>`
 
 export const TagFilterWrapper = styled.div`
     position: relative;
+`;
+
+export const SelectedTagsDisplay = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    max-width: 150px;
+    overflow: hidden;
+
+    span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+`;
+
+export const TagCount = styled.span`
+    background: ${darkTheme.accent};
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    flex-shrink: 0;
 `;
