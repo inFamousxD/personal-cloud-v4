@@ -160,6 +160,9 @@ export const SearchInput = styled.input`
     @media (max-width: 768px) {
         min-width: 0;
         width: 100%;
+        box-sizing: border-box;
+        -webkit-box-sizing:border-box;
+        -moz-box-sizing: border-box;
     }
 `;
 
@@ -177,11 +180,12 @@ export const SearchWrapper = styled.div`
         color: ${darkTheme.text.color};
         opacity: 0.4;
         pointer-events: none;
+        z-index: 1;
     }
 
     @media (max-width: 768px) {
         min-width: 0;
-        width: 89.5%;
+        width: 100%;
     }
 `;
 
