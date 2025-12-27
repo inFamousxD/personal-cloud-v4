@@ -295,7 +295,7 @@ export const ActionButton = styled.button<{ $variant?: 'primary' | 'danger' }>`
             cursor: not-allowed;
         }
     ` : props.$variant === 'danger' ? `
-        background: #e74c3c;
+        background: #5e2019ff;
         color: white;
 
         &:hover {
@@ -322,10 +322,45 @@ export const EditorContainer = styled.div`
     flex-direction: column;
     overflow: hidden;
     padding: 16px;
-    gap: 12px;
 
     @media (max-width: 768px) {
         padding: 12px;
+    }
+`;
+
+export const EditorModeToggle = styled.div`
+    display: flex;
+    gap: 4px;
+    background: ${darkTheme.backgroundDarkest};
+    border: 1px solid ${darkTheme.border};
+    border-radius: 4px;
+    padding: 2px;
+    align-self: flex-start;
+`;
+
+export const ModeButton = styled.button<{ $active: boolean }>`
+    padding: 4px 12px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+    transition: all 0.2s;
+    background: ${props => props.$active ? darkTheme.accent : 'transparent'};
+    color: ${props => props.$active ? 'white' : darkTheme.text.color};
+    opacity: ${props => props.$active ? 1 : 0.6};
+
+    &:hover {
+        opacity: 1;
+    }
+
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    .material-symbols-outlined {
+        font-size: 14px;
     }
 `;
 
@@ -348,6 +383,174 @@ export const MarkdownEditor = styled.textarea`
         font-family: inherit;
     }
 
+    &::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: ${darkTheme.accent}40;
+
+        &:hover {
+            background: ${darkTheme.accent}60;
+        }
+    }
+`;
+
+export const MarkdownPreview = styled.div`
+    flex: 1;
+    background: ${darkTheme.backgroundDarker};
+    border: none;
+    border-radius: 4px;
+    color: ${darkTheme.text.color};
+    font-size: 14px;
+    padding: 12px;
+    overflow-y: auto;
+    line-height: 1.6;
+    font-family: 'JetBrains Mono', monospace;
+
+    /* Typography */
+    h1, h2, h3, h4, h5, h6 {
+        color: ${darkTheme.accent};
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+        font-weight: 600;
+        line-height: 1.3;
+
+        &:first-child {
+            margin-top: 0;
+        }
+    }
+
+    h1 { font-size: 2em; }
+    h2 { font-size: 1.5em; }
+    h3 { font-size: 1.25em; }
+    h4 { font-size: 1.1em; }
+    h5 { font-size: 1em; }
+    h6 { font-size: 0.9em; }
+
+    p {
+        margin: 0.8em 0;
+    }
+
+    /* Lists */
+    ul, ol {
+        margin: 0.8em 0;
+        padding-left: 2em;
+    }
+
+    li {
+        margin: 0.3em 0;
+
+        > p {
+            margin: 0.2em 0;
+        }
+    }
+
+    /* Nested lists */
+    li > ul,
+    li > ol {
+        margin: 0.3em 0;
+    }
+
+    /* Code */
+    code {
+        background: ${darkTheme.backgroundDarkest};
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9em;
+    }
+
+    pre {
+        background: ${darkTheme.backgroundDarkest};
+        border-radius: 4px;
+        overflow-x: auto;
+        margin: 1em 0;
+
+        code {
+            background: transparent;
+            padding: 0;
+            display: block;
+        }
+    }
+
+    /* Syntax highlighter overrides */
+    pre > div {
+        background: ${darkTheme.backgroundDarkest} !important;
+        margin: 0 !important;
+        border-radius: 4px;
+        font-family: 'JetBrains Mono', monospace !important;
+    }
+
+    /* Blockquotes */
+    blockquote {
+        border-left: 3px solid ${darkTheme.accent};
+        padding-left: 1em;
+        margin: 1em 0;
+        opacity: 0.8;
+
+        p {
+            margin: 0.5em 0;
+        }
+    }
+
+    /* Links */
+    a {
+        color: ${darkTheme.accent};
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    /* Horizontal rules */
+    hr {
+        border: none;
+        border-top: 1px solid ${darkTheme.border};
+        margin: 2em 0;
+    }
+
+    /* Images */
+    img {
+        max-width: 100%;
+        border-radius: 4px;
+        margin: 1em 0;
+    }
+
+    /* Tables */
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1em 0;
+    }
+
+    th, td {
+        border: 1px solid ${darkTheme.border};
+        padding: 8px 12px;
+        text-align: left;
+    }
+
+    th {
+        background: ${darkTheme.backgroundDarkest};
+        font-weight: 600;
+    }
+
+    /* Task lists (GFM) */
+    input[type="checkbox"] {
+        margin-right: 0.5em;
+    }
+
+    /* Strikethrough (GFM) */
+    del {
+        opacity: 0.7;
+    }
+
+    /* Scrollbar */
     &::-webkit-scrollbar {
         width: 8px;
     }

@@ -1,5 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { journalsApi, Journal, Folder, CreateJournalInput } from '../../../services/journalsApi';
 import {
     JournalContainer,
@@ -24,7 +28,10 @@ import {
     ContentActions,
     ActionButton,
     EditorContainer,
+    EditorModeToggle,
+    ModeButton,
     MarkdownEditor,
+    MarkdownPreview,
     EmptyState,
     LoadingState,
     ModalOverlay,
@@ -43,6 +50,7 @@ const Journals = () => {
     const [loading, setLoading] = useState(true);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+    const [editorMode, setEditorMode] = useState<'edit' | 'preview'>('edit');
 
     // Current journal state
     const [currentJournal, setCurrentJournal] = useState<Journal | null>(null);
@@ -74,6 +82,11 @@ const Journals = () => {
                 if (currentJournal && hasUnsavedChanges) {
                     handleSaveJournal();
                 }
+            }
+            // Ctrl+P or Cmd+P to toggle preview
+            if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+                e.preventDefault();
+                setEditorMode(mode => mode === 'edit' ? 'preview' : 'edit');
             }
         };
 
@@ -393,6 +406,25 @@ Start writing your thoughts here...`;
 
                     {currentJournal && (
                         <ContentActions>
+                            <EditorModeToggle>
+                                <ModeButton 
+                                    $active={editorMode === 'edit'}
+                                    onClick={() => setEditorMode('edit')}
+                                    title="Edit mode (Ctrl+P to toggle)"
+                                >
+                                    <span className="material-symbols-outlined">edit</span>
+                                    Edit
+                                </ModeButton>
+                                <ModeButton 
+                                    $active={editorMode === 'preview'}
+                                    onClick={() => setEditorMode('preview')}
+                                    title="Preview mode (Ctrl+P to toggle)"
+                                >
+                                    <span className="material-symbols-outlined">visibility</span>
+                                    Preview
+                                </ModeButton>
+                            </EditorModeToggle>
+
                             <ActionButton onClick={handleSaveJournal} $variant="primary" disabled={!hasUnsavedChanges}>
                                 <span className="material-symbols-outlined">save</span>
                                 {hasUnsavedChanges ? 'Save' : 'Saved'}
@@ -415,15 +447,44 @@ Start writing your thoughts here...`;
 
                 {currentJournal ? (
                     <EditorContainer>
-                        <MarkdownEditor
-                            value={content}
-                            onChange={(e) => handleContentChange(e.target.value)}
-                            placeholder="# Title
+                        {editorMode === 'edit' ? (
+                            <MarkdownEditor
+                                value={content}
+                                onChange={(e) => handleContentChange(e.target.value)}
+                                placeholder="# Title
 
 Subtitle
 
 Write your thoughts in markdown..."
-                        />
+                            />
+                        ) : (
+                            <MarkdownPreview>
+                                <ReactMarkdown
+                                    remarkPlugins={[remarkGfm]}
+                                    components={{
+                                        code({ node, inline, className, children, ...props }: any) {
+                                            const match = /language-(\w+)/.exec(className || '');
+                                            return !inline && match ? (
+                                                <SyntaxHighlighter
+                                                    style={vscDarkPlus}
+                                                    language={match[1]}
+                                                    PreTag="div"
+                                                    {...props}
+                                                >
+                                                    {String(children).replace(/\n$/, '')}
+                                                </SyntaxHighlighter>
+                                            ) : (
+                                                <code className={className} {...props}>
+                                                    {children}
+                                                </code>
+                                            );
+                                        }
+                                    }}
+                                >
+                                    {content}
+                                </ReactMarkdown>
+                            </MarkdownPreview>
+                        )}
                     </EditorContainer>
                 ) : (
                     <EmptyState>
