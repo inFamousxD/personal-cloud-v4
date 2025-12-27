@@ -38,6 +38,8 @@ export const ViewerHeader = styled.div`
     border-bottom: 1px solid ${darkTheme.border};
     background: ${darkTheme.backgroundDarkest};
     flex-shrink: 0;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
 `;
 
 export const ViewerTitle = styled.h2`

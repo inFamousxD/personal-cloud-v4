@@ -348,6 +348,12 @@ export const EditorContainer = styled.div`
     padding: 16px;
     gap: 16px;
 
+    justify-content: flex-start;
+    width: 70%;
+    margin: auto;
+
+    box-sizing: border-box;
+
     &::-webkit-scrollbar {
         width: 8px;
     }
@@ -364,8 +370,19 @@ export const EditorContainer = styled.div`
         }
     }
 
+    @media (max-width: 1280px) {
+        padding: 12px;
+        width: 80%;
+    }
+
+    @media (max-width: 1024px) {
+        padding: 12px;
+        width: 90%;
+    }
+
     @media (max-width: 768px) {
         padding: 12px;
+        width: 100%;
     }
 `;
 

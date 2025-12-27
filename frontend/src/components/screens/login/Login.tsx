@@ -26,9 +26,11 @@ const Login = () => {
                 <GoogleLogin
                     onSuccess={handleSuccess}
                     onError={handleError}
-                    theme="filled_blue"
+                    theme="outline"
                     size="large"
                     shape="rectangular"
+                    useOneTap={true}
+                    type="icon"
                 />
             </LoginCard>
         </LoginContainer>
