@@ -176,6 +176,7 @@ export const JournalItem = styled.div<{ $selected?: boolean, $nested?: boolean }
     flex-direction: column;
     gap: 2px;
     cursor: pointer;
+    user-select: none;
     color: ${darkTheme.text.color};
     font-size: 12px;
     background: ${props => props.$selected ? darkTheme.accent + '30' : 'transparent'};

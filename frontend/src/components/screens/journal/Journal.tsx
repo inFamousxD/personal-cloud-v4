@@ -50,6 +50,7 @@ const Journals = () => {
     const [loading, setLoading] = useState(true);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+    const [expandedJournals, setExpandedJournals] = useState<Set<string>>(new Set());
     const [editorMode, setEditorMode] = useState<'edit' | 'preview'>('edit');
 
     // Current journal state
@@ -109,6 +110,16 @@ const Journals = () => {
         }
     }, [journalId, journals]);
 
+    const formatDate = (date: Date) => {
+        return new Date(date).toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
     const loadData = async () => {
         try {
             setLoading(true);
@@ -142,8 +153,9 @@ const Journals = () => {
         });
 
         const initialContent = `# Untitled Journal
-
 ${defaultDate}
+
+---
 
 Start writing your thoughts here...`;
 
@@ -266,6 +278,16 @@ Start writing your thoughts here...`;
         setExpandedFolders(newExpanded);
     };
 
+    const toggleJournal = (journalId: string) => {
+        const newExpanded = new Set(expandedJournals);
+        if (newExpanded.has(journalId)) {
+            newExpanded.delete(journalId);
+        } else {
+            newExpanded.add(journalId);
+        }
+        setExpandedJournals(newExpanded);
+    };
+
     const handleContentChange = (value: string) => {
         setContent(value);
         setHasUnsavedChanges(true);
@@ -328,10 +350,28 @@ Start writing your thoughts here...`;
                                 onClick={() => navigate(`/journal/${journal._id}`)}
                             >
                                 <JournalItemHeader>
-                                    <span className="material-symbols-outlined">article</span>
+                                    <span className="material-symbols-outlined">history_edu</span>
                                     <JournalTitle>{journal.title}</JournalTitle>
+                                    <span
+                                        onClick={() => toggleJournal(journal._id!)} 
+                                        className="material-symbols-outlined chevron"
+                                        style={{ 
+                                            transform: expandedJournals.has(journal._id!) 
+                                                ? 'rotate(90deg)' 
+                                                : 'rotate(0deg)' 
+                                        }}
+                                    >
+                                        chevron_right
+                                    </span>
                                 </JournalItemHeader>
                                 <JournalSubtitle>{journal.subtitle}</JournalSubtitle>
+                                {
+                                    expandedJournals.has(journal._id!) && 
+                                    <>
+                                        <JournalSubtitle>Created {formatDate(journal.createdAt)}</JournalSubtitle>
+                                        <JournalSubtitle>Updated {formatDate(journal.updatedAt)}</JournalSubtitle>
+                                    </>
+                                }
                             </JournalItem>
                         ))}
                     </JournalsList>
@@ -383,10 +423,28 @@ Start writing your thoughts here...`;
                                             onClick={() => navigate(`/journal/${journal._id}`)}
                                         >
                                             <JournalItemHeader>
-                                                <span className="material-symbols-outlined">article</span>
+                                                <span className="material-symbols-outlined">history_edu</span>
                                                 <JournalTitle>{journal.title}</JournalTitle>
+                                                <span 
+                                                    onClick={() => toggleJournal(journal._id!)} 
+                                                    className="material-symbols-outlined chevron"
+                                                    style={{ 
+                                                        transform: expandedJournals.has(journal._id!) 
+                                                            ? 'rotate(90deg)' 
+                                                            : 'rotate(0deg)' 
+                                                    }}
+                                                >
+                                                    chevron_right
+                                                </span>
                                             </JournalItemHeader>
                                             <JournalSubtitle>{journal.subtitle}</JournalSubtitle>
+                                            {
+                                                expandedJournals.has(journal._id!) && 
+                                                <>
+                                                    <JournalSubtitle>Created {formatDate(journal.createdAt)}</JournalSubtitle>
+                                                    <JournalSubtitle>Updated {formatDate(journal.updatedAt)}</JournalSubtitle>
+                                                </>
+                                            }
                                         </JournalItem>
                                     ))}
                                 </JournalsList>
