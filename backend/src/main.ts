@@ -53,9 +53,17 @@ process.on('SIGINT', async () => {
     process.exit(0);
 });
 
-
-connectDB().then(() => {
-    app.listen(PORT, () => {
-        console.log(`Server is running on port ${PORT}`);
+// For Vercel serverless deployment
+if (process.env.VERCEL) {
+    connectDB();
+} else {
+    // For local development
+    connectDB().then(() => {
+        app.listen(PORT, () => {
+            console.log(`Server is running on port ${PORT}`);
+        });
     });
-});
+}
+
+// Export for Vercel
+export default app;
