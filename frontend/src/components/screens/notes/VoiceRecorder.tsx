@@ -116,14 +116,75 @@ const ProgressPercent = styled.div`
 `;
 
 const ErrorMessage = styled.div`
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
     background: rgba(231, 76, 60, 0.1);
     border: 1px solid #e74c3c;
     border-radius: 4px;
-    padding: 12px;
-    margin-top: 12px;
+    padding: 16px;
     color: #e74c3c;
     font-size: 12px;
     line-height: 1.4;
+    max-width: 400px;
+    z-index: 2000;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.3s ease;
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 13px;
+    }
+`;
+
+const RetryButton = styled.button`
+    margin-top: 12px;
+    padding: 6px 12px;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s;
+
+    &:hover {
+        background: #c0392b;
+    }
+`;
+
+const CloseButton = styled.button`
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: transparent;
+    border: none;
+    color: #e74c3c;
+    cursor: pointer;
+    padding: 4px;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+
+    &:hover {
+        opacity: 1;
+    }
+
+    .material-symbols-outlined {
+        font-size: 16px;
+    }
 `;
 
 interface VoiceRecorderProps {
@@ -231,6 +292,17 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
         try {
             setError(null);
             
+            // Initialize transcriber if not already done - do this FIRST before requesting mic
+            if (!transcriberRef.current) {
+                try {
+                    await initializeTranscriber();
+                } catch (modelErr) {
+                    // Error already set in initializeTranscriber, just return
+                    console.error('Model initialization failed:', modelErr);
+                    return; // Don't continue to recording
+                }
+            }
+            
             // Request microphone permission and get stream
             const stream = await navigator.mediaDevices.getUserMedia({ 
                 audio: {
@@ -241,11 +313,6 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
                     autoGainControl: true
                 } 
             });
-            
-            // Initialize transcriber if not already done
-            if (!transcriberRef.current) {
-                await initializeTranscriber();
-            }
 
             // Create MediaRecorder
             audioChunksRef.current = [];
@@ -275,9 +342,6 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
                 setError('Microphone access denied. Please allow microphone access in your browser settings.');
             } else if (err.name === 'NotFoundError') {
                 setError('No microphone found. Please connect a microphone and try again.');
-            } else if (err.message?.includes('registerBackend')) {
-                // Model loading failed, don't override that error
-                return;
             } else {
                 setError('Failed to start recording. Please check your microphone and try again.');
             }
@@ -339,6 +403,13 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
         }
     };
 
+    const handleRetry = () => {
+        setError(null);
+        setIsModelLoading(false);
+        transcriberRef.current = null;
+        setDownloadProgress(0);
+    };
+
     if (!isSupported) {
         return null;
     }
@@ -382,12 +453,24 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
                             <ProgressPercent>{downloadProgress}%</ProgressPercent>
                         </>
                     )}
+                    <DownloadText style={{ fontSize: '11px', marginTop: '12px', marginBottom: 0 }}>
+                        This only happens once. The model will be cached for future use.
+                    </DownloadText>
                 </DownloadProgress>
             )}
 
             {error && (
                 <ErrorMessage>
-                    <strong>Error:</strong> {error}
+                    <CloseButton onClick={() => setError(null)}>
+                        <span className="material-symbols-outlined">close</span>
+                    </CloseButton>
+                    <strong>Voice Note Error</strong>
+                    {error}
+                    {error.includes('model') || error.includes('download') || error.includes('network') ? (
+                        <RetryButton onClick={handleRetry}>
+                            Retry Model Load
+                        </RetryButton>
+                    ) : null}
                 </ErrorMessage>
             )}
         </>
