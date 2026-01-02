@@ -143,8 +143,6 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
     const transcriberRef = useRef<any>(null);
-    const pipelineRef = useRef<any>(null);
-    const envRef = useRef<any>(null);
 
     useEffect(() => {
         // Check browser support
@@ -152,30 +150,6 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
             setIsSupported(false);
             return;
         }
-
-        // Preload the pipeline function
-        const preloadPipeline = async () => {
-            try {
-                const transformers = await import('@xenova/transformers');
-                pipelineRef.current = transformers.pipeline;
-                envRef.current = transformers.env;
-                
-                // Configure environment for better CDN access
-                if (envRef.current) {
-                    // Use jsdelivr CDN as fallback
-                    envRef.current.useBrowserCache = true;
-                    envRef.current.allowLocalModels = false;
-                    envRef.current.allowRemoteModels = true;
-                }
-                
-                console.log('Pipeline function loaded');
-            } catch (err) {
-                console.error('Failed to load transformers library:', err);
-                setError('Failed to load speech recognition library. Please refresh the page.');
-            }
-        };
-
-        preloadPipeline();
     }, []);
 
     const initializeTranscriber = async () => {
@@ -183,51 +157,46 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
 
         setIsModelLoading(true);
         setDownloadProgress(0);
-        setLoadingStatus('Preparing to download model...');
+        setLoadingStatus('Loading speech recognition...');
         setError(null);
 
         try {
-            // Load pipeline if not already loaded
-            if (!pipelineRef.current) {
-                setLoadingStatus('Loading transformers library...');
-                const transformers = await import('@xenova/transformers');
-                pipelineRef.current = transformers.pipeline;
-                envRef.current = transformers.env;
-                
-                if (envRef.current) {
-                    envRef.current.useBrowserCache = true;
-                    envRef.current.allowLocalModels = false;
-                    envRef.current.allowRemoteModels = true;
-                }
-            }
+            // Dynamic import with better error handling
+            const { pipeline, env } = await import('@xenova/transformers');
+            
+            // Configure environment - try multiple CDN mirrors
+            env.allowLocalModels = false;
+            env.allowRemoteModels = true;
+            env.useBrowserCache = true;
 
-            setLoadingStatus('Downloading speech model (40MB)...');
+            setLoadingStatus('Connecting to model server...');
 
-            // Create transcriber with progress callback and better error handling
-            transcriberRef.current = await pipelineRef.current(
+            // Create transcriber with better configuration
+            transcriberRef.current = await pipeline(
                 'automatic-speech-recognition',
                 'Xenova/whisper-tiny.en',
                 {
-                    quantized: true, // Use quantized version for smaller size
+                    quantized: true,
+                    revision: 'main',
                     progress_callback: (progress: any) => {
+                        console.log('Progress:', progress);
+                        
                         if (progress.status === 'progress' && progress.total) {
                             const percent = Math.round((progress.loaded / progress.total) * 100);
                             setDownloadProgress(percent);
                             
-                            // Update status based on file being downloaded
                             if (progress.file) {
                                 const fileName = progress.file.split('/').pop();
-                                setLoadingStatus(`Downloading ${fileName}... (${percent}%)`);
+                                setLoadingStatus(`Downloading ${fileName}...`);
                             }
                         } else if (progress.status === 'done') {
-                            setLoadingStatus('Model loaded successfully!');
+                            setLoadingStatus('Model loaded!');
+                        } else if (progress.status === 'ready') {
+                            setLoadingStatus('Initializing model...');
                         } else if (progress.status === 'initiate') {
                             setLoadingStatus('Starting download...');
                         }
-                    },
-                    // Additional options for better error handling
-                    device: 'auto',
-                    dtype: 'fp32'
+                    }
                 }
             );
             
@@ -235,18 +204,21 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
             console.log('Whisper model loaded successfully');
         } catch (err: any) {
             console.error('Failed to load Whisper model:', err);
+            console.error('Full error:', err.stack);
             
-            // Provide specific error messages based on error type
             let errorMessage = 'Failed to load speech recognition model. ';
             
-            if (err.message?.includes('JSON')) {
-                errorMessage += 'Network error - model files could not be downloaded. Please check your internet connection and try again.';
-            } else if (err.message?.includes('fetch')) {
-                errorMessage += 'Could not connect to model server. Please check your internet connection.';
+            // Check for specific errors
+            if (err.message?.includes('registerBackend')) {
+                errorMessage = 'Browser compatibility issue detected. This might be due to: (1) Your browser blocking required features, (2) Running in HTTP instead of HTTPS, or (3) Browser extensions interfering. Try: Refresh the page, use HTTPS, or disable extensions temporarily.';
+            } else if (err.message?.includes('JSON') || err.message?.includes('404')) {
+                errorMessage = 'Could not download model files. Your network may be blocking access to model servers. Options: (1) Check firewall/VPN settings, (2) Try a different network, or (3) Contact your network admin to whitelist cdn.jsdelivr.net and huggingface.co.';
+            } else if (err.message?.includes('fetch') || err.message?.includes('network')) {
+                errorMessage = 'Network error while downloading models. Please check your internet connection and try again.';
             } else if (err.message?.includes('CORS')) {
-                errorMessage += 'Browser security blocked the download. Please try refreshing the page.';
+                errorMessage = 'Browser security blocked the download. Make sure you\'re accessing the app via HTTPS (not HTTP).';
             } else {
-                errorMessage += 'Please refresh the page and try again. If the problem persists, try using a different browser.';
+                errorMessage += `Error: ${err.message}. Try refreshing the page or using a different browser (Chrome/Edge recommended).`;
             }
             
             setError(errorMessage);
@@ -265,7 +237,8 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
                     channelCount: 1,
                     sampleRate: 16000,
                     echoCancellation: true,
-                    noiseSuppression: true
+                    noiseSuppression: true,
+                    autoGainControl: true
                 } 
             });
             
@@ -276,17 +249,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
 
             // Create MediaRecorder
             audioChunksRef.current = [];
-            
-            // Try to use the best available codec
-            let mimeType = 'audio/webm;codecs=opus';
-            if (!MediaRecorder.isTypeSupported(mimeType)) {
-                mimeType = 'audio/webm';
-            }
-            if (!MediaRecorder.isTypeSupported(mimeType)) {
-                mimeType = ''; // Use default
-            }
-            
-            const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+            const mediaRecorder = new MediaRecorder(stream);
             
             mediaRecorder.ondataavailable = (event) => {
                 if (event.data.size > 0) {
@@ -309,11 +272,11 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
             console.error('Failed to start recording:', err);
             
             if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                setError('Microphone access denied. Please allow microphone access in your browser settings to use voice notes.');
+                setError('Microphone access denied. Please allow microphone access in your browser settings.');
             } else if (err.name === 'NotFoundError') {
                 setError('No microphone found. Please connect a microphone and try again.');
-            } else if (err.message?.includes('JSON') || err.message?.includes('fetch')) {
-                // Model loading failed, show appropriate error
+            } else if (err.message?.includes('registerBackend')) {
+                // Model loading failed, don't override that error
                 return;
             } else {
                 setError('Failed to start recording. Please check your microphone and try again.');
@@ -337,7 +300,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
             const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
             
             // Check if we got any audio
-            if (audioBlob.size < 1000) { // Less than 1KB is likely too short
+            if (audioBlob.size < 1000) {
                 setError('Recording too short. Please try again and speak for at least 2-3 seconds.');
                 setIsProcessing(false);
                 return;
@@ -347,12 +310,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
             const arrayBuffer = await audioBlob.arrayBuffer();
             
             // Transcribe using Whisper
-            const result = await transcriberRef.current(arrayBuffer, {
-                chunk_length_s: 30,
-                stride_length_s: 5,
-                language: 'english',
-                task: 'transcribe'
-            });
+            const result = await transcriberRef.current(arrayBuffer);
             
             if (result && result.text) {
                 const transcription = result.text.trim();
@@ -366,15 +324,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
             }
         } catch (err: any) {
             console.error('Transcription failed:', err);
-            
-            let errorMessage = 'Failed to process recording. ';
-            if (err.message?.includes('audio')) {
-                errorMessage += 'Audio format not supported. Please try using a different browser.';
-            } else {
-                errorMessage += 'Please try again.';
-            }
-            
-            setError(errorMessage);
+            setError('Failed to process recording. Please try again.');
         } finally {
             setIsProcessing(false);
             audioChunksRef.current = [];
