@@ -68,48 +68,11 @@ export default defineConfig({
                                 statuses: [0, 200]
                             }
                         }
-                    },
-                    // NEW: Cache transformers.js model files from HuggingFace CDN
-                    {
-                        urlPattern: /^https:\/\/huggingface\.co\/.*/i,
-                        handler: 'CacheFirst',
-                        options: {
-                            cacheName: 'huggingface-models-cache',
-                            expiration: {
-                                maxEntries: 50,
-                                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
-                            },
-                            cacheableResponse: {
-                                statuses: [0, 200]
-                            }
-                        }
-                    },
-                    // NEW: Cache transformers.js WASM files from jsdelivr CDN
-                    {
-                        urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/npm\/@xenova\/transformers.*/i,
-                        handler: 'CacheFirst',
-                        options: {
-                            cacheName: 'transformers-wasm-cache',
-                            expiration: {
-                                maxEntries: 20,
-                                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
-                            },
-                            cacheableResponse: {
-                                statuses: [0, 200]
-                            }
-                        }
                     }
                 ]
             }
         })
     ],
-    // NEW: Add server headers for local development
-    server: {
-        headers: {
-            'Cross-Origin-Opener-Policy': 'same-origin',
-            'Cross-Origin-Embedder-Policy': 'require-corp',
-        },
-    },
     // Build optimizations for transformers.js
     build: {
         rollupOptions: {
