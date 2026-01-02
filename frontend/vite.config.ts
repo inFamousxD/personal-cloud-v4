@@ -52,6 +52,8 @@ export default defineConfig({
             },
             workbox: {
                 globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+                // Fix for transformers.js: Increase cache limit to 5 MB
+                maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
                 runtimeCaching: [
                     {
                         urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -71,4 +73,28 @@ export default defineConfig({
             }
         })
     ],
+    // Build optimizations for transformers.js
+    build: {
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    // Separate transformers into its own chunk
+                    'transformers': ['@xenova/transformers'],
+                    // Separate vendor libraries
+                    'vendor': ['react', 'react-dom', 'react-router-dom'],
+                    // Separate UI libraries
+                    'ui': ['styled-components', 'react-redux', '@reduxjs/toolkit']
+                }
+            }
+        },
+        // Increase chunk size warning limit
+        chunkSizeWarningLimit: 1000
+    },
+    // Optimization settings for transformers.js
+    optimizeDeps: {
+        exclude: ['@xenova/transformers']
+    },
+    worker: {
+        format: 'es'
+    }
 })

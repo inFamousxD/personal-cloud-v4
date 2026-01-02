@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { darkTheme } from '../../../theme/dark.colors';
-import { pipeline } from '@xenova/transformers';
 
 const VoiceButton = styled.button<{ $isRecording?: boolean; $isProcessing?: boolean }>`
     background: ${props => 
@@ -140,6 +139,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
     const transcriberRef = useRef<any>(null);
+    const pipelineRef = useRef<any>(null); // Store the pipeline function
 
     useEffect(() => {
         // Check browser support
@@ -148,22 +148,19 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
             return;
         }
 
-        // Check if model is already cached
-        const checkModelCache = async () => {
+        // Preload the pipeline function (but not the model yet)
+        const preloadPipeline = async () => {
             try {
-                const cache = await caches.open('transformers-cache');
-                const keys = await cache.keys();
-                const hasModel = keys.some(key => key.url.includes('whisper-tiny.en'));
-                
-                if (!hasModel) {
-                    console.log('Whisper model not cached yet - will download on first use');
-                }
+                // Dynamic import - only loads when needed
+                const { pipeline } = await import('@xenova/transformers');
+                pipelineRef.current = pipeline;
+                console.log('Pipeline function loaded');
             } catch (err) {
-                console.log('Cache check failed:', err);
+                console.error('Failed to load transformers library:', err);
             }
         };
 
-        checkModelCache();
+        preloadPipeline();
     }, []);
 
     const initializeTranscriber = async () => {
@@ -174,13 +171,19 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
         setError(null);
 
         try {
+            // Load pipeline if not already loaded
+            if (!pipelineRef.current) {
+                const { pipeline } = await import('@xenova/transformers');
+                pipelineRef.current = pipeline;
+            }
+
             // Create transcriber with progress callback
-            transcriberRef.current = await pipeline(
+            transcriberRef.current = await pipelineRef.current(
                 'automatic-speech-recognition',
                 'Xenova/whisper-tiny.en',
                 {
                     progress_callback: (progress: any) => {
-                        if (progress.status === 'progress') {
+                        if (progress.status === 'progress' && progress.total) {
                             const percent = Math.round((progress.loaded / progress.total) * 100);
                             setDownloadProgress(percent);
                         }
