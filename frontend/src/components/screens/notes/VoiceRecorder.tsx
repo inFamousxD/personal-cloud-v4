@@ -225,10 +225,16 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
             // Dynamic import with better error handling
             const { pipeline, env } = await import('@xenova/transformers');
             
-            // Configure environment - try multiple CDN mirrors
-            env.allowLocalModels = false;
+            // CRITICAL: Configure environment for Vercel deployment
+            // This fixes the "<!doctype" JSON parsing error
+            env.backends.onnx.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/';
             env.allowRemoteModels = true;
+            env.allowLocalModels = false;
             env.useBrowserCache = true;
+            
+            // Use HuggingFace CDN directly
+            env.remoteHost = 'https://huggingface.co';
+            env.remotePathTemplate = '{model}/resolve/{revision}/';
 
             setLoadingStatus('Connecting to model server...');
 
@@ -270,10 +276,12 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
             let errorMessage = 'Failed to load speech recognition model. ';
             
             // Check for specific errors
-            if (err.message?.includes('registerBackend')) {
+            if (err.message?.includes('JSON') || err.message?.includes('<!doctype')) {
+                errorMessage = 'CDN configuration issue detected. The model files could not be loaded from the CDN. This is a deployment configuration problem. Possible solutions: (1) Clear browser cache and try again, (2) Try a different network, or (3) The app may need to be redeployed with updated CDN settings.';
+            } else if (err.message?.includes('registerBackend')) {
                 errorMessage = 'Browser compatibility issue detected. This might be due to: (1) Your browser blocking required features, (2) Running in HTTP instead of HTTPS, or (3) Browser extensions interfering. Try: Refresh the page, use HTTPS, or disable extensions temporarily.';
-            } else if (err.message?.includes('JSON') || err.message?.includes('404')) {
-                errorMessage = 'Could not download model files. Your network may be blocking access to model servers. Options: (1) Check firewall/VPN settings, (2) Try a different network, or (3) Contact your network admin to whitelist cdn.jsdelivr.net and huggingface.co.';
+            } else if (err.message?.includes('404')) {
+                errorMessage = 'Model files not found on CDN. Your network may be blocking access to model servers. Options: (1) Check firewall/VPN settings, (2) Try a different network, or (3) Contact your network admin to whitelist cdn.jsdelivr.net and huggingface.co.';
             } else if (err.message?.includes('fetch') || err.message?.includes('network')) {
                 errorMessage = 'Network error while downloading models. Please check your internet connection and try again.';
             } else if (err.message?.includes('CORS')) {
@@ -466,7 +474,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
                     </CloseButton>
                     <strong>Voice Note Error</strong>
                     {error}
-                    {error.includes('model') || error.includes('download') || error.includes('network') ? (
+                    {error.includes('model') || error.includes('download') || error.includes('network') || error.includes('CDN') ? (
                         <RetryButton onClick={handleRetry}>
                             Retry Model Load
                         </RetryButton>
