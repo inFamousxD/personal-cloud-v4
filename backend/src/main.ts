@@ -6,6 +6,7 @@ import notesRouter from './routes/notes.js';
 import journalsRouter from './routes/journals.js';
 import listsRouter from './routes/lists.js';
 import serverRouter from './routes/server.js';
+import whisperRouter from './routes/whisper.js';
 import { client, connectDB } from './db.js';
 
 dotenv.config();
@@ -15,7 +16,7 @@ const PORT = 3333;
 
 // CORS middleware
 app.use(cors({
-    origin: [process.env.FRONTEND_URL_DEV, process.env.FRONTEND_URL_PROD],
+    origin: true,
     credentials: true,
 }));
 
@@ -34,18 +35,12 @@ app.post('/post-test', (req: Request, res: Response) => {
     res.send(200);
 });
 
-// Mount notes routes
+// Mount routes
 app.use('/api/notes', notesRouter);
-
-// Mount journals routes
 app.use('/api/journals', journalsRouter);
-
-// Mount lists routes
 app.use('/api/lists', listsRouter);
-
-// Mount server routes
 app.use('/api/server', serverRouter);
-
+app.use('/api/whisper', whisperRouter);
 
 process.on('SIGINT', async () => {
     await client.close();

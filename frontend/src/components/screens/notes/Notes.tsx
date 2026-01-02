@@ -36,7 +36,7 @@ import {
 } from './Notes.styles';
 import { useSelector } from 'react-redux';
 import { RootState } from "../../../redux/store";
-import OfflineVoiceRecorder from './OVR';
+import VoiceRecorder from './VoiceRecorder';
 
 type SortOrder = 'newest' | 'oldest';
 
@@ -354,7 +354,7 @@ const Notes = () => {
                         <HiddenNoteButton onClick={handleCreateHiddenNote} title="Create hidden note">
                             <span className="material-symbols-outlined">add</span>
                         </HiddenNoteButton>
-                        <OfflineVoiceRecorder 
+                        <VoiceRecorder 
                             onTranscriptionComplete={setVoiceTranscription}
                             disabled={loading}
                         />

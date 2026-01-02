@@ -68,9 +68,9 @@ export const NotesCount = styled.span`
 export const CreateButton = styled.button`
     background: ${darkTheme.accent};
     color: white;
-    border: none;
+    border: 1px solid ${darkTheme.accent};
     border-radius: 4px;
-    padding: 6px 12px;
+    padding: 5.5px 12px;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;

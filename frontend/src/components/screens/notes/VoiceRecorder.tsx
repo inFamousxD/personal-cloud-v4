@@ -1,30 +1,44 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { darkTheme } from '../../../theme/dark.colors';
+import axios from 'axios';
 
-const VoiceButton = styled.button<{ $isRecording?: boolean }>`
-    background: ${props => props.$isRecording ? '#e74c3c' : darkTheme.accent};
+const API_URL = import.meta.env.VITE_API_URL;
+
+const VoiceButtonWrapper = styled.div`
+    position: relative;
+    display: flex;
+    
+    @media (max-width: 768px) {
+        /* flex: 1; */
+    }
+`;
+
+const VoiceButton = styled.button<{ $isRecording?: boolean; $isProcessing?: boolean }>`
+    background: ${props => 
+        props.$isRecording ? '#e74c3c' : 
+        props.$isProcessing ? darkTheme.accentOrange : 
+        darkTheme.accent};
     color: white;
-    border: none;
-    border-radius: 4px;
+    /* border: none; */
+    border-radius: ${props => props.$isRecording ? '4px 0 0 4px' : '4px'};
     padding: 6px 12px;
     font-size: 13px;
     font-weight: 600;
-    cursor: pointer;
+    cursor: ${props => props.$isProcessing ? 'wait' : 'pointer'};
     display: flex;
     align-items: center;
     gap: 4px;
     font-family: inherit;
-    position: relative;
     transition: all 0.3s ease;
+    flex: 1;
 
     ${props => props.$isRecording && `
         animation: pulse 1.5s ease-in-out infinite;
     `}
 
-    &:hover:not(:disabled) {
+    &:hover {
         opacity: 0.9;
-        transform: translateY(-1px);
     }
 
     &:disabled {
@@ -44,10 +58,26 @@ const VoiceButton = styled.button<{ $isRecording?: boolean }>`
             box-shadow: 0 0 0 8px rgba(231, 76, 60, 0);
         }
     }
+`;
 
-    @media (max-width: 768px) {
-        flex: 1;
-        justify-content: center;
+const CancelButton = styled.button`
+    background: #c0392b;
+    color: white;
+    border: none;
+    border-radius: 0 4px 4px 0;
+    padding: 6px 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+
+    &:hover {
+        background: #a93226;
+    }
+
+    .material-symbols-outlined {
+        font-size: 16px;
     }
 `;
 
@@ -60,66 +90,6 @@ const StatusText = styled.span`
     }
 `;
 
-const ListeningIndicator = styled.div`
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: ${darkTheme.backgroundDarkest};
-    border: 1px solid ${darkTheme.border};
-    border-radius: 4px;
-    padding: 24px;
-    z-index: 2000;
-    min-width: 300px;
-    max-width: 400px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    text-align: center;
-`;
-
-const ListeningTitle = styled.h3`
-    color: ${darkTheme.accent};
-    margin: 0 0 12px 0;
-    font-size: 16px;
-`;
-
-const TranscriptPreview = styled.div`
-    color: ${darkTheme.text.color};
-    font-size: 13px;
-    opacity: 0.8;
-    line-height: 1.4;
-    min-height: 60px;
-    max-height: 150px;
-    overflow-y: auto;
-    padding: 12px;
-    background: ${darkTheme.backgroundDarker};
-    border-radius: 4px;
-    margin-top: 12px;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-
-    &:empty::before {
-        content: 'Listening...';
-        opacity: 0.5;
-        font-style: italic;
-    }
-
-    &::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    &::-webkit-scrollbar-track {
-        background: ${darkTheme.backgroundDarkest};
-    }
-
-    &::-webkit-scrollbar-thumb {
-        background: ${darkTheme.accent}40;
-
-        &:hover {
-            background: ${darkTheme.accent}60;
-        }
-    }
-`;
-
 const ErrorMessage = styled.div`
     position: fixed;
     bottom: 20px;
@@ -127,31 +97,13 @@ const ErrorMessage = styled.div`
     background: rgba(231, 76, 60, 0.1);
     border: 1px solid #e74c3c;
     border-radius: 4px;
-    padding: 16px;
+    padding: 16px 40px 16px 16px;
     color: #e74c3c;
     font-size: 12px;
-    line-height: 1.4;
+    line-height: 1.5;
     max-width: 400px;
     z-index: 2000;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    animation: slideIn 0.3s ease;
-
-    @keyframes slideIn {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-
-    strong {
-        display: block;
-        margin-bottom: 8px;
-        font-size: 13px;
-    }
 `;
 
 const CloseButton = styled.button`
@@ -164,7 +116,6 @@ const CloseButton = styled.button`
     cursor: pointer;
     padding: 4px;
     opacity: 0.6;
-    transition: opacity 0.2s;
 
     &:hover {
         opacity: 1;
@@ -175,220 +126,167 @@ const CloseButton = styled.button`
     }
 `;
 
-const StopButton = styled.button`
-    margin-top: 16px;
-    padding: 8px 16px;
-    background: #e74c3c;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 600;
-    transition: all 0.2s;
-
-    &:hover {
-        background: #c0392b;
-    }
-`;
-
-interface VoiceRecorderProps {
+interface OfflineVoiceRecorderProps {
     onTranscriptionComplete: (text: string) => void;
     disabled?: boolean;
 }
 
-// Declare the webkit-prefixed SpeechRecognition for TypeScript
-declare global {
-    interface Window {
-        SpeechRecognition: any;
-        webkitSpeechRecognition: any;
+const getAuthHeader = () => {
+    const user = localStorage.getItem('user');
+    if (user) {
+        const { token } = JSON.parse(user);
+        return { Authorization: `Bearer ${token}` };
     }
-}
+    return {};
+};
 
-const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, disabled }) => {
+const OfflineVoiceRecorder: React.FC<OfflineVoiceRecorderProps> = ({ onTranscriptionComplete, disabled }) => {
     const [isRecording, setIsRecording] = useState(false);
-    const [transcript, setTranscript] = useState('');
+    const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isSupported, setIsSupported] = useState(true);
+    const [isSupported, setIsSupported] = useState(false);
+    const [serviceAvailable, setServiceAvailable] = useState(false);
     
-    const recognitionRef = useRef<any>(null);
-    const finalTranscriptRef = useRef('');
-    const isRecordingRef = useRef(false);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const audioChunksRef = useRef<Blob[]>([]);
 
     useEffect(() => {
-        // Check browser support for Web Speech API
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        
-        if (!SpeechRecognition) {
-            setIsSupported(false);
-            console.warn('Web Speech API is not supported in this browser');
-            return;
-        }
-
-        // Don't initialize yet - wait until user clicks the button
-        setIsSupported(true);
-
-        return () => {
-            if (recognitionRef.current) {
-                try {
-                    recognitionRef.current.abort();
-                } catch (e) {
-                    // Ignore errors on cleanup
-                }
-            }
-        };
+        checkSupport();
     }, []);
 
-    const initializeRecognition = () => {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        
-        if (!SpeechRecognition) {
-            return null;
-        }
-
-        const recognition = new SpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.lang = 'en-US';
-        recognition.maxAlternatives = 1;
-
-        recognition.onstart = () => {
-            console.log('Speech recognition started');
-            setError(null);
-        };
-
-        recognition.onresult = (event: any) => {
-            let interimTranscript = '';
-            let finalTranscript = finalTranscriptRef.current;
-
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                const transcriptPiece = event.results[i][0].transcript;
-                if (event.results[i].isFinal) {
-                    finalTranscript += transcriptPiece + ' ';
-                    finalTranscriptRef.current = finalTranscript;
-                } else {
-                    interimTranscript += transcriptPiece;
-                }
-            }
-
-            // Update the transcript display
-            const displayText = (finalTranscript + interimTranscript).trim();
-            setTranscript(displayText);
-        };
-
-        recognition.onerror = (event: any) => {
-            console.error('Speech recognition error:', event);
-            
-            // Only show errors if we're actually recording
-            if (!isRecordingRef.current) {
-                return;
-            }
-            
-            let errorMessage = '';
-            
-            switch (event.error) {
-                case 'no-speech':
-                    // Don't show error for no-speech - just let it continue
-                    return;
-                case 'audio-capture':
-                    errorMessage = 'No microphone found. Please connect a microphone and try again.';
-                    break;
-                case 'not-allowed':
-                    errorMessage = 'Microphone access denied. Please allow microphone access in your browser settings and reload the page.';
-                    break;
-                case 'network':
-                    errorMessage = 'Network error. Please check your internet connection. Speech recognition requires internet access.';
-                    break;
-                case 'aborted':
-                    // User stopped it, don't show error
-                    return;
-                case 'service-not-allowed':
-                    errorMessage = 'Speech service not allowed. Please ensure you are using HTTPS and try again.';
-                    break;
-                default:
-                    errorMessage = `Speech recognition error: ${event.error}. Please try again.`;
-            }
-            
-            if (errorMessage) {
-                setError(errorMessage);
-                setIsRecording(false);
-                isRecordingRef.current = false;
-            }
-        };
-
-        recognition.onend = () => {
-            console.log('Speech recognition ended');
-            // Don't auto-restart - let user control it
-        };
-
-        return recognition;
-    };
-
-    const startRecording = () => {
-        setError(null);
-        setTranscript('');
-        finalTranscriptRef.current = '';
-
-        // Create a fresh recognition instance
-        const recognition = initializeRecognition();
-        
-        if (!recognition) {
-            setError('Speech recognition not available. This feature requires Chrome, Edge, or Safari.');
+    const checkSupport = async () => {
+        if (!navigator.mediaDevices?.getUserMedia) {
+            setIsSupported(false);
             return;
         }
 
         try {
-            recognitionRef.current = recognition;
-            recognition.start();
+            await axios.get(`${API_URL}/api/whisper/health`, {
+                headers: getAuthHeader(),
+                timeout: 3000
+            });
+            setServiceAvailable(true);
+            setIsSupported(true);
+        } catch (err) {
+            console.error('Whisper service unavailable:', err);
+            setServiceAvailable(false);
+            setIsSupported(false);
+        }
+    };
+
+    const startRecording = async () => {
+        try {
+            setError(null);
+            
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                audio: {
+                    channelCount: 1,
+                    sampleRate: 16000,
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true
+                } 
+            });
+
+            audioChunksRef.current = [];
+            const mediaRecorder = new MediaRecorder(stream);
+            
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunksRef.current.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = async () => {
+                stream.getTracks().forEach(track => track.stop());
+                await processRecording();
+            };
+
+            mediaRecorderRef.current = mediaRecorder;
+            mediaRecorder.start();
             setIsRecording(true);
-            isRecordingRef.current = true;
-            console.log('Starting speech recognition...');
         } catch (err: any) {
             console.error('Failed to start recording:', err);
             
-            if (err.message && err.message.includes('already started')) {
-                // If already started, try to stop and restart
-                try {
-                    recognition.stop();
-                    setTimeout(() => startRecording(), 300);
-                } catch (e) {
-                    setError('Failed to start speech recognition. Please refresh the page and try again.');
-                }
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                setError('Microphone access denied.');
+            } else if (err.name === 'NotFoundError') {
+                setError('No microphone found.');
             } else {
-                setError('Failed to start speech recognition. Please try again.');
+                setError(`Recording failed: ${err.message}`);
             }
         }
     };
 
     const stopRecording = () => {
-        isRecordingRef.current = false;
-        
-        if (recognitionRef.current) {
-            try {
-                recognitionRef.current.stop();
-            } catch (err) {
-                console.error('Error stopping recognition:', err);
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+        }
+    };
+
+    const cancelRecording = () => {
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+            audioChunksRef.current = []; // Clear chunks without processing
+            
+            // Stop all tracks
+            if (mediaRecorderRef.current.stream) {
+                mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
             }
         }
-        
-        // Process the final transcript
-        const finalText = finalTranscriptRef.current.trim();
-        if (finalText.length > 0) {
-            onTranscriptionComplete(finalText);
-            setTranscript('');
-            finalTranscriptRef.current = '';
-            setError(null);
-        } else if (finalText.length === 0 && transcript.trim().length > 0) {
-            // Use whatever we have in the transcript
-            onTranscriptionComplete(transcript.trim());
-            setTranscript('');
-            finalTranscriptRef.current = '';
-            setError(null);
-        } else {
-            setError('No speech detected. Please try again and speak clearly.');
+    };
+
+    const processRecording = async () => {
+        setIsProcessing(true);
+
+        try {
+            const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+            
+            if (audioBlob.size < 1000) {
+                setError('Recording too short.');
+                setIsProcessing(false);
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.webm');
+
+            const response = await axios.post(
+                `${API_URL}/api/whisper/transcribe`,
+                formData,
+                {
+                    headers: {
+                        ...getAuthHeader(),
+                        'Content-Type': 'multipart/form-data'
+                    },
+                    timeout: 30000
+                }
+            );
+
+            if (response.data.text) {
+                const transcription = response.data.text.trim();
+                if (transcription.length > 0) {
+                    onTranscriptionComplete(transcription);
+                } else {
+                    setError('No speech detected.');
+                }
+            }
+        } catch (err: any) {
+            console.error('Transcription failed:', err);
+            
+            if (err.code === 'ECONNABORTED') {
+                setError('Transcription timeout. Try shorter recording.');
+            } else if (err.response?.status === 503) {
+                setError('Transcription service unavailable.');
+            } else {
+                setError('Transcription failed.');
+            }
+        } finally {
+            setIsProcessing(false);
+            audioChunksRef.current = [];
         }
-        
-        setIsRecording(false);
     };
 
     const handleClick = () => {
@@ -404,38 +302,36 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
     }
 
     const getButtonText = () => {
-        if (isRecording) return 'Stop Recording';
+        if (isProcessing) return 'Processing...';
+        if (isRecording) return 'Stop';
         return 'Voice Note';
     };
 
     const getButtonIcon = () => {
+        if (isProcessing) return 'pending';
         if (isRecording) return 'stop_circle';
         return 'mic';
     };
 
     return (
         <>
-            <VoiceButton
-                onClick={handleClick}
-                disabled={disabled}
-                $isRecording={isRecording}
-                title={isRecording ? 'Click to stop recording' : 'Click to start voice note'}
-            >
-                <span className="material-symbols-outlined">{getButtonIcon()}</span>
-                <StatusText>{getButtonText()}</StatusText>
-            </VoiceButton>
-
-            {isRecording && (
-                <ListeningIndicator>
-                    <ListeningTitle>🎤 Listening...</ListeningTitle>
-                    <TranscriptPreview>
-                        {transcript || ''}
-                    </TranscriptPreview>
-                    <StopButton onClick={stopRecording}>
-                        Stop & Save
-                    </StopButton>
-                </ListeningIndicator>
-            )}
+            <VoiceButtonWrapper>
+                <VoiceButton
+                    onClick={handleClick}
+                    disabled={disabled || isProcessing || !serviceAvailable}
+                    $isRecording={isRecording}
+                    $isProcessing={isProcessing}
+                    title={serviceAvailable ? 'Record voice note' : 'Voice service unavailable'}
+                >
+                    <span className="material-symbols-outlined">{getButtonIcon()}</span>
+                    <StatusText>{getButtonText()}</StatusText>
+                </VoiceButton>
+                {isRecording && (
+                    <CancelButton onClick={cancelRecording} title="Cancel recording">
+                        <span className="material-symbols-outlined">close</span>
+                    </CancelButton>
+                )}
+            </VoiceButtonWrapper>
 
             {error && (
                 <ErrorMessage>
@@ -443,6 +339,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
                         <span className="material-symbols-outlined">close</span>
                     </CloseButton>
                     <strong>Voice Note Error</strong>
+                    <br />
                     {error}
                 </ErrorMessage>
             )}
@@ -450,4 +347,4 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
     );
 };
 
-export default VoiceRecorder;
+export default OfflineVoiceRecorder;
