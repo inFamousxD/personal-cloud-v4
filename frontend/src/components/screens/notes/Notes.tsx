@@ -3,6 +3,7 @@ import { notesApi, Note, CreateNoteInput } from '../../../services/notesApi';
 import NoteCard from './NoteCard';
 import NoteEditor from './NoteEditor';
 import NoteViewer from './NoteViewer';
+import VoiceRecorder from './VoiceRecorder';
 import {
     NotesContainer,
     NotesHeader,
@@ -52,6 +53,7 @@ const Notes = () => {
         noteId: null
     });
     const [isCreatingHidden, setIsCreatingHidden] = useState(false);
+    const [voiceTranscription, setVoiceTranscription] = useState<string | null>(null);
 
     // Filter and sort states
     const [searchQuery, setSearchQuery] = useState('');
@@ -89,6 +91,14 @@ const Notes = () => {
         };
     }, [showTagFilter]);
 
+    // Handle voice transcription
+    useEffect(() => {
+        if (voiceTranscription) {
+            handleVoiceNote(voiceTranscription);
+            setVoiceTranscription(null);
+        }
+    }, [voiceTranscription]);
+
     const loadNotes = async () => {
         try {
             setLoading(true);
@@ -104,8 +114,8 @@ const Notes = () => {
     const loadTags = async () => {
         try {
             const tags = await notesApi.getAllTags();
-            // Always include 'hidden' in the tags list
-            const uniqueTags = Array.from(new Set([...tags, 'hidden']));
+            // Always include 'hidden' and 'voice' in the tags list
+            const uniqueTags = Array.from(new Set([...tags, 'hidden', 'voice']));
             setAllTags(uniqueTags);
         } catch (error) {
             console.error('Error loading tags:', error);
@@ -138,6 +148,53 @@ const Notes = () => {
         saveFavoriteTags(favoriteTags.filter(t => t !== tag));
         if (selectedTags.includes(tag)) {
             setSelectedTags(selectedTags.filter(t => t !== tag));
+        }
+    };
+
+    const generateTitleFromText = (text: string): string => {
+        // Clean up the text
+        const cleaned = text.trim();
+        
+        // Split into sentences
+        const sentences = cleaned.split(/[.!?]+/).filter(s => s.trim().length > 0);
+        
+        if (sentences.length === 0) return 'Voice Note';
+        
+        // Use first sentence as title
+        let title = sentences[0].trim();
+        
+        // Limit to 50 characters for title
+        if (title.length > 50) {
+            title = title.substring(0, 47) + '...';
+        }
+        
+        return title;
+    };
+
+    const handleVoiceNote = async (transcription: string) => {
+        if (!transcription || transcription.trim().length === 0) {
+            console.log('Empty transcription received');
+            return;
+        }
+
+        try {
+            // Generate title from first sentence
+            const title = generateTitleFromText(transcription);
+            
+            // Create note with 'voice' tag
+            const noteInput: CreateNoteInput = {
+                title,
+                content: transcription,
+                tags: ['voice']
+            };
+
+            const created = await notesApi.createNote(noteInput);
+            setNotes([created, ...notes]);
+            loadTags();
+            
+            console.log('Voice note created successfully');
+        } catch (error) {
+            console.error('Error creating voice note:', error);
         }
     };
 
@@ -297,6 +354,10 @@ const Notes = () => {
                         <HiddenNoteButton onClick={handleCreateHiddenNote} title="Create hidden note">
                             <span className="material-symbols-outlined">add</span>
                         </HiddenNoteButton>
+                        <VoiceRecorder 
+                            onTranscriptionComplete={setVoiceTranscription}
+                            disabled={loading}
+                        />
                         <CreateButton onClick={handleCreateNote}>
                             <span className="material-symbols-outlined">add</span>
                             New Note
