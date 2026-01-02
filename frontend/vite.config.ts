@@ -51,7 +51,9 @@ export default defineConfig({
                 ]
             },
             workbox: {
-                globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+                globPatterns: ['**/*.{js,css,html,ico,png,svg,wasm}'],
+                // Allow larger files for transformers.js models
+                maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10MB
                 runtimeCaching: [
                     {
                         urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -60,6 +62,36 @@ export default defineConfig({
                             cacheName: 'google-fonts-cache',
                             expiration: {
                                 maxEntries: 10,
+                                maxAgeSeconds: 60 * 60 * 24 * 365
+                            },
+                            cacheableResponse: {
+                                statuses: [0, 200]
+                            }
+                        }
+                    },
+                    {
+                        // Cache transformers.js models from CDN
+                        urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/.*/i,
+                        handler: 'CacheFirst',
+                        options: {
+                            cacheName: 'transformers-models-cache',
+                            expiration: {
+                                maxEntries: 50,
+                                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+                            },
+                            cacheableResponse: {
+                                statuses: [0, 200]
+                            }
+                        }
+                    },
+                    {
+                        // Cache HuggingFace models
+                        urlPattern: /^https:\/\/huggingface\.co\/.*/i,
+                        handler: 'CacheFirst',
+                        options: {
+                            cacheName: 'huggingface-models-cache',
+                            expiration: {
+                                maxEntries: 50,
                                 maxAgeSeconds: 60 * 60 * 24 * 365
                             },
                             cacheableResponse: {
@@ -75,12 +107,24 @@ export default defineConfig({
         rollupOptions: {
             output: {
                 manualChunks: {
+                    // Separate transformers into its own chunk
+                    'transformers': ['@xenova/transformers'],
                     // Separate vendor libraries
                     'vendor': ['react', 'react-dom', 'react-router-dom'],
                     // Separate UI libraries
                     'ui': ['styled-components', 'react-redux', '@reduxjs/toolkit']
                 }
             }
-        }
+        },
+        // Don't warn about large chunks (transformers is big)
+        chunkSizeWarningLimit: 2000
+    },
+    // Important: Don't pre-bundle transformers - it needs dynamic imports
+    optimizeDeps: {
+        exclude: ['@xenova/transformers', 'onnxruntime-web']
+    },
+    // Support for web workers (transformers uses workers)
+    worker: {
+        format: 'es'
     }
 })
