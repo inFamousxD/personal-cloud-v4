@@ -277,7 +277,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
         };
 
         recognition.onerror = (event: any) => {
-            console.error('Speech recognition error:', event.error);
+            console.error('Speech recognition error:', event);
             
             // Only show errors if we're actually recording
             if (!isRecordingRef.current) {

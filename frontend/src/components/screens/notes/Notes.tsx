@@ -37,6 +37,7 @@ import {
 } from './Notes.styles';
 import { useSelector } from 'react-redux';
 import { RootState } from "../../../redux/store";
+import SimpleVoiceNote from './SVN';
 
 type SortOrder = 'newest' | 'oldest';
 
@@ -354,7 +355,7 @@ const Notes = () => {
                         <HiddenNoteButton onClick={handleCreateHiddenNote} title="Create hidden note">
                             <span className="material-symbols-outlined">add</span>
                         </HiddenNoteButton>
-                        <VoiceRecorder 
+                        <SimpleVoiceNote 
                             onTranscriptionComplete={setVoiceTranscription}
                             disabled={loading}
                         />
