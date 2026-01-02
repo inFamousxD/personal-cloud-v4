@@ -213,6 +213,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
     
     const recognitionRef = useRef<any>(null);
     const finalTranscriptRef = useRef('');
+    const isRecordingRef = useRef(false);
 
     useEffect(() => {
         // Check browser support for Web Speech API
@@ -224,11 +225,37 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
             return;
         }
 
-        // Initialize speech recognition
+        // Don't initialize yet - wait until user clicks the button
+        setIsSupported(true);
+
+        return () => {
+            if (recognitionRef.current) {
+                try {
+                    recognitionRef.current.abort();
+                } catch (e) {
+                    // Ignore errors on cleanup
+                }
+            }
+        };
+    }, []);
+
+    const initializeRecognition = () => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+        if (!SpeechRecognition) {
+            return null;
+        }
+
         const recognition = new SpeechRecognition();
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.lang = 'en-US';
+        recognition.maxAlternatives = 1;
+
+        recognition.onstart = () => {
+            console.log('Speech recognition started');
+            setError(null);
+        };
 
         recognition.onresult = (event: any) => {
             let interimTranscript = '';
@@ -252,67 +279,81 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
         recognition.onerror = (event: any) => {
             console.error('Speech recognition error:', event.error);
             
-            let errorMessage = 'Speech recognition error. ';
+            // Only show errors if we're actually recording
+            if (!isRecordingRef.current) {
+                return;
+            }
+            
+            let errorMessage = '';
             
             switch (event.error) {
                 case 'no-speech':
-                    errorMessage = 'No speech detected. Please try again and speak clearly.';
-                    break;
+                    // Don't show error for no-speech - just let it continue
+                    return;
                 case 'audio-capture':
                     errorMessage = 'No microphone found. Please connect a microphone and try again.';
                     break;
                 case 'not-allowed':
-                    errorMessage = 'Microphone access denied. Please allow microphone access in your browser settings.';
+                    errorMessage = 'Microphone access denied. Please allow microphone access in your browser settings and reload the page.';
                     break;
                 case 'network':
-                    errorMessage = 'Network error. Speech recognition requires an internet connection.';
+                    errorMessage = 'Network error. Please check your internet connection. Speech recognition requires internet access.';
                     break;
                 case 'aborted':
-                    // Don't show error for user-initiated stops
+                    // User stopped it, don't show error
                     return;
+                case 'service-not-allowed':
+                    errorMessage = 'Speech service not allowed. Please ensure you are using HTTPS and try again.';
+                    break;
                 default:
-                    errorMessage += event.error;
+                    errorMessage = `Speech recognition error: ${event.error}. Please try again.`;
             }
             
-            setError(errorMessage);
-            setIsRecording(false);
+            if (errorMessage) {
+                setError(errorMessage);
+                setIsRecording(false);
+                isRecordingRef.current = false;
+            }
         };
 
         recognition.onend = () => {
-            // Don't auto-restart or do anything - just let it end
             console.log('Speech recognition ended');
+            // Don't auto-restart - let user control it
         };
 
-        recognitionRef.current = recognition;
-
-        return () => {
-            if (recognitionRef.current) {
-                try {
-                    recognitionRef.current.stop();
-                } catch (e) {
-                    // Ignore errors on cleanup
-                }
-            }
-        };
-    }, []);
+        return recognition;
+    };
 
     const startRecording = () => {
-        if (!recognitionRef.current) {
+        setError(null);
+        setTranscript('');
+        finalTranscriptRef.current = '';
+
+        // Create a fresh recognition instance
+        const recognition = initializeRecognition();
+        
+        if (!recognition) {
             setError('Speech recognition not available. This feature requires Chrome, Edge, or Safari.');
             return;
         }
 
         try {
-            setError(null);
-            setTranscript('');
-            finalTranscriptRef.current = '';
-            recognitionRef.current.start();
+            recognitionRef.current = recognition;
+            recognition.start();
             setIsRecording(true);
+            isRecordingRef.current = true;
+            console.log('Starting speech recognition...');
         } catch (err: any) {
             console.error('Failed to start recording:', err);
-            if (err.message.includes('already started')) {
-                // Recognition is already running, just mark as recording
-                setIsRecording(true);
+            
+            if (err.message && err.message.includes('already started')) {
+                // If already started, try to stop and restart
+                try {
+                    recognition.stop();
+                    setTimeout(() => startRecording(), 300);
+                } catch (e) {
+                    setError('Failed to start speech recognition. Please refresh the page and try again.');
+                }
             } else {
                 setError('Failed to start speech recognition. Please try again.');
             }
@@ -320,25 +361,34 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
     };
 
     const stopRecording = () => {
-        if (recognitionRef.current && isRecording) {
+        isRecordingRef.current = false;
+        
+        if (recognitionRef.current) {
             try {
                 recognitionRef.current.stop();
             } catch (err) {
                 console.error('Error stopping recognition:', err);
             }
-            
-            // Process the final transcript
-            const finalText = finalTranscriptRef.current.trim();
-            if (finalText.length > 0) {
-                onTranscriptionComplete(finalText);
-                setTranscript('');
-                finalTranscriptRef.current = '';
-            } else {
-                setError('No speech detected. Please try again.');
-            }
-            
-            setIsRecording(false);
         }
+        
+        // Process the final transcript
+        const finalText = finalTranscriptRef.current.trim();
+        if (finalText.length > 0) {
+            onTranscriptionComplete(finalText);
+            setTranscript('');
+            finalTranscriptRef.current = '';
+            setError(null);
+        } else if (finalText.length === 0 && transcript.trim().length > 0) {
+            // Use whatever we have in the transcript
+            onTranscriptionComplete(transcript.trim());
+            setTranscript('');
+            finalTranscriptRef.current = '';
+            setError(null);
+        } else {
+            setError('No speech detected. Please try again and speak clearly.');
+        }
+        
+        setIsRecording(false);
     };
 
     const handleClick = () => {
