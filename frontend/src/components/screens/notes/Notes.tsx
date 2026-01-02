@@ -3,7 +3,6 @@ import { notesApi, Note, CreateNoteInput } from '../../../services/notesApi';
 import NoteCard from './NoteCard';
 import NoteEditor from './NoteEditor';
 import NoteViewer from './NoteViewer';
-import VoiceRecorder from './VoiceRecorder';
 import {
     NotesContainer,
     NotesHeader,
