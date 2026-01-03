@@ -37,6 +37,8 @@ export const EditorHeader = styled.div`
     padding: 8px 12px;
     border-bottom: 1px solid ${darkTheme.border};
     background: ${darkTheme.backgroundDarkest};
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
 `;
 
 export const EditorTitle = styled.h2`
@@ -170,6 +172,8 @@ export const EditorFooter = styled.div`
     padding: 8px 12px;
     border-top: 1px solid ${darkTheme.border};
     background: ${darkTheme.backgroundDarkest};
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
 
     @media (max-width: 768px) {
         flex-direction: column-reverse;
