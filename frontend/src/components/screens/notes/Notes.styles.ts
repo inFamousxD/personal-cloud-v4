@@ -78,6 +78,7 @@ export const CreateButton = styled.button`
     align-items: center;
     gap: 4px;
     font-family: inherit;
+    transition: width 200ms ease-in-out;
 
     &:hover {
         opacity: 0.9;
