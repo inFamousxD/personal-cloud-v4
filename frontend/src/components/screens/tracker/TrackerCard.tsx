@@ -183,8 +183,7 @@ const TrackerCard: React.FC<TrackerCardProps> = ({ tracker, onEdit, onDelete, on
 
         const entry = weekEntries.find(e => {
             const entryDate = new Date(e.date);
-            entryDate.setHours(0, 0, 0, 0);
-            return entryDate.getTime() === targetDate.getTime();
+            return entryDate.getUTCDate() === targetDate.getUTCDate();
         });
 
         if (!entry) return 'missed';

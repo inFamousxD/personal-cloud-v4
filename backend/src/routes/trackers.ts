@@ -431,7 +431,6 @@ router.get('/:trackerId/entries/:date', async (req: AuthRequest, res: Response) 
 
         // Normalize date to start of day
         const entryDate = new Date(date);
-        entryDate.setHours(0, 0, 0, 0);
 
         const entry = await db.collection<TrackerEntry>('tracker_entries').findOne({
             trackerId,
@@ -484,7 +483,6 @@ router.post('/:trackerId/entries', async (req: AuthRequest, res: Response) => {
 
         // Normalize date to start of day
         const entryDate = new Date(date);
-        entryDate.setHours(0, 0, 0, 0);
 
         const now = new Date();
 

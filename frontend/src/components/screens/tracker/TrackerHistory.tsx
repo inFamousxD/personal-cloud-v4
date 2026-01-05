@@ -99,8 +99,8 @@ const TrackerHistory: React.FC<TrackerHistoryProps> = ({ isOpen, onClose, tracke
         
         return entries.find(e => {
             const entryDate = new Date(e.date);
-            entryDate.setHours(0, 0, 0, 0);
-            return entryDate.getTime() === targetDate.getTime();
+            // entryDate.setHours(0, 0, 0, 0);
+            return entryDate.getUTCDate() === targetDate.getUTCDate();
         });
     };
 
@@ -214,8 +214,8 @@ const TrackerHistory: React.FC<TrackerHistoryProps> = ({ isOpen, onClose, tracke
 
         const entry = entries.find(e => {
             const entryDate = new Date(e.date);
-            entryDate.setHours(0, 0, 0, 0);
-            return entryDate.getTime() === date.getTime();
+            // entryDate.setHours(0, 0, 0, 0);
+            return entryDate.getUTCDate() === date.getUTCDate();
         });
 
         if (!entry) return 'missed';

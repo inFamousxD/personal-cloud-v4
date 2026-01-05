@@ -104,6 +104,7 @@ export const ProgressSection = styled.div`
 export const ProgressLabel = styled.div`
     font-size: 11px;
     opacity: 0.7;
+    color: ${darkTheme.text.color};
 `;
 
 export const ProgressBarContainer = styled.div`
@@ -125,6 +126,7 @@ export const Heatmap = styled.div`
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 3px;
+    margin-top: auto;
 `;
 
 export const HeatmapDay = styled.div<{ $status?: 'completed' | 'partial' | 'missed' | 'none' }>`
