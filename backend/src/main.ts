@@ -7,6 +7,7 @@ import journalsRouter from './routes/journals.js';
 import listsRouter from './routes/lists.js';
 import serverRouter from './routes/server.js';
 import whisperRouter from './routes/whisper.js';
+import trackersRouter from './routes/trackers.js';  // ADD THIS LINE
 import { client, connectDB } from './db.js';
 
 dotenv.config();
@@ -41,6 +42,7 @@ app.use('/api/journals', journalsRouter);
 app.use('/api/lists', listsRouter);
 app.use('/api/server', serverRouter);
 app.use('/api/whisper', whisperRouter);
+app.use('/api/trackers', trackersRouter);  // ADD THIS LINE
 
 process.on('SIGINT', async () => {
     await client.close();

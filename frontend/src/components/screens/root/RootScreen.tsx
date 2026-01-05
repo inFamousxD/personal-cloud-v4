@@ -9,6 +9,7 @@ import Server from "../server/Server";
 import Settings from "../settings/Settings";
 import ProtectedRoute from "../../ProtectedRoute";
 import styled from "styled-components";
+import Trackers from "../tracker/Tracker";
 
 const RootContainer = styled.div`
     display: flex;
@@ -52,6 +53,7 @@ export const RootScreen: React.FC = () => {
                             <Route path="/lists/:listId" element={<Lists />} />
                             <Route path="/server" element={<Server />} />
                             <Route path="/settings" element={<Settings />} />
+                            <Route path="/tracker" element={<Trackers />} />
                         </Routes>
                     </ContentArea>
                     <BottomRibbonContainer />

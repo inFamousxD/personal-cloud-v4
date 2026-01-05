@@ -15,8 +15,13 @@ const mainDockInitialState = {
         },
         {
             id: "lists",
-            icon: "event_list",
+            icon: "format_list_bulleted_add",
             navigatesTo: "/lists"
+        },
+        {
+            id: "tracker",
+            icon: "track_changes",
+            navigatesTo: "/tracker"
         }
     ],
     dockBottomOptions: [
