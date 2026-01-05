@@ -73,17 +73,18 @@ router.post('/', async (req: AuthRequest, res: Response) => {
     try {
         const { title, content, tags }: CreateNoteInput = req.body;
 
-        if (!title || !content) {
+        if (!title) {
             return res.status(400).json({ error: 'Title and content are required' });
         }
 
         const now = new Date();
         const noteTags = tags && tags.length > 0 ? tags : ['default'];
+        const noteContent = content || '';
         
         const newNote: Note = {
             userId: req.userId!,
             title,
-            content,
+            content: noteContent,
             tags: noteTags,
             createdAt: now,
             updatedAt: now,

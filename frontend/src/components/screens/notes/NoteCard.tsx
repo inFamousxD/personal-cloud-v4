@@ -94,9 +94,11 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onView, onEdit, onDelete }) =
                     )}
                 </TagsContainer>
             )}
-            <NoteCardContent style={{ WebkitLineClamp: lineClamp }}>
-                {note.content}
-            </NoteCardContent>
+            {note.content && note.content !== '' && (
+                <NoteCardContent style={{ WebkitLineClamp: lineClamp }}>
+                    {note.content}
+                </NoteCardContent>
+            )}
             <NoteCardFooter>
                 <span>{formatDate(note.updatedAt)}</span>
                 <NoteCardActions>
