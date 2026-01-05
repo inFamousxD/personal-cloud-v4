@@ -25,8 +25,8 @@ export const EditorModal = styled.div`
     flex-direction: column;
 
     @media (max-width: 768px) {
-        width: 95%;
-        max-height: 90vh;
+        width: 100%;
+        max-height: 95vh;
     }
 `;
 
