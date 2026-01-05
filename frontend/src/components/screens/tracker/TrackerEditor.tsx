@@ -16,14 +16,16 @@ import {
     TypeGrid,
     TypeCard,
     ConfigSection,
-    ConfigTitle,
     ConfigRow,
     CheckboxGroup,
     EditorFooter,
     ArchiveButton,
     FooterActions,
     EditorButton,
-    HelpText
+    HelpText,
+    SectionDivider,
+    InlineAddButton,
+    FolderRow
 } from './TrackerEditor.styles';
 
 interface TrackerEditorProps {
@@ -36,10 +38,10 @@ interface TrackerEditorProps {
 }
 
 const trackerTypes: { type: TrackerType; icon: string; label: string; description: string }[] = [
-    { type: 'binary', icon: 'check_circle', label: 'Binary', description: 'Did/Didn\'t' },
-    { type: 'numeric', icon: '123', label: 'Numeric', description: 'Count items' },
+    { type: 'binary', icon: 'check_circle', label: 'Binary', description: 'Yes/No tracking' },
+    { type: 'numeric', icon: '123', label: 'Numeric', description: 'Count values' },
     { type: 'duration', icon: 'schedule', label: 'Duration', description: 'Track time' },
-    { type: 'frequency', icon: 'repeat', label: 'Frequency', description: 'X times/period' },
+    { type: 'frequency', icon: 'repeat', label: 'Frequency', description: 'Times per period' },
     { type: 'scale', icon: 'sentiment_satisfied', label: 'Scale', description: 'Rate 1-10' },
     { type: 'target', icon: 'flag', label: 'Target', description: 'Goal-based' }
 ];
@@ -59,6 +61,8 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
     const [tags, setTags] = useState<string[]>([]);
     const [config, setConfig] = useState<TrackerConfig>({});
     const [saving, setSaving] = useState(false);
+    const [isAddingFolder, setIsAddingFolder] = useState(false);
+    const [newFolderName, setNewFolderName] = useState('');
 
     useEffect(() => {
         if (editingTracker) {
@@ -83,6 +87,8 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
             allowNotes: true,
             frequency: 'daily'
         });
+        setIsAddingFolder(false);
+        setNewFolderName('');
     };
 
     const handleSave = async () => {
@@ -140,18 +146,14 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
             case 'numeric':
                 return (
                     <ConfigSection>
-                        <ConfigTitle>
-                            <span className="material-symbols-outlined">settings</span>
-                            Numeric Configuration
-                        </ConfigTitle>
                         <ConfigRow>
                             <FormGroup>
-                                <Label>Unit (e.g., glasses, pages)</Label>
+                                <Label>Unit</Label>
                                 <Input
                                     type="text"
                                     value={config.unit || ''}
                                     onChange={(e) => updateConfig('unit', e.target.value)}
-                                    placeholder="glasses"
+                                    placeholder="glasses, pages, km..."
                                 />
                             </FormGroup>
                             <FormGroup>
@@ -165,27 +167,12 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
                                 />
                             </FormGroup>
                         </ConfigRow>
-                        <FormGroup>
-                            <Label>Frequency</Label>
-                            <Select
-                                value={config.frequency || 'daily'}
-                                onChange={(e) => updateConfig('frequency', e.target.value)}
-                            >
-                                <option value="daily">Daily</option>
-                                <option value="weekly">Weekly</option>
-                                <option value="monthly">Monthly</option>
-                            </Select>
-                        </FormGroup>
                     </ConfigSection>
                 );
 
             case 'duration':
                 return (
                     <ConfigSection>
-                        <ConfigTitle>
-                            <span className="material-symbols-outlined">settings</span>
-                            Duration Configuration
-                        </ConfigTitle>
                         <ConfigRow>
                             <FormGroup>
                                 <Label>Unit</Label>
@@ -208,26 +195,12 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
                                 />
                             </FormGroup>
                         </ConfigRow>
-                        <FormGroup>
-                            <Label>Period</Label>
-                            <Select
-                                value={config.targetPeriod || 'week'}
-                                onChange={(e) => updateConfig('targetPeriod', e.target.value)}
-                            >
-                                <option value="week">Weekly</option>
-                                <option value="month">Monthly</option>
-                            </Select>
-                        </FormGroup>
                     </ConfigSection>
                 );
 
             case 'frequency':
                 return (
                     <ConfigSection>
-                        <ConfigTitle>
-                            <span className="material-symbols-outlined">settings</span>
-                            Frequency Configuration
-                        </ConfigTitle>
                         <ConfigRow>
                             <FormGroup>
                                 <Label>Target Count</Label>
@@ -251,20 +224,16 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
                                 </Select>
                             </FormGroup>
                         </ConfigRow>
-                        <HelpText>e.g., "3 times per week"</HelpText>
+                        <HelpText>Example: 3 times per week</HelpText>
                     </ConfigSection>
                 );
 
             case 'scale':
                 return (
                     <ConfigSection>
-                        <ConfigTitle>
-                            <span className="material-symbols-outlined">settings</span>
-                            Scale Configuration
-                        </ConfigTitle>
                         <ConfigRow>
                             <FormGroup>
-                                <Label>Minimum Value</Label>
+                                <Label>Min Value</Label>
                                 <Input
                                     type="number"
                                     value={config.scaleMin || ''}
@@ -273,7 +242,7 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
                                 />
                             </FormGroup>
                             <FormGroup>
-                                <Label>Maximum Value</Label>
+                                <Label>Max Value</Label>
                                 <Input
                                     type="number"
                                     value={config.scaleMax || ''}
@@ -282,17 +251,13 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
                                 />
                             </FormGroup>
                         </ConfigRow>
-                        <HelpText>Rate on a scale (e.g., 1-10 for mood tracking)</HelpText>
+                        <HelpText>Rate on a scale for mood, energy, etc.</HelpText>
                     </ConfigSection>
                 );
 
             case 'target':
                 return (
                     <ConfigSection>
-                        <ConfigTitle>
-                            <span className="material-symbols-outlined">settings</span>
-                            Target Configuration
-                        </ConfigTitle>
                         <ConfigRow>
                             <FormGroup>
                                 <Label>Target Days</Label>
@@ -315,31 +280,13 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
                                 </Select>
                             </FormGroup>
                         </ConfigRow>
-                        <HelpText>e.g., "5 days per week"</HelpText>
+                        <HelpText>Example: 5 days per week</HelpText>
                     </ConfigSection>
                 );
 
             case 'binary':
             default:
-                return (
-                    <ConfigSection>
-                        <ConfigTitle>
-                            <span className="material-symbols-outlined">settings</span>
-                            Binary Configuration
-                        </ConfigTitle>
-                        <FormGroup>
-                            <Label>Frequency</Label>
-                            <Select
-                                value={config.frequency || 'daily'}
-                                onChange={(e) => updateConfig('frequency', e.target.value)}
-                            >
-                                <option value="daily">Daily</option>
-                                <option value="weekly">Weekly</option>
-                                <option value="monthly">Monthly</option>
-                            </Select>
-                        </FormGroup>
-                    </ConfigSection>
-                );
+                return null;
         }
     };
 
@@ -359,12 +306,12 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
 
                 <EditorBody>
                     <FormGroup>
-                        <Label>Tracker Name *</Label>
+                        <Label>Name *</Label>
                         <Input
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            placeholder="e.g., Morning Meditation"
+                            placeholder="Morning Meditation, Read 30 mins..."
                             maxLength={100}
                             autoFocus
                         />
@@ -377,45 +324,86 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder="Optional description..."
                             maxLength={500}
+                            rows={2}
                         />
                     </FormGroup>
 
                     {!editingTracker && (
-                        <FormGroup>
-                            <Label>Tracker Type *</Label>
-                            <TypeGrid>
-                                {trackerTypes.map(t => (
-                                    <TypeCard
-                                        key={t.type}
-                                        $selected={type === t.type}
-                                        onClick={() => setType(t.type)}
-                                    >
-                                        <span className="material-symbols-outlined">{t.icon}</span>
-                                        <span>{t.label}</span>
-                                    </TypeCard>
-                                ))}
-                            </TypeGrid>
-                            <HelpText>
-                                {trackerTypes.find(t => t.type === type)?.description}
-                            </HelpText>
-                        </FormGroup>
+                        <>
+                            <SectionDivider />
+                            <FormGroup>
+                                <Label>Type *</Label>
+                                <TypeGrid>
+                                    {trackerTypes.map(t => (
+                                        <TypeCard
+                                            key={t.type}
+                                            $selected={type === t.type}
+                                            onClick={() => setType(t.type)}
+                                        >
+                                            <span className="material-symbols-outlined">{t.icon}</span>
+                                            <div>
+                                                <span>{t.label}</span>
+                                                <small>{t.description}</small>
+                                            </div>
+                                        </TypeCard>
+                                    ))}
+                                </TypeGrid>
+                            </FormGroup>
+                        </>
                     )}
 
                     {renderConfigForm()}
 
+                    <SectionDivider />
+
                     <FormGroup>
                         <Label>Folder</Label>
-                        <Select
-                            value={folderId || ''}
-                            onChange={(e) => setFolderId(e.target.value || null)}
-                        >
-                            <option value="">No Folder</option>
-                            {folders.map(folder => (
-                                <option key={folder._id} value={folder._id}>
-                                    {folder.name}
-                                </option>
-                            ))}
-                        </Select>
+                        {!isAddingFolder ? (
+                            <FolderRow>
+                                <Select
+                                    value={folderId || ''}
+                                    onChange={(e) => setFolderId(e.target.value || null)}
+                                >
+                                    <option value="">No Folder</option>
+                                    {folders.map(folder => (
+                                        <option key={folder._id} value={folder._id}>
+                                            {folder.name}
+                                        </option>
+                                    ))}
+                                </Select>
+                                <InlineAddButton onClick={() => setIsAddingFolder(true)}>
+                                    <span className="material-symbols-outlined">add</span>
+                                </InlineAddButton>
+                            </FolderRow>
+                        ) : (
+                            <FolderRow>
+                                <Input
+                                    type="text"
+                                    value={newFolderName}
+                                    onChange={(e) => setNewFolderName(e.target.value)}
+                                    placeholder="New folder name..."
+                                    autoFocus
+                                />
+                                <InlineAddButton 
+                                    onClick={() => {
+                                        // TODO: Call API to create folder
+                                        setIsAddingFolder(false);
+                                        setNewFolderName('');
+                                    }}
+                                    disabled={!newFolderName.trim()}
+                                >
+                                    <span className="material-symbols-outlined">check</span>
+                                </InlineAddButton>
+                                <InlineAddButton 
+                                    onClick={() => {
+                                        setIsAddingFolder(false);
+                                        setNewFolderName('');
+                                    }}
+                                >
+                                    <span className="material-symbols-outlined">close</span>
+                                </InlineAddButton>
+                            </FolderRow>
+                        )}
                     </FormGroup>
 
                     <FormGroup>

@@ -15,6 +15,12 @@ import {
     CalendarGrid,
     DayHeader,
     CalendarDay,
+    QuickAddSection,
+    QuickAddInputs,
+    QuickAddRow,
+    QuickInput,
+    QuickTextArea,
+    QuickAddButton,
     EntryList,
     EntryCard,
     EntryInfo,
@@ -23,13 +29,7 @@ import {
     EntryNote,
     EntryActions,
     IconButton,
-    EmptyState,
-    QuickAddSection,
-    QuickAddInputs,
-    QuickAddRow,
-    QuickInput,
-    QuickTextArea,
-    QuickAddButton
+    EmptyState
 } from './TrackerHistory.styles';
 
 interface TrackerHistoryProps {
@@ -85,6 +85,7 @@ const TrackerHistory: React.FC<TrackerHistoryProps> = ({ isOpen, onClose, tracke
 
     const handleToday = () => {
         setCurrentMonth(new Date());
+        setSelectedDate(new Date());
     };
 
     const getDayStatus = (date: Date): 'completed' | 'partial' | 'missed' | 'skipped' | 'future' | 'empty' => {
@@ -234,12 +235,14 @@ const TrackerHistory: React.FC<TrackerHistoryProps> = ({ isOpen, onClose, tracke
             date.setHours(0, 0, 0, 0);
             const status = getDayStatus(date);
             const isToday = date.getTime() === today.getTime();
+            const isSelected = date.getTime() === selectedDate.getTime();
 
             days.push(
                 <CalendarDay
                     key={day}
                     $status={status}
                     $isToday={isToday}
+                    $isSelected={isSelected}
                     onClick={() => handleDayClick(date)}
                 >
                     <span>{day}</span>

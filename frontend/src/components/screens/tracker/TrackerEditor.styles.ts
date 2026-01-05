@@ -7,7 +7,8 @@ export const EditorOverlay = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -20,11 +21,12 @@ export const EditorModal = styled.div`
     border: 1px solid ${darkTheme.border};
     border-radius: 4px;
     width: 90%;
-    max-width: 600px;
+    max-width: 650px;
     max-height: 90vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 
     @media (max-width: 768px) {
         width: 95%;
@@ -36,7 +38,7 @@ export const EditorHeader = styled.div`
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
+    padding: 16px 20px;
     border-bottom: 1px solid ${darkTheme.border};
     background: ${darkTheme.backgroundDarkest};
     flex-shrink: 0;
@@ -44,7 +46,7 @@ export const EditorHeader = styled.div`
 
 export const EditorTitle = styled.h2`
     color: ${darkTheme.accent};
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 600;
     margin: 0;
 `;
@@ -54,14 +56,17 @@ export const CloseButton = styled.button`
     border: none;
     color: ${darkTheme.text.color};
     cursor: pointer;
-    padding: 4px;
+    padding: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
     opacity: 0.5;
+    border-radius: 4px;
+    transition: all 0.2s;
 
     &:hover {
         opacity: 1;
+        background: ${darkTheme.backgroundDarker};
     }
 
     .material-symbols-outlined {
@@ -70,10 +75,10 @@ export const CloseButton = styled.button`
 `;
 
 export const EditorBody = styled.div`
-    padding: 16px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 20px;
     flex: 1;
     overflow-y: auto;
 
@@ -87,6 +92,7 @@ export const EditorBody = styled.div`
 
     &::-webkit-scrollbar-thumb {
         background: ${darkTheme.accent}40;
+        border-radius: 4px;
 
         &:hover {
             background: ${darkTheme.accent}60;
@@ -104,6 +110,7 @@ export const Label = styled.label`
     color: ${darkTheme.text.color};
     font-size: 13px;
     font-weight: 600;
+    opacity: 0.9;
 `;
 
 export const Input = styled.input`
@@ -112,13 +119,14 @@ export const Input = styled.input`
     border-radius: 4px;
     color: ${darkTheme.text.color};
     font-size: 14px;
-    padding: 8px 10px;
+    padding: 10px 12px;
     outline: none;
     font-family: inherit;
+    transition: border-color 0.2s;
 
     &::placeholder {
         color: ${darkTheme.text.color};
-        opacity: 0.4;
+        opacity: 0.35;
     }
 
     &:focus {
@@ -132,15 +140,16 @@ export const TextArea = styled.textarea`
     border-radius: 4px;
     color: ${darkTheme.text.color};
     font-size: 13px;
-    padding: 8px 10px;
+    padding: 10px 12px;
     outline: none;
     resize: vertical;
     min-height: 60px;
     font-family: inherit;
+    transition: border-color 0.2s;
 
     &::placeholder {
         color: ${darkTheme.text.color};
-        opacity: 0.4;
+        opacity: 0.35;
     }
 
     &:focus {
@@ -157,6 +166,7 @@ export const TextArea = styled.textarea`
 
     &::-webkit-scrollbar-thumb {
         background: ${darkTheme.accent}40;
+        border-radius: 4px;
 
         &:hover {
             background: ${darkTheme.accent}60;
@@ -170,10 +180,12 @@ export const Select = styled.select`
     border-radius: 4px;
     color: ${darkTheme.text.color};
     font-size: 14px;
-    padding: 8px 10px;
+    padding: 10px 12px;
     outline: none;
     font-family: inherit;
     cursor: pointer;
+    transition: border-color 0.2s;
+    flex: 1;
 
     &:focus {
         border-color: ${darkTheme.accent};
@@ -186,24 +198,23 @@ export const Select = styled.select`
 
 export const TypeGrid = styled.div`
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
 
     @media (max-width: 768px) {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr;
     }
 `;
 
 export const TypeCard = styled.div<{ $selected: boolean }>`
-    background: ${props => props.$selected ? darkTheme.accent + '20' : darkTheme.backgroundDarker};
+    background: ${props => props.$selected ? darkTheme.accent + '15' : darkTheme.backgroundDarker};
     border: 1px solid ${props => props.$selected ? darkTheme.accent : darkTheme.border};
     border-radius: 4px;
-    padding: 12px;
+    padding: 14px;
     cursor: pointer;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 12px;
     transition: all 0.2s;
 
     &:hover {
@@ -212,15 +223,29 @@ export const TypeCard = styled.div<{ $selected: boolean }>`
     }
 
     .material-symbols-outlined {
-        font-size: 24px;
+        font-size: 28px;
         color: ${props => props.$selected ? darkTheme.accent : darkTheme.text.color};
+        opacity: ${props => props.$selected ? 1 : 0.6};
+        flex-shrink: 0;
+    }
+
+    > div {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
     }
 
     span {
-        font-size: 11px;
+        font-size: 13px;
         font-weight: 600;
         color: ${props => props.$selected ? darkTheme.accent : darkTheme.text.color};
-        text-align: center;
+    }
+
+    small {
+        font-size: 11px;
+        color: ${darkTheme.text.color};
+        opacity: 0.5;
     }
 `;
 
@@ -228,23 +253,10 @@ export const ConfigSection = styled.div`
     background: ${darkTheme.backgroundDarker};
     border: 1px solid ${darkTheme.border};
     border-radius: 4px;
-    padding: 12px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-`;
-
-export const ConfigTitle = styled.div`
-    color: ${darkTheme.accent};
-    font-size: 13px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-
-    .material-symbols-outlined {
-        font-size: 16px;
-    }
+    gap: 14px;
 `;
 
 export const ConfigRow = styled.div`
@@ -260,14 +272,23 @@ export const ConfigRow = styled.div`
 export const CheckboxGroup = styled.label`
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     cursor: pointer;
     color: ${darkTheme.text.color};
     font-size: 13px;
+    padding: 10px 12px;
+    background: ${darkTheme.backgroundDarker};
+    border: 1px solid ${darkTheme.border};
+    border-radius: 4px;
+    transition: all 0.2s;
+
+    &:hover {
+        border-color: ${darkTheme.accent}60;
+    }
 
     input[type="checkbox"] {
-        width: 16px;
-        height: 16px;
+        width: 18px;
+        height: 18px;
         cursor: pointer;
         accent-color: ${darkTheme.accent};
     }
@@ -277,8 +298,8 @@ export const EditorFooter = styled.div`
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 8px;
-    padding: 12px 16px;
+    gap: 12px;
+    padding: 16px 20px;
     border-top: 1px solid ${darkTheme.border};
     background: ${darkTheme.backgroundDarkest};
     flex-shrink: 0;
@@ -289,17 +310,20 @@ export const ArchiveButton = styled.button`
     border: 1px solid ${darkTheme.border};
     color: ${darkTheme.text.color};
     border-radius: 4px;
-    padding: 8px 12px;
+    padding: 10px 16px;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     font-family: inherit;
+    transition: all 0.2s;
 
     &:hover {
         background: ${darkTheme.backgroundDarker};
+        border-color: ${darkTheme.accent};
+        color: ${darkTheme.accent};
     }
 
     .material-symbols-outlined {
@@ -309,7 +333,7 @@ export const ArchiveButton = styled.button`
 
 export const FooterActions = styled.div`
     display: flex;
-    gap: 8px;
+    gap: 10px;
 
     @media (max-width: 768px) {
         flex: 1;
@@ -317,16 +341,17 @@ export const FooterActions = styled.div`
 `;
 
 export const EditorButton = styled.button<{ variant?: 'primary' | 'secondary' }>`
-    padding: 8px 16px;
+    padding: 10px 20px;
     border-radius: 4px;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     border: none;
     font-family: inherit;
+    transition: all 0.2s;
 
     ${props => props.variant === 'primary' ? `
         background: ${darkTheme.accent};
@@ -334,6 +359,7 @@ export const EditorButton = styled.button<{ variant?: 'primary' | 'secondary' }>
 
         &:hover:not(:disabled) {
             opacity: 0.9;
+            transform: translateY(-1px);
         }
 
         &:disabled {
@@ -347,6 +373,7 @@ export const EditorButton = styled.button<{ variant?: 'primary' | 'secondary' }>
 
         &:hover {
             background: ${darkTheme.backgroundDarker};
+            border-color: ${darkTheme.accent};
         }
     `}
 
@@ -361,8 +388,50 @@ export const EditorButton = styled.button<{ variant?: 'primary' | 'secondary' }>
 `;
 
 export const HelpText = styled.div`
-    font-size: 11px;
-    opacity: 0.6;
+    font-size: 12px;
+    opacity: 0.5;
     color: ${darkTheme.text.color};
-    margin-top: 4px;
+    margin-top: -4px;
+`;
+
+export const SectionDivider = styled.div`
+    height: 1px;
+    background: ${darkTheme.border};
+    margin: 4px 0;
+    opacity: 0.5;
+`;
+
+export const FolderRow = styled.div`
+    display: flex;
+    gap: 8px;
+    align-items: center;
+`;
+
+export const InlineAddButton = styled.button`
+    background: ${darkTheme.accent}20;
+    border: 1px solid ${darkTheme.accent}40;
+    color: ${darkTheme.accent};
+    border-radius: 4px;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+
+    &:hover:not(:disabled) {
+        background: ${darkTheme.accent}30;
+        border-color: ${darkTheme.accent};
+    }
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    .material-symbols-outlined {
+        font-size: 18px;
+    }
 `;

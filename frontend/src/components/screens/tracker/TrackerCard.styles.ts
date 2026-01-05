@@ -131,10 +131,18 @@ export const HeatmapDay = styled.div<{ $status?: 'completed' | 'partial' | 'miss
     aspect-ratio: 1;
     background: ${props => {
         switch (props.$status) {
-            case 'completed': return darkTheme.accentGreen;
-            case 'partial': return darkTheme.accentOrange;
-            case 'missed': return '#e74c3c40';
+            case 'completed': return darkTheme.accentGreen + '30';
+            case 'partial': return '#F59E0B30';
+            case 'missed': return '#EF444430';
             default: return darkTheme.backgroundDarker;
+        }
+    }};
+    border: 1px solid ${props => {
+        switch (props.$status) {
+            case 'completed': return darkTheme.accentGreen;
+            case 'partial': return '#F59E0B';
+            case 'missed': return '#EF4444';
+            default: return darkTheme.border;
         }
     }};
     border-radius: 2px;
@@ -143,7 +151,7 @@ export const HeatmapDay = styled.div<{ $status?: 'completed' | 'partial' | 'miss
 
     &:hover {
         transform: scale(1.1);
-        border: 1px solid ${darkTheme.accent};
+        border-color: ${darkTheme.accent};
     }
 `;
 
@@ -219,8 +227,8 @@ export const StreakBadge = styled.div`
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    background: ${darkTheme.accentOrange}20;
-    color: ${darkTheme.accentOrange};
+    background: ${darkTheme.accentGreen}20;
+    color: ${darkTheme.accentGreen};
     padding: 4px 8px;
     border-radius: 4px;
     font-size: 11px;

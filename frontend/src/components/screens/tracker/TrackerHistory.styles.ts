@@ -8,6 +8,7 @@ export const HistoryOverlay = styled.div`
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -162,7 +163,11 @@ export const NavButton = styled.button`
 export const CalendarGrid = styled.div`
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
+    gap: 3px;
+    
+    @media (max-width: 768px) {
+        gap: 2px;
+    }
 `;
 
 export const DayHeader = styled.div`
@@ -177,7 +182,10 @@ export const DayHeader = styled.div`
 export const CalendarDay = styled.div<{ 
     $status?: 'completed' | 'partial' | 'missed' | 'skipped' | 'future' | 'empty';
     $isToday?: boolean;
+    $isSelected?: boolean;
 }>`
+    min-height: 36px;
+    max-height: 40px;
     aspect-ratio: 1;
     display: flex;
     flex-direction: column;
@@ -186,12 +194,13 @@ export const CalendarDay = styled.div<{
     border-radius: 4px;
     cursor: ${props => props.$status === 'future' || props.$status === 'empty' ? 'default' : 'pointer'};
     position: relative;
-    transition: all 0.2s;
+    transition: all 0.15s ease;
     background: ${props => {
+        if (props.$isSelected) return darkTheme.accent + '40';
         switch (props.$status) {
-            case 'completed': return darkTheme.accentGreen;
-            case 'partial': return darkTheme.accentOrange;
-            case 'missed': return '#e74c3c40';
+            case 'completed': return darkTheme.accentGreen + '30';
+            case 'partial': return '#F59E0B30';
+            case 'missed': return '#EF444430';
             case 'skipped': return darkTheme.backgroundDarkest;
             case 'future': return darkTheme.backgroundDarkest;
             case 'empty': return 'transparent';
@@ -199,28 +208,45 @@ export const CalendarDay = styled.div<{
         }
     }};
     border: ${props => {
+        if (props.$isSelected) return `2px solid ${darkTheme.accent}`;
         if (props.$isToday) return `2px solid ${darkTheme.accent}`;
         if (props.$status === 'skipped') return `1px dashed ${darkTheme.border}`;
+        if (props.$status === 'completed') return `1px solid ${darkTheme.accentGreen}`;
+        if (props.$status === 'partial') return `1px solid #F59E0B`;
+        if (props.$status === 'missed') return `1px solid #EF4444`;
         return `1px solid ${darkTheme.border}`;
     }};
     opacity: ${props => props.$status === 'future' || props.$status === 'empty' ? 0.3 : 1};
 
     &:hover {
         ${props => props.$status !== 'future' && props.$status !== 'empty' && `
-            transform: scale(1.05);
+            transform: scale(1.08);
+            border-width: 2px;
             border-color: ${darkTheme.accent};
             z-index: 1;
+            background: ${props.$isSelected ? darkTheme.accent + '50' : darkTheme.accent + '30'};
         `}
     }
 
     span {
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 600;
         color: ${props => {
-            if (props.$status === 'completed') return 'white';
-            if (props.$status === 'partial') return 'white';
+            if (props.$isSelected) return darkTheme.accent;
+            if (props.$status === 'completed') return darkTheme.accentGreen;
+            if (props.$status === 'partial') return '#F59E0B';
+            if (props.$status === 'missed') return '#EF4444';
             return darkTheme.text.color;
         }};
+    }
+    
+    @media (max-width: 768px) {
+        min-height: 32px;
+        max-height: 36px;
+        
+        span {
+            font-size: 11px;
+        }
     }
 `;
 
