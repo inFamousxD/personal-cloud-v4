@@ -160,6 +160,7 @@ export const HeatmapDay = styled.div<{ $status?: 'completed' | 'partial' | 'miss
 export const ActionSection = styled.div`
     display: flex;
     gap: 8px;
+    justify-content: space-between;
 `;
 
 export const CompleteButton = styled.button<{ $completed?: boolean }>`
@@ -250,13 +251,19 @@ export const NumericControls = styled.div`
 export const NumericValue = styled.div`
     flex: 1;
     text-align: center;
-    font-size: 24px;
-    font-weight: 700;
+    font-size: 20px;
+    font-weight: 600;
     color: ${darkTheme.accent};
 `;
 
 export const NumericButton = styled.button`
-    background: ${darkTheme.accent};
+    background: repeating-linear-gradient(
+        45deg,
+        ${darkTheme.accent}80,
+        ${darkTheme.accent}80 10px,
+        ${darkTheme.accent}40 10px,
+        ${darkTheme.accent}40 20px
+    );
     color: white;
     border: none;
     border-radius: 4px;

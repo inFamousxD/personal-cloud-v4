@@ -143,7 +143,7 @@ const TrackerCard: React.FC<TrackerCardProps> = ({ tracker, onEdit, onDelete, on
     const getTypeIcon = () => {
         switch (tracker.type) {
             case 'binary': return 'check_circle';
-            case 'numeric': return '123';
+            case 'numeric': return 'numbers';
             case 'duration': return 'schedule';
             case 'frequency': return 'repeat';
             case 'scale': return 'sentiment_satisfied';

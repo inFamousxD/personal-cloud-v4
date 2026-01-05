@@ -228,14 +228,20 @@ export const NumericControls = styled.div`
 
 export const NumericValue = styled.div`
     text-align: center;
-    font-size: 24px;
-    font-weight: 700;
+    font-size: 20px;
+    font-weight: 600;
     color: ${darkTheme.accent};
     min-width: 100px;
 `;
 
 export const NumericButton = styled.button`
-    background: ${darkTheme.accent};
+    background: repeating-linear-gradient(
+        45deg,
+        ${darkTheme.accent}80,
+        ${darkTheme.accent}80 10px,
+        ${darkTheme.accent}40 10px,
+        ${darkTheme.accent}40 20px
+    );
     color: white;
     border: none;
     border-radius: 4px;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Tracker, TrackerFolder, TrackerType, TrackerConfig, CreateTrackerInput, UpdateTrackerInput, trackersApi } from '../../../services/trackersApi';
 import TagInput from '../notes/TagInput';
 import {
@@ -12,7 +12,6 @@ import {
     Label,
     Input,
     TextArea,
-    Select,
     TypeGrid,
     TypeCard,
     ConfigSection,
@@ -24,8 +23,13 @@ import {
     EditorButton,
     HelpText,
     SectionDivider,
-    InlineAddButton,
-    FolderRow
+    FolderSelectorWrapper,
+    FolderSelectorButton,
+    FolderDropdown,
+    FolderDropdownItem,
+    AddFolderInput,
+    FolderInput,
+    FolderActionButton
 } from './TrackerEditor.styles';
 
 interface TrackerEditorProps {
@@ -39,10 +43,10 @@ interface TrackerEditorProps {
 }
 
 const trackerTypes: { type: TrackerType; icon: string; label: string; description: string }[] = [
-    { type: 'binary', icon: 'check_circle', label: 'Binary', description: 'Yes/No tracking' },
-    { type: 'numeric', icon: '123', label: 'Numeric', description: 'Count values' },
-    { type: 'duration', icon: 'schedule', label: 'Duration', description: 'Track time' },
-    { type: 'frequency', icon: 'repeat', label: 'Frequency', description: 'Times per period' },
+    { type: 'binary', icon: 'check_circle', label: 'Binary', description: 'Yes/No' },
+    { type: 'numeric', icon: '123', label: 'Numeric', description: 'Count' },
+    { type: 'duration', icon: 'schedule', label: 'Duration', description: 'Time' },
+    { type: 'frequency', icon: 'repeat', label: 'Frequency', description: 'Times/period' },
     { type: 'scale', icon: 'sentiment_satisfied', label: 'Scale', description: 'Rate 1-10' },
     { type: 'target', icon: 'flag', label: 'Target', description: 'Goal-based' }
 ];
@@ -63,8 +67,12 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
     const [tags, setTags] = useState<string[]>([]);
     const [config, setConfig] = useState<TrackerConfig>({});
     const [saving, setSaving] = useState(false);
+    
+    // Folder selector states
+    const [showFolderDropdown, setShowFolderDropdown] = useState(false);
     const [isAddingFolder, setIsAddingFolder] = useState(false);
     const [newFolderName, setNewFolderName] = useState('');
+    const folderDropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (editingTracker) {
@@ -79,6 +87,25 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
         }
     }, [editingTracker, isOpen]);
 
+    // Click outside to close dropdown
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (folderDropdownRef.current && !folderDropdownRef.current.contains(event.target as Node)) {
+                setShowFolderDropdown(false);
+                setIsAddingFolder(false);
+                setNewFolderName('');
+            }
+        };
+
+        if (showFolderDropdown) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showFolderDropdown]);
+
     const resetForm = () => {
         setName('');
         setDescription('');
@@ -89,6 +116,7 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
             allowNotes: true,
             frequency: 'daily'
         });
+        setShowFolderDropdown(false);
         setIsAddingFolder(false);
         setNewFolderName('');
     };
@@ -101,7 +129,8 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
             setFolderId(newFolder._id || null);
             setIsAddingFolder(false);
             setNewFolderName('');
-            onFoldersUpdate(); // Refresh the folders list
+            setShowFolderDropdown(false);
+            onFoldersUpdate();
         } catch (error) {
             console.error('Error creating folder:', error);
         }
@@ -165,6 +194,12 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
         }
     };
 
+    const getSelectedFolderName = () => {
+        if (!folderId) return 'No Folder';
+        const folder = folders.find(f => f._id === folderId);
+        return folder?.name || 'No Folder';
+    };
+
     const renderConfigForm = () => {
         switch (type) {
             case 'numeric':
@@ -177,7 +212,7 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
                                     type="text"
                                     value={config.unit || ''}
                                     onChange={(e) => updateConfig('unit', e.target.value)}
-                                    placeholder="glasses, pages, km..."
+                                    placeholder="glasses, pages..."
                                 />
                             </FormGroup>
                             <FormGroup>
@@ -200,16 +235,17 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
                         <ConfigRow>
                             <FormGroup>
                                 <Label>Unit</Label>
-                                <Select
+                                <Input
+                                    as="select"
                                     value={config.durationUnit || 'minutes'}
                                     onChange={(e) => updateConfig('durationUnit', e.target.value)}
                                 >
                                     <option value="minutes">Minutes</option>
                                     <option value="hours">Hours</option>
-                                </Select>
+                                </Input>
                             </FormGroup>
                             <FormGroup>
-                                <Label>Target Duration</Label>
+                                <Label>Target</Label>
                                 <Input
                                     type="number"
                                     min="0"
@@ -238,14 +274,15 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
                             </FormGroup>
                             <FormGroup>
                                 <Label>Per Period</Label>
-                                <Select
+                                <Input
+                                    as="select"
                                     value={config.frequency || 'weekly'}
                                     onChange={(e) => updateConfig('frequency', e.target.value)}
                                 >
                                     <option value="daily">Daily</option>
                                     <option value="weekly">Weekly</option>
                                     <option value="monthly">Monthly</option>
-                                </Select>
+                                </Input>
                             </FormGroup>
                         </ConfigRow>
                         <HelpText>Example: 3 times per week</HelpText>
@@ -257,7 +294,7 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
                     <ConfigSection>
                         <ConfigRow>
                             <FormGroup>
-                                <Label>Min Value</Label>
+                                <Label>Min</Label>
                                 <Input
                                     type="number"
                                     value={config.scaleMin || ''}
@@ -266,7 +303,7 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
                                 />
                             </FormGroup>
                             <FormGroup>
-                                <Label>Max Value</Label>
+                                <Label>Max</Label>
                                 <Input
                                     type="number"
                                     value={config.scaleMax || ''}
@@ -275,7 +312,7 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
                                 />
                             </FormGroup>
                         </ConfigRow>
-                        <HelpText>Rate on a scale for mood, energy, etc.</HelpText>
+                        <HelpText>Rate on a scale (mood, energy, etc.)</HelpText>
                     </ConfigSection>
                 );
 
@@ -295,13 +332,14 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
                             </FormGroup>
                             <FormGroup>
                                 <Label>Per Period</Label>
-                                <Select
+                                <Input
+                                    as="select"
                                     value={config.targetPeriod || 'week'}
                                     onChange={(e) => updateConfig('targetPeriod', e.target.value)}
                                 >
                                     <option value="week">Week</option>
                                     <option value="month">Month</option>
-                                </Select>
+                                </Input>
                             </FormGroup>
                         </ConfigRow>
                         <HelpText>Example: 5 days per week</HelpText>
@@ -365,10 +403,8 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
                                             onClick={() => setType(t.type)}
                                         >
                                             <span className="material-symbols-outlined">{t.icon}</span>
-                                            <div>
-                                                <span>{t.label}</span>
-                                                <small>{t.description}</small>
-                                            </div>
+                                            <span>{t.label}</span>
+                                            <small>{t.description}</small>
                                         </TypeCard>
                                     ))}
                                 </TypeGrid>
@@ -382,57 +418,94 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
 
                     <FormGroup>
                         <Label>Folder</Label>
-                        {!isAddingFolder ? (
-                            <FolderRow>
-                                <Select
-                                    value={folderId || ''}
-                                    onChange={(e) => setFolderId(e.target.value || null)}
-                                >
-                                    <option value="">No Folder</option>
+                        <FolderSelectorWrapper ref={folderDropdownRef}>
+                            <FolderSelectorButton
+                                type="button"
+                                $hasValue={!!folderId}
+                                onClick={() => setShowFolderDropdown(!showFolderDropdown)}
+                            >
+                                {getSelectedFolderName()}
+                                <span className="material-symbols-outlined">
+                                    {showFolderDropdown ? 'expand_less' : 'expand_more'}
+                                </span>
+                            </FolderSelectorButton>
+                            {showFolderDropdown && (
+                                <FolderDropdown>
+                                    {isAddingFolder ? (
+                                        <AddFolderInput>
+                                            <FolderInput
+                                                type="text"
+                                                value={newFolderName}
+                                                onChange={(e) => setNewFolderName(e.target.value)}
+                                                placeholder="Folder name..."
+                                                autoFocus
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        handleCreateFolder();
+                                                    } else if (e.key === 'Escape') {
+                                                        setIsAddingFolder(false);
+                                                        setNewFolderName('');
+                                                    }
+                                                }}
+                                            />
+                                            <FolderActionButton
+                                                type="button"
+                                                $variant="primary"
+                                                onClick={handleCreateFolder}
+                                                disabled={!newFolderName.trim()}
+                                            >
+                                                <span className="material-symbols-outlined">check</span>
+                                            </FolderActionButton>
+                                            <FolderActionButton
+                                                type="button"
+                                                onClick={() => {
+                                                    setIsAddingFolder(false);
+                                                    setNewFolderName('');
+                                                }}
+                                            >
+                                                <span className="material-symbols-outlined">close</span>
+                                            </FolderActionButton>
+                                        </AddFolderInput>
+                                    ) : (
+                                        <FolderDropdownItem
+                                            $isAdd
+                                            onClick={() => setIsAddingFolder(true)}
+                                        >
+                                            <span className="material-symbols-outlined">add</span>
+                                            Create New Folder
+                                        </FolderDropdownItem>
+                                    )}
+                                    <FolderDropdownItem
+                                        $selected={!folderId}
+                                        onClick={() => {
+                                            setFolderId(null);
+                                            setShowFolderDropdown(false);
+                                        }}
+                                    >
+                                        No Folder
+                                        {!folderId && (
+                                            <span className="material-symbols-outlined">check</span>
+                                        )}
+                                    </FolderDropdownItem>
                                     {folders.map(folder => (
-                                        <option key={folder._id} value={folder._id}>
+                                        <FolderDropdownItem
+                                            key={folder._id}
+                                            $selected={folderId === folder._id}
+                                            onClick={() => {
+                                                setFolderId(folder._id || null);
+                                                setShowFolderDropdown(false);
+                                            }}
+                                        >
                                             {folder.name}
-                                        </option>
+                                            {folderId === folder._id && (
+                                                <span className="material-symbols-outlined">check</span>
+                                            )}
+                                        </FolderDropdownItem>
                                     ))}
-                                </Select>
-                                <InlineAddButton onClick={() => setIsAddingFolder(true)}>
-                                    <span className="material-symbols-outlined">add</span>
-                                </InlineAddButton>
-                            </FolderRow>
-                        ) : (
-                            <FolderRow>
-                                <Input
-                                    type="text"
-                                    value={newFolderName}
-                                    onChange={(e) => setNewFolderName(e.target.value)}
-                                    placeholder="New folder name..."
-                                    autoFocus
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            e.preventDefault();
-                                            handleCreateFolder();
-                                        } else if (e.key === 'Escape') {
-                                            setIsAddingFolder(false);
-                                            setNewFolderName('');
-                                        }
-                                    }}
-                                />
-                                <InlineAddButton 
-                                    onClick={handleCreateFolder}
-                                    disabled={!newFolderName.trim()}
-                                >
-                                    <span className="material-symbols-outlined">check</span>
-                                </InlineAddButton>
-                                <InlineAddButton 
-                                    onClick={() => {
-                                        setIsAddingFolder(false);
-                                        setNewFolderName('');
-                                    }}
-                                >
-                                    <span className="material-symbols-outlined">close</span>
-                                </InlineAddButton>
-                            </FolderRow>
-                        )}
+                                </FolderDropdown>
+                            )}
+                        </FolderSelectorWrapper>
                     </FormGroup>
 
                     <FormGroup>
