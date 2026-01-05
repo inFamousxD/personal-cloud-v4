@@ -21,7 +21,7 @@ export const HistoryModal = styled.div`
     border: 1px solid ${darkTheme.border};
     border-radius: 4px;
     width: 90%;
-    max-width: 900px;
+    max-width: 700px;
     max-height: 90vh;
     display: flex;
     flex-direction: column;
@@ -46,7 +46,7 @@ export const HistoryHeader = styled.div`
 export const HistoryTitle = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
     color: ${darkTheme.text.color};
 
     h2 {
@@ -107,23 +107,213 @@ export const HistoryBody = styled.div`
     }
 `;
 
+export const QuickLogSection = styled.div`
+    background: ${darkTheme.backgroundDarker};
+    border: 1px solid ${darkTheme.border};
+    border-radius: 4px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+`;
+
+export const QuickLogTitle = styled.h3`
+    color: ${darkTheme.accent};
+    font-size: 13px;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    &::before {
+        content: '⚡';
+        font-size: 14px;
+    }
+`;
+
+export const QuickLogControls = styled.div`
+    display: flex;
+    gap: 8px;
+    align-items: center;
+
+    @media (max-width: 768px) {
+        flex-direction: column;
+    }
+`;
+
+export const QuickLogButton = styled.button<{ $completed?: boolean }>`
+    flex: 1;
+    background: ${props => props.$completed ? darkTheme.backgroundDarker : darkTheme.accentGreen};
+    color: ${props => props.$completed ? darkTheme.accentGreen : 'white'};
+    border: ${props => props.$completed ? `1px solid ${darkTheme.accentGreen}` : 'none'};
+    border-radius: 4px;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: inherit;
+    transition: all 0.2s;
+
+    &:hover:not(:disabled) {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .material-symbols-outlined {
+        font-size: 20px;
+    }
+
+    @media (max-width: 768px) {
+        width: 100%;
+    }
+`;
+
+export const QuickInput = styled.input`
+    flex: 1;
+    background: ${darkTheme.backgroundDarkest};
+    border: 1px solid ${darkTheme.border};
+    border-radius: 4px;
+    color: ${darkTheme.text.color};
+    font-size: 14px;
+    padding: 10px 12px;
+    outline: none;
+    font-family: inherit;
+
+    &:focus {
+        border-color: ${darkTheme.accent};
+    }
+
+    @media (max-width: 768px) {
+        width: 100%;
+    }
+`;
+
+export const QuickTextArea = styled.textarea`
+    background: ${darkTheme.backgroundDarkest};
+    border: 1px solid ${darkTheme.border};
+    border-radius: 4px;
+    color: ${darkTheme.text.color};
+    font-size: 12px;
+    padding: 8px 10px;
+    outline: none;
+    resize: vertical;
+    font-family: inherit;
+
+    &:focus {
+        border-color: ${darkTheme.accent};
+    }
+
+    &::placeholder {
+        opacity: 0.4;
+    }
+`;
+
+export const NumericControls = styled.div`
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex: 1;
+    justify-content: center;
+`;
+
+export const NumericValue = styled.div`
+    text-align: center;
+    font-size: 24px;
+    font-weight: 700;
+    color: ${darkTheme.accent};
+    min-width: 100px;
+`;
+
+export const NumericButton = styled.button`
+    background: ${darkTheme.accent};
+    color: white;
+    border: none;
+    border-radius: 4px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+
+    &:hover:not(:disabled) {
+        opacity: 0.9;
+        transform: scale(1.05);
+    }
+
+    &:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+    .material-symbols-outlined {
+        font-size: 20px;
+    }
+`;
+
+export const ScaleButtons = styled.div`
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+`;
+
+export const ScaleButton = styled.button<{ $selected?: boolean }>`
+    background: ${props => props.$selected ? darkTheme.accent : darkTheme.backgroundDarkest};
+    color: ${props => props.$selected ? 'white' : darkTheme.text.color};
+    border: 1px solid ${props => props.$selected ? darkTheme.accent : darkTheme.border};
+    border-radius: 4px;
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+
+    &:hover:not(:disabled) {
+        background: ${darkTheme.accent};
+        color: white;
+        border-color: ${darkTheme.accent};
+        transform: translateY(-2px);
+    }
+
+    &:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+`;
+
 export const CalendarSection = styled.div`
     background: ${darkTheme.backgroundDarker};
     border: 1px solid ${darkTheme.border};
     border-radius: 4px;
-    padding: 16px;
+    padding: 12px;
 `;
 
 export const MonthHeader = styled.div`
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 `;
 
 export const MonthTitle = styled.h3`
     color: ${darkTheme.accent};
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     margin: 0;
 `;
@@ -144,8 +334,9 @@ export const NavButton = styled.button`
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.2s;
 
-    &:hover {
+    &:hover:not(:disabled) {
         background: ${darkTheme.accent}20;
         border-color: ${darkTheme.accent};
     }
@@ -163,40 +354,36 @@ export const NavButton = styled.button`
 export const CalendarGrid = styled.div`
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 3px;
+    gap: 4px;
     
     @media (max-width: 768px) {
-        gap: 2px;
+        gap: 3px;
     }
 `;
 
 export const DayHeader = styled.div`
     text-align: center;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
     color: ${darkTheme.text.color};
     opacity: 0.6;
-    padding: 8px 4px;
+    padding: 4px;
 `;
 
 export const CalendarDay = styled.div<{ 
     $status?: 'completed' | 'partial' | 'missed' | 'skipped' | 'future' | 'empty';
     $isToday?: boolean;
-    $isSelected?: boolean;
 }>`
-    min-height: 36px;
-    max-height: 40px;
     aspect-ratio: 1;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
-    cursor: ${props => props.$status === 'future' || props.$status === 'empty' ? 'default' : 'pointer'};
+    border-radius: 3px;
     position: relative;
-    transition: all 0.15s ease;
+    font-size: 11px;
+    font-weight: 600;
+    
     background: ${props => {
-        if (props.$isSelected) return darkTheme.accent + '40';
         switch (props.$status) {
             case 'completed': return darkTheme.accentGreen + '30';
             case 'partial': return '#F59E0B30';
@@ -207,8 +394,8 @@ export const CalendarDay = styled.div<{
             default: return darkTheme.backgroundDarkest;
         }
     }};
+    
     border: ${props => {
-        if (props.$isSelected) return `2px solid ${darkTheme.accent}`;
         if (props.$isToday) return `2px solid ${darkTheme.accent}`;
         if (props.$status === 'skipped') return `1px dashed ${darkTheme.border}`;
         if (props.$status === 'completed') return `1px solid ${darkTheme.accentGreen}`;
@@ -216,38 +403,30 @@ export const CalendarDay = styled.div<{
         if (props.$status === 'missed') return `1px solid #EF4444`;
         return `1px solid ${darkTheme.border}`;
     }};
+    
     opacity: ${props => props.$status === 'future' || props.$status === 'empty' ? 0.3 : 1};
 
-    &:hover {
-        ${props => props.$status !== 'future' && props.$status !== 'empty' && `
-            transform: scale(1.08);
-            border-width: 2px;
-            border-color: ${darkTheme.accent};
-            z-index: 1;
-            background: ${props.$isSelected ? darkTheme.accent + '50' : darkTheme.accent + '30'};
-        `}
-    }
-
     span {
-        font-size: 12px;
-        font-weight: 600;
         color: ${props => {
-            if (props.$isSelected) return darkTheme.accent;
             if (props.$status === 'completed') return darkTheme.accentGreen;
             if (props.$status === 'partial') return '#F59E0B';
             if (props.$status === 'missed') return '#EF4444';
             return darkTheme.text.color;
         }};
     }
-    
-    @media (max-width: 768px) {
-        min-height: 32px;
-        max-height: 36px;
-        
-        span {
-            font-size: 11px;
-        }
-    }
+`;
+
+export const HistoryListSection = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+`;
+
+export const HistoryListTitle = styled.h3`
+    color: ${darkTheme.accent};
+    font-size: 13px;
+    font-weight: 600;
+    margin: 0;
 `;
 
 export const EntryList = styled.div`
@@ -260,42 +439,47 @@ export const EntryCard = styled.div`
     background: ${darkTheme.backgroundDarker};
     border: 1px solid ${darkTheme.border};
     border-radius: 4px;
-    padding: 12px;
+    padding: 10px;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 12px;
+    gap: 10px;
+    transition: all 0.2s;
+
+    &:hover {
+        border-color: ${darkTheme.accent}40;
+    }
 `;
 
 export const EntryInfo = styled.div`
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
 `;
 
 export const EntryDate = styled.div`
     color: ${darkTheme.accent};
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
 `;
 
 export const EntryValue = styled.div`
     color: ${darkTheme.text.color};
-    font-size: 14px;
+    font-size: 13px;
     display: flex;
     align-items: center;
     gap: 6px;
 
     .material-symbols-outlined {
-        font-size: 16px;
+        font-size: 14px;
         color: ${darkTheme.accentGreen};
     }
 `;
 
 export const EntryNote = styled.div`
     color: ${darkTheme.text.color};
-    font-size: 12px;
+    font-size: 11px;
     opacity: 0.7;
     font-style: italic;
 `;
@@ -314,6 +498,7 @@ export const IconButton = styled.button`
     padding: 4px;
     display: flex;
     align-items: center;
+    transition: all 0.2s;
 
     &:hover {
         opacity: 1;
@@ -333,116 +518,19 @@ export const EmptyState = styled.div`
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 40px;
+    padding: 30px;
     color: ${darkTheme.text.color};
     opacity: 0.6;
-    gap: 12px;
+    gap: 10px;
     text-align: center;
 
     .material-symbols-outlined {
-        font-size: 48px;
+        font-size: 40px;
         color: ${darkTheme.accent}40;
     }
 
     p {
         margin: 0;
-        font-size: 14px;
-    }
-`;
-
-export const QuickAddSection = styled.div`
-    background: ${darkTheme.backgroundDarker};
-    border: 1px solid ${darkTheme.border};
-    border-radius: 4px;
-    padding: 12px;
-    display: flex;
-    gap: 8px;
-    align-items: flex-start;
-
-    @media (max-width: 768px) {
-        flex-direction: column;
-    }
-`;
-
-export const QuickAddInputs = styled.div`
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-`;
-
-export const QuickAddRow = styled.div`
-    display: flex;
-    gap: 8px;
-
-    @media (max-width: 768px) {
-        flex-direction: column;
-    }
-`;
-
-export const QuickInput = styled.input`
-    flex: 1;
-    background: ${darkTheme.backgroundDarkest};
-    border: 1px solid ${darkTheme.border};
-    border-radius: 4px;
-    color: ${darkTheme.text.color};
-    font-size: 13px;
-    padding: 8px 10px;
-    outline: none;
-    font-family: inherit;
-
-    &:focus {
-        border-color: ${darkTheme.accent};
-    }
-`;
-
-export const QuickTextArea = styled.textarea`
-    background: ${darkTheme.backgroundDarkest};
-    border: 1px solid ${darkTheme.border};
-    border-radius: 4px;
-    color: ${darkTheme.text.color};
-    font-size: 12px;
-    padding: 8px 10px;
-    outline: none;
-    resize: vertical;
-    min-height: 60px;
-    font-family: inherit;
-
-    &:focus {
-        border-color: ${darkTheme.accent};
-    }
-`;
-
-export const QuickAddButton = styled.button`
-    background: ${darkTheme.accent};
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 8px 16px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-family: inherit;
-    white-space: nowrap;
-
-    &:hover:not(:disabled) {
-        opacity: 0.9;
-    }
-
-    &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    .material-symbols-outlined {
-        font-size: 16px;
-    }
-
-    @media (max-width: 768px) {
-        width: 100%;
-        justify-content: center;
+        font-size: 13px;
     }
 `;

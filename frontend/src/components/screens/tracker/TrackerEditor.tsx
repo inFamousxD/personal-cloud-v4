@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Tracker, TrackerFolder, TrackerType, TrackerConfig, CreateTrackerInput, UpdateTrackerInput } from '../../../services/trackersApi';
+import { Tracker, TrackerFolder, TrackerType, TrackerConfig, CreateTrackerInput, UpdateTrackerInput, trackersApi } from '../../../services/trackersApi';
 import TagInput from '../notes/TagInput';
 import {
     EditorOverlay,
@@ -35,6 +35,7 @@ interface TrackerEditorProps {
     editingTracker: Tracker | null;
     folders: TrackerFolder[];
     availableTags: string[];
+    onFoldersUpdate: () => void;
 }
 
 const trackerTypes: { type: TrackerType; icon: string; label: string; description: string }[] = [
@@ -52,7 +53,8 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
     onSave,
     editingTracker,
     folders,
-    availableTags
+    availableTags,
+    onFoldersUpdate
 }) => {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
@@ -89,6 +91,20 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
         });
         setIsAddingFolder(false);
         setNewFolderName('');
+    };
+
+    const handleCreateFolder = async () => {
+        if (!newFolderName.trim()) return;
+
+        try {
+            const newFolder = await trackersApi.createFolder({ name: newFolderName.trim() });
+            setFolderId(newFolder._id || null);
+            setIsAddingFolder(false);
+            setNewFolderName('');
+            onFoldersUpdate(); // Refresh the folders list
+        } catch (error) {
+            console.error('Error creating folder:', error);
+        }
     };
 
     const handleSave = async () => {
@@ -139,6 +155,14 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
 
     const updateConfig = (key: keyof TrackerConfig, value: any) => {
         setConfig(prev => ({ ...prev, [key]: value }));
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Escape') {
+            onClose();
+        } else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            handleSave();
+        }
     };
 
     const renderConfigForm = () => {
@@ -294,7 +318,7 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
 
     return (
         <EditorOverlay onClick={onClose}>
-            <EditorModal onClick={(e) => e.stopPropagation()}>
+            <EditorModal onClick={(e) => e.stopPropagation()} onKeyDown={handleKeyDown}>
                 <EditorHeader>
                     <EditorTitle>
                         {editingTracker ? 'Edit Tracker' : 'Create New Tracker'}
@@ -383,13 +407,18 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
                                     onChange={(e) => setNewFolderName(e.target.value)}
                                     placeholder="New folder name..."
                                     autoFocus
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleCreateFolder();
+                                        } else if (e.key === 'Escape') {
+                                            setIsAddingFolder(false);
+                                            setNewFolderName('');
+                                        }
+                                    }}
                                 />
                                 <InlineAddButton 
-                                    onClick={() => {
-                                        // TODO: Call API to create folder
-                                        setIsAddingFolder(false);
-                                        setNewFolderName('');
-                                    }}
+                                    onClick={handleCreateFolder}
                                     disabled={!newFolderName.trim()}
                                 >
                                     <span className="material-symbols-outlined">check</span>

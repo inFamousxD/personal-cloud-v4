@@ -77,6 +77,15 @@ const Trackers: React.FC = () => {
         }
     };
 
+    const loadFolders = async () => {
+        try {
+            const foldersData = await trackersApi.getAllFolders();
+            setFolders(foldersData);
+        } catch (error) {
+            console.error('Error loading folders:', error);
+        }
+    };
+
     const filteredTrackers = React.useMemo(() => {
         let filtered = trackers;
 
@@ -336,6 +345,7 @@ const Trackers: React.FC = () => {
                 editingTracker={editingTracker}
                 folders={folders}
                 availableTags={tags}
+                onFoldersUpdate={loadFolders}
             />
 
             <TrackerHistory
