@@ -378,7 +378,7 @@ const Lists = () => {
             <ListsSidebar $collapsed={sidebarCollapsed}>
                 <SidebarHeader>
                     <SidebarTitle>
-                        <span className="material-symbols-outlined">event_list</span>
+                        <span className="material-symbols-outlined">format_list_bulleted_add</span>
                         Lists
                     </SidebarTitle>
                     <SidebarActions>

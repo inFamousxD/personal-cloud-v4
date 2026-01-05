@@ -393,7 +393,7 @@ export const TitleInput = styled.input`
     color: ${darkTheme.accent};
     font-size: 18px;
     font-weight: 600;
-    padding: 12px;
+    padding: 12px 0px;
     outline: none;
     font-family: inherit;
 
@@ -404,7 +404,7 @@ export const TitleInput = styled.input`
     }
 
     &:focus {
-        background: ${darkTheme.backgroundDarkest};
+        /* background: ${darkTheme.backgroundDarkest}; */
     }
 `;
 

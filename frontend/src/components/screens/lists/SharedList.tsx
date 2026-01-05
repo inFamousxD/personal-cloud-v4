@@ -245,7 +245,7 @@ const SharedList = () => {
                             <strong>{isReadOnly ? 'View-only mode' : 'Edit mode'}</strong> - 
                             {isReadOnly 
                                 ? ' You can view and check items but cannot make other changes.'
-                                : ' You can make changes to this list and they will be saved automatically.'}
+                                : ' You can make changes to this list. Remember to save your changes.'}
                         </div>
                     </ShareBanner>
 
