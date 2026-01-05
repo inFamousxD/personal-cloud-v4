@@ -190,10 +190,10 @@ const TrackerCard: React.FC<TrackerCardProps> = ({ tracker, onEdit, onDelete, on
 
         if (entry.skipped) return 'none';
 
-        if (tracker.type === 'binary') {
+        if (tracker.type === 'binary' || tracker.type === 'target') {
             return entry.completed ? 'completed' : 'missed';
-        } else if (tracker.type === 'numeric') {
-            const target = tracker.config.targetValue || 0;
+        } else if (tracker.type === 'numeric' || tracker.type === 'frequency') {
+            const target = tracker.config.targetValue || tracker.config.targetFrequency || 0;
             const value = entry.numericValue || 0;
             if (value >= target) return 'completed';
             if (value > 0) return 'partial';
@@ -212,17 +212,25 @@ const TrackerCard: React.FC<TrackerCardProps> = ({ tracker, onEdit, onDelete, on
     };
 
     const getProgressPercentage = () => {
-        if (tracker.type === 'numeric' && todayEntry?.numericValue && tracker.config.targetValue) {
-            return Math.min(100, (todayEntry.numericValue / tracker.config.targetValue) * 100);
+        if ((tracker.type === 'numeric' || tracker.type === 'frequency') && todayEntry?.numericValue) {
+            const target = tracker.config.targetValue || tracker.config.targetFrequency || 0;
+            if (target > 0) {
+                return Math.min(100, (todayEntry.numericValue / target) * 100);
+            }
         } else if (tracker.type === 'duration' && stats?.thisWeekCount && tracker.config.targetDuration) {
             // Simplified - would need to sum up actual durations
             return Math.min(100, (stats.thisWeekCount / 7) * 100);
+        } else if (tracker.type === 'target' && stats?.thisWeekCount) {
+            const target = tracker.config.targetDays || 0;
+            if (target > 0) {
+                return Math.min(100, (stats.thisWeekCount / target) * 100);
+            }
         }
         return 0;
     };
 
     const renderActionButton = () => {
-        if (tracker.type === 'binary') {
+        if (tracker.type === 'binary' || tracker.type === 'target') {
             return (
                 <CompleteButton
                     $completed={todayEntry?.completed}
@@ -233,13 +241,19 @@ const TrackerCard: React.FC<TrackerCardProps> = ({ tracker, onEdit, onDelete, on
                     {todayEntry?.completed ? 'Completed!' : 'Mark Complete'}
                 </CompleteButton>
             );
-        } else if (tracker.type === 'numeric') {
+        } else if (tracker.type === 'numeric' || tracker.type === 'frequency') {
+            const currentValue = todayEntry?.numericValue || 0;
+            const unit = tracker.type === 'frequency' ? 'times' : (tracker.config.unit || 'units');
+            
             return (
                 <NumericControls>
-                    <NumericButton onClick={() => handleNumericChange(-1)} disabled={loading}>
+                    <NumericButton 
+                        onClick={() => handleNumericChange(-1)} 
+                        disabled={loading || currentValue === 0}
+                    >
                         <span className="material-symbols-outlined">remove</span>
                     </NumericButton>
-                    <NumericValue>{todayEntry?.numericValue || 0}</NumericValue>
+                    <NumericValue>{currentValue} {unit}</NumericValue>
                     <NumericButton onClick={() => handleNumericChange(1)} disabled={loading}>
                         <span className="material-symbols-outlined">add</span>
                     </NumericButton>
@@ -307,11 +321,15 @@ const TrackerCard: React.FC<TrackerCardProps> = ({ tracker, onEdit, onDelete, on
                 </TrackerTags>
             )}
 
-            {(tracker.type === 'numeric' || tracker.type === 'duration') && (
+            {(tracker.type === 'numeric' || tracker.type === 'duration' || tracker.type === 'frequency' || tracker.type === 'target') && (
                 <ProgressSection>
                     <ProgressLabel>
                         {tracker.type === 'numeric' 
                             ? `Today: ${todayEntry?.numericValue || 0} / ${tracker.config.targetValue || 0} ${tracker.config.unit || 'units'}`
+                            : tracker.type === 'frequency'
+                            ? `Today: ${todayEntry?.numericValue || 0} / ${tracker.config.targetFrequency || 0} times`
+                            : tracker.type === 'target'
+                            ? `This ${tracker.config.targetPeriod || 'week'}: ${stats?.thisWeekCount || 0} / ${tracker.config.targetDays || 0} days`
                             : 'Weekly Progress'
                         }
                     </ProgressLabel>

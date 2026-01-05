@@ -99,7 +99,6 @@ const TrackerHistory: React.FC<TrackerHistoryProps> = ({ isOpen, onClose, tracke
         
         return entries.find(e => {
             const entryDate = new Date(e.date);
-            // entryDate.setHours(0, 0, 0, 0);
             return entryDate.getUTCDate() === targetDate.getUTCDate();
         });
     };
@@ -116,14 +115,14 @@ const TrackerHistory: React.FC<TrackerHistoryProps> = ({ isOpen, onClose, tracke
             const logDate = targetDate || selectedDate;
             const dateStr = formatDateLocal(logDate);
 
-            if (tracker.type === 'binary') {
+            if (tracker.type === 'binary' || tracker.type === 'target') {
                 await trackersApi.createOrUpdateEntry({
                     trackerId: tracker._id,
                     date: dateStr,
                     completed: value !== undefined ? Boolean(value) : true,
                     note: quickNote || undefined
                 });
-            } else if (tracker.type === 'numeric') {
+            } else if (tracker.type === 'numeric' || tracker.type === 'frequency') {
                 const numValue = value !== undefined ? Number(value) : parseInt(quickValue) || 0;
                 await trackersApi.createOrUpdateEntry({
                     trackerId: tracker._id,
@@ -178,7 +177,7 @@ const TrackerHistory: React.FC<TrackerHistoryProps> = ({ isOpen, onClose, tracke
         // Load existing entry data if present
         const entry = getEntryForDate(date);
         if (entry) {
-            if (tracker?.type === 'numeric') {
+            if (tracker?.type === 'numeric' || tracker?.type === 'frequency') {
                 setQuickValue(String(entry.numericValue || ''));
             } else if (tracker?.type === 'duration') {
                 setQuickValue(String(entry.durationValue || ''));
@@ -214,17 +213,16 @@ const TrackerHistory: React.FC<TrackerHistoryProps> = ({ isOpen, onClose, tracke
 
         const entry = entries.find(e => {
             const entryDate = new Date(e.date);
-            // entryDate.setHours(0, 0, 0, 0);
             return entryDate.getUTCDate() === date.getUTCDate();
         });
 
         if (!entry) return 'missed';
         if (entry.skipped) return 'skipped';
 
-        if (tracker?.type === 'binary') {
+        if (tracker?.type === 'binary' || tracker?.type === 'target') {
             return entry.completed ? 'completed' : 'missed';
-        } else if (tracker?.type === 'numeric') {
-            const target = tracker.config.targetValue || 0;
+        } else if (tracker?.type === 'numeric' || tracker?.type === 'frequency') {
+            const target = tracker.config.targetValue || tracker.config.targetFrequency || 0;
             const value = entry.numericValue || 0;
             if (value >= target) return 'completed';
             if (value > 0) return 'partial';
@@ -248,7 +246,7 @@ const TrackerHistory: React.FC<TrackerHistoryProps> = ({ isOpen, onClose, tracke
             year: selectedDate.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
         });
 
-        if (tracker?.type === 'binary') {
+        if (tracker?.type === 'binary' || tracker?.type === 'target') {
             return (
                 <QuickLogControls>
                     <QuickLogButton
@@ -263,7 +261,9 @@ const TrackerHistory: React.FC<TrackerHistoryProps> = ({ isOpen, onClose, tracke
                     </QuickLogButton>
                 </QuickLogControls>
             );
-        } else if (tracker?.type === 'numeric') {
+        } else if (tracker?.type === 'numeric' || tracker?.type === 'frequency') {
+            const unit = tracker.type === 'frequency' ? 'times' : (tracker.config.unit || 'units');
+            
             return (
                 <QuickLogControls>
                     <NumericControls>
@@ -273,7 +273,7 @@ const TrackerHistory: React.FC<TrackerHistoryProps> = ({ isOpen, onClose, tracke
                         >
                             <span className="material-symbols-outlined">remove</span>
                         </NumericButton>
-                        <NumericValue>{entry?.numericValue || 0} {tracker.config.unit || ''}</NumericValue>
+                        <NumericValue>{entry?.numericValue || 0} {unit}</NumericValue>
                         <NumericButton onClick={() => handleNumericChange(1)} disabled={loading}>
                             <span className="material-symbols-outlined">add</span>
                         </NumericButton>
@@ -368,10 +368,12 @@ const TrackerHistory: React.FC<TrackerHistoryProps> = ({ isOpen, onClose, tracke
     };
 
     const formatEntryValue = (entry: TrackerEntry) => {
-        if (tracker?.type === 'binary') {
+        if (tracker?.type === 'binary' || tracker?.type === 'target') {
             return entry.completed ? 'Completed' : 'Not completed';
         } else if (tracker?.type === 'numeric') {
             return `${entry.numericValue} ${tracker.config.unit || 'units'}`;
+        } else if (tracker?.type === 'frequency') {
+            return `${entry.numericValue} times`;
         } else if (tracker?.type === 'duration') {
             return `${entry.durationValue} ${tracker.config.durationUnit || 'minutes'}`;
         } else if (tracker?.type === 'scale') {

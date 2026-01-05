@@ -113,7 +113,7 @@ const TrackerEditor: React.FC<TrackerEditorProps> = ({
         setFolderId(null);
         setTags([]);
         setConfig({
-            allowNotes: true,
+            allowNotes: false,
             frequency: 'daily'
         });
         setShowFolderDropdown(false);
