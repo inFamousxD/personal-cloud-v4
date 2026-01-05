@@ -58,9 +58,19 @@ const TrackerHistory: React.FC<TrackerHistoryProps> = ({ isOpen, onClose, tracke
     useEffect(() => {
         if (isOpen && tracker) {
             loadEntries();
-            setSelectedDate(new Date());
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            setSelectedDate(today);
         }
     }, [isOpen, tracker, currentMonth]);
+
+    // Helper function to format date in local timezone
+    const formatDateLocal = (date: Date): string => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
 
     const loadEntries = async () => {
         if (!tracker?._id) return;
@@ -71,8 +81,8 @@ const TrackerHistory: React.FC<TrackerHistoryProps> = ({ isOpen, onClose, tracke
             const endDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
 
             const data = await trackersApi.getEntries(tracker._id, {
-                startDate: startDate.toISOString().split('T')[0],
-                endDate: endDate.toISOString().split('T')[0]
+                startDate: formatDateLocal(startDate),
+                endDate: formatDateLocal(endDate)
             });
 
             setEntries(data);
@@ -83,25 +93,28 @@ const TrackerHistory: React.FC<TrackerHistoryProps> = ({ isOpen, onClose, tracke
         }
     };
 
-    const getTodayEntry = () => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+    const getEntryForDate = (date: Date) => {
+        const targetDate = new Date(date);
+        targetDate.setHours(0, 0, 0, 0);
         
         return entries.find(e => {
             const entryDate = new Date(e.date);
             entryDate.setHours(0, 0, 0, 0);
-            return entryDate.getTime() === today.getTime();
+            return entryDate.getTime() === targetDate.getTime();
         });
     };
 
-    const handleQuickLog = async (value?: number | boolean) => {
+    const getTodayEntry = () => {
+        return getEntryForDate(selectedDate);
+    };
+
+    const handleQuickLog = async (value?: number | boolean, targetDate?: Date) => {
         if (!tracker?._id) return;
 
         setLoading(true);
         try {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const dateStr = today.toISOString().split('T')[0];
+            const logDate = targetDate || selectedDate;
+            const dateStr = formatDateLocal(logDate);
 
             if (tracker.type === 'binary') {
                 await trackersApi.createOrUpdateEntry({
@@ -145,11 +158,38 @@ const TrackerHistory: React.FC<TrackerHistoryProps> = ({ isOpen, onClose, tracke
         }
     };
 
-    const handleNumericChange = async (delta: number) => {
-        const todayEntry = getTodayEntry();
-        const currentValue = todayEntry?.numericValue || 0;
+    const handleNumericChange = async (delta: number, targetDate?: Date) => {
+        const date = targetDate || selectedDate;
+        const entry = getEntryForDate(date);
+        const currentValue = entry?.numericValue || 0;
         const newValue = Math.max(0, currentValue + delta);
-        await handleQuickLog(newValue);
+        await handleQuickLog(newValue, date);
+    };
+
+    const handleDayClick = (date: Date) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        // Don't allow selecting future dates
+        if (date > today) return;
+
+        setSelectedDate(date);
+        
+        // Load existing entry data if present
+        const entry = getEntryForDate(date);
+        if (entry) {
+            if (tracker?.type === 'numeric') {
+                setQuickValue(String(entry.numericValue || ''));
+            } else if (tracker?.type === 'duration') {
+                setQuickValue(String(entry.durationValue || ''));
+            } else if (tracker?.type === 'scale') {
+                setQuickValue(String(entry.scaleValue || ''));
+            }
+            setQuickNote(entry.note || '');
+        } else {
+            setQuickValue('');
+            setQuickNote('');
+        }
     };
 
     const handleDeleteEntry = async (entryId: string) => {
@@ -200,20 +240,26 @@ const TrackerHistory: React.FC<TrackerHistoryProps> = ({ isOpen, onClose, tracke
     };
 
     const renderQuickLog = () => {
-        const todayEntry = getTodayEntry();
+        const entry = getTodayEntry();
+        const isToday = selectedDate.toDateString() === new Date().toDateString();
+        const dateLabel = isToday ? 'Today' : selectedDate.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric',
+            year: selectedDate.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+        });
 
         if (tracker?.type === 'binary') {
             return (
                 <QuickLogControls>
                     <QuickLogButton
-                        $completed={todayEntry?.completed}
-                        onClick={() => handleQuickLog(!todayEntry?.completed)}
+                        $completed={entry?.completed}
+                        onClick={() => handleQuickLog(!entry?.completed)}
                         disabled={loading}
                     >
                         <span className="material-symbols-outlined">
-                            {todayEntry?.completed ? 'check_circle' : 'radio_button_unchecked'}
+                            {entry?.completed ? 'check_circle' : 'radio_button_unchecked'}
                         </span>
-                        {todayEntry?.completed ? 'Completed Today!' : 'Mark Complete'}
+                        {entry?.completed ? `Completed on ${dateLabel}` : `Mark Complete for ${dateLabel}`}
                     </QuickLogButton>
                 </QuickLogControls>
             );
@@ -221,10 +267,13 @@ const TrackerHistory: React.FC<TrackerHistoryProps> = ({ isOpen, onClose, tracke
             return (
                 <QuickLogControls>
                     <NumericControls>
-                        <NumericButton onClick={() => handleNumericChange(-1)} disabled={loading || (todayEntry?.numericValue || 0) === 0}>
+                        <NumericButton 
+                            onClick={() => handleNumericChange(-1)} 
+                            disabled={loading || (entry?.numericValue || 0) === 0}
+                        >
                             <span className="material-symbols-outlined">remove</span>
                         </NumericButton>
-                        <NumericValue>{todayEntry?.numericValue || 0} {tracker.config.unit || ''}</NumericValue>
+                        <NumericValue>{entry?.numericValue || 0} {tracker.config.unit || ''}</NumericValue>
                         <NumericButton onClick={() => handleNumericChange(1)} disabled={loading}>
                             <span className="material-symbols-outlined">add</span>
                         </NumericButton>
@@ -258,7 +307,7 @@ const TrackerHistory: React.FC<TrackerHistoryProps> = ({ isOpen, onClose, tracke
                         {range.map(value => (
                             <ScaleButton
                                 key={value}
-                                $selected={todayEntry?.scaleValue === value}
+                                $selected={entry?.scaleValue === value}
                                 onClick={() => handleQuickLog(value)}
                                 disabled={loading}
                             >
@@ -296,12 +345,19 @@ const TrackerHistory: React.FC<TrackerHistoryProps> = ({ isOpen, onClose, tracke
             date.setHours(0, 0, 0, 0);
             const status = getDayStatus(date);
             const isToday = date.getTime() === today.getTime();
+            const isSelected = date.getTime() === selectedDate.getTime();
+            const isFuture = date > today;
 
             days.push(
                 <CalendarDay
                     key={day}
                     $status={status}
                     $isToday={isToday}
+                    onClick={() => !isFuture && handleDayClick(date)}
+                    style={{ 
+                        cursor: isFuture ? 'default' : 'pointer',
+                        boxShadow: isSelected && !isToday ? `0 0 0 2px ${darkTheme.text.color}50` : undefined
+                    }}
                 >
                     <span>{day}</span>
                 </CalendarDay>
@@ -330,6 +386,13 @@ const TrackerHistory: React.FC<TrackerHistoryProps> = ({ isOpen, onClose, tracke
     const today = new Date();
     const canGoNext = currentMonth < new Date(today.getFullYear(), today.getMonth(), 1);
 
+    const isToday = selectedDate.toDateString() === new Date().toDateString();
+    const quickLogTitle = isToday ? 'Log Today' : `Log ${selectedDate.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        year: selectedDate.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+    })}`;
+
     return (
         <HistoryOverlay onClick={onClose}>
             <HistoryModal onClick={(e) => e.stopPropagation()}>
@@ -345,7 +408,7 @@ const TrackerHistory: React.FC<TrackerHistoryProps> = ({ isOpen, onClose, tracke
 
                 <HistoryBody>
                     <QuickLogSection>
-                        <QuickLogTitle>Log Today</QuickLogTitle>
+                        <QuickLogTitle>{quickLogTitle}</QuickLogTitle>
                         {renderQuickLog()}
                         {tracker.config.allowNotes && (
                             <QuickTextArea
@@ -364,7 +427,12 @@ const TrackerHistory: React.FC<TrackerHistoryProps> = ({ isOpen, onClose, tracke
                                 <NavButton onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}>
                                     <span className="material-symbols-outlined">chevron_left</span>
                                 </NavButton>
-                                <NavButton onClick={() => { setCurrentMonth(new Date()); }}>
+                                <NavButton onClick={() => { 
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    setCurrentMonth(new Date()); 
+                                    setSelectedDate(today);
+                                }}>
                                     <span className="material-symbols-outlined">today</span>
                                 </NavButton>
                                 <NavButton 
@@ -435,5 +503,8 @@ const TrackerHistory: React.FC<TrackerHistoryProps> = ({ isOpen, onClose, tracke
         </HistoryOverlay>
     );
 };
+
+// Import darkTheme for inline styles
+import { darkTheme } from '../../../theme/dark.colors';
 
 export default TrackerHistory;
