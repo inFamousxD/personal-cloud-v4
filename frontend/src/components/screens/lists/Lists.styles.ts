@@ -468,11 +468,14 @@ export const ItemsContainer = styled.div`
     display: flex;
     flex-direction: column;
     gap: 8px;
+    :hover, :focus-within {
+        background: ${darkTheme.backgroundDarkest};
+    }
 `;
 
 export const ListItemRow = styled.div<{ $checked?: boolean }>`
-    background: ${darkTheme.backgroundDarkest};
-    border: 1px solid ${darkTheme.border};
+    /* background: ${darkTheme.backgroundDarkest}; */
+    /* border: 1px solid ${darkTheme.border}; */
     border-radius: 4px;
     padding: 12px;
     display: flex;
@@ -480,6 +483,7 @@ export const ListItemRow = styled.div<{ $checked?: boolean }>`
     gap: 8px;
     opacity: ${props => props.$checked ? 0.6 : 1};
     transition: opacity 0.2s;
+
 `;
 
 export const ItemMainRow = styled.div`
@@ -546,7 +550,7 @@ export const ItemActions = styled.div`
 
 export const ItemDetails = styled.textarea<{ $expanded?: boolean }>`
     background: ${darkTheme.backgroundDarker};
-    border: 1px solid ${darkTheme.border};
+    border: 1px dashed ${darkTheme.border};
     border-radius: 4px;
     color: ${darkTheme.text.color};
     font-size: 13px;
@@ -556,7 +560,7 @@ export const ItemDetails = styled.textarea<{ $expanded?: boolean }>`
     min-height: ${props => props.$expanded ? '80px' : '0'};
     max-height: ${props => props.$expanded ? '200px' : '0'};
     opacity: ${props => props.$expanded ? 1 : 0};
-    margin-left: 28px;
+    /* margin-left: 28px; */
     font-family: inherit;
     line-height: 1.4;
     transition: all 0.2s;
