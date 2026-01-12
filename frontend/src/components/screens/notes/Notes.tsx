@@ -66,6 +66,8 @@ const Notes = () => {
     const tagFilterRef = useRef<HTMLDivElement>(null);
     const topOptions = useSelector((state: RootState) => state.mainDock.dockTopOptions);
 
+    const MAX_FAVORITES = 5;
+
     useEffect(() => {
         loadNotes();
         loadTags();
@@ -137,7 +139,7 @@ const Notes = () => {
     const toggleFavoriteTag = (tag: string) => {
         const newFavorites = favoriteTags.includes(tag)
             ? favoriteTags.filter(t => t !== tag)
-            : favoriteTags.length < 3
+            : favoriteTags.length < MAX_FAVORITES
                 ? [...favoriteTags, tag]
                 : favoriteTags;
         saveFavoriteTags(newFavorites);
@@ -421,9 +423,11 @@ const Notes = () => {
                                             $selected={selectedTags.includes(tag)}
                                             onClick={() => handleTagFilter(tag)}
                                         >
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                {tag}
-                                                {!favoriteTags.includes(tag) && favoriteTags.length < 3 && tag !== 'hidden' && (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'space-between', flexDirection: 'row', width: '100%' }}>
+                                                <>
+                                                    {tag}
+                                                </>
+                                                {!favoriteTags.includes(tag) && favoriteTags.length < MAX_FAVORITES && tag !== 'hidden' && (
                                                     <span 
                                                         className="material-symbols-outlined"
                                                         style={{ fontSize: '12px', opacity: 0.5 }}

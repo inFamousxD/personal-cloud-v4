@@ -302,11 +302,12 @@ export const FavoriteTagPill = styled.button<{ $active?: boolean }>`
         background: ${darkTheme.accent};
         color: white;
     }
-
+    
     .material-symbols-outlined {
         font-size: 12px;
-        opacity: 0;
+        opacity: 0.5;
         transition: opacity 0.2s;
+        margin-left: 12px;
     }
 
     &:hover .material-symbols-outlined {
