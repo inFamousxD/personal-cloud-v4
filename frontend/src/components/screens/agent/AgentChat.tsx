@@ -48,6 +48,11 @@ import {
     ModalActions,
     ActionButton,
     LoadingState,
+    DeleteConfirmModal,
+    DeleteConfirmContent,
+    DeleteConfirmActions,
+    RenameChatInput,
+    RenameChatWrapper,
 } from './AgentChat.styles';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
@@ -74,10 +79,21 @@ const AgentChat = () => {
     const [showSettings, setShowSettings] = useState(false);
     const [contextLimit, setContextLimit] = useState(20);
 
+    // Delete confirmation
+    const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; chatId: string | null }>({
+        isOpen: false,
+        chatId: null
+    });
+
+    // Rename chat (for header title)
+    const [isRenaming, setIsRenaming] = useState(false);
+    const [renameValue, setRenameValue] = useState('');
+
     // Refs
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
+    const renameInputRef = useRef<HTMLInputElement>(null);
 
     // Detect if user is on mobile
     const [isMobile, setIsMobile] = useState(false);
@@ -110,6 +126,14 @@ const AgentChat = () => {
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
+
+    // Focus rename input when renaming starts
+    useEffect(() => {
+        if (isRenaming && renameInputRef.current) {
+            renameInputRef.current.focus();
+            renameInputRef.current.select();
+        }
+    }, [isRenaming]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -208,18 +232,67 @@ const AgentChat = () => {
         }
     };
 
-    const handleDeleteChat = async (id: string, e: React.MouseEvent) => {
+    const handleDeleteChat = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!confirm('Delete this chat?')) return;
+        setDeleteConfirm({ isOpen: true, chatId: id });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteConfirm.chatId) return;
 
         try {
-            await agentApi.deleteChat(id);
-            setChats(chats.filter(c => c._id !== id));
-            if (currentChatId === id) {
+            await agentApi.deleteChat(deleteConfirm.chatId);
+            setChats(chats.filter(c => c._id !== deleteConfirm.chatId));
+            if (currentChatId === deleteConfirm.chatId) {
                 navigate('/agent');
             }
+            setDeleteConfirm({ isOpen: false, chatId: null });
         } catch (error) {
             console.error('Error deleting chat:', error);
+        }
+    };
+
+    const cancelDelete = () => {
+        setDeleteConfirm({ isOpen: false, chatId: null });
+    };
+
+    const handleStartRename = () => {
+        if (!currentChat) return;
+        setIsRenaming(true);
+        setRenameValue(currentChat.title);
+    };
+
+    const handleSaveRename = async () => {
+        if (!currentChatId || !renameValue.trim()) {
+            setIsRenaming(false);
+            setRenameValue('');
+            return;
+        }
+
+        try {
+            await agentApi.updateChatTitle(currentChatId, renameValue.trim());
+            setChats(chats.map(c => 
+                c._id === currentChatId ? { ...c, title: renameValue.trim() } : c
+            ));
+            setIsRenaming(false);
+            setRenameValue('');
+        } catch (error) {
+            console.error('Error renaming chat:', error);
+            setIsRenaming(false);
+            setRenameValue('');
+        }
+    };
+
+    const handleCancelRename = () => {
+        setIsRenaming(false);
+        setRenameValue('');
+    };
+
+    const handleRenameKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleSaveRename();
+        } else if (e.key === 'Escape') {
+            handleCancelRename();
         }
     };
 
@@ -448,9 +521,28 @@ const AgentChat = () => {
                             </span>
                         </ToggleSidebarButton>
                         {currentChat && (
-                            <ChatTitleDisplay title={currentChat.title}>
-                                {currentChat.title}
-                            </ChatTitleDisplay>
+                            isRenaming ? (
+                                <RenameChatInput
+                                    ref={renameInputRef}
+                                    value={renameValue}
+                                    onChange={(e) => setRenameValue(e.target.value)}
+                                    onKeyDown={handleRenameKeyDown}
+                                    onBlur={handleSaveRename}
+                                />
+                            ) : (
+                                <RenameChatWrapper>
+                                    <ChatTitleDisplay title={currentChat.title}>
+                                        {currentChat.title}
+                                    </ChatTitleDisplay>
+                                    <IconButton 
+                                        onClick={handleStartRename}
+                                        title="Rename chat"
+                                        className="rename-button"
+                                    >
+                                        <span className="material-symbols-outlined">edit</span>
+                                    </IconButton>
+                                </RenameChatWrapper>
+                            )
                         )}
                     </HeaderLeft>
 
@@ -595,6 +687,20 @@ const AgentChat = () => {
                         </ModalActions>
                     </ModalContent>
                 </ModalOverlay>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {deleteConfirm.isOpen && (
+                <DeleteConfirmModal onClick={cancelDelete}>
+                    <DeleteConfirmContent onClick={(e) => e.stopPropagation()}>
+                        <h3>Delete Chat?</h3>
+                        <p>Are you sure you want to delete this chat? This action cannot be undone.</p>
+                        <DeleteConfirmActions>
+                            <button onClick={cancelDelete}>Cancel</button>
+                            <button onClick={confirmDelete}>Delete</button>
+                        </DeleteConfirmActions>
+                    </DeleteConfirmContent>
+                </DeleteConfirmModal>
             )}
         </AgentContainer>
     );

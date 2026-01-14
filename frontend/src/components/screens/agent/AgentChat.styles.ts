@@ -16,6 +16,7 @@ export const AgentSidebar = styled.div<{ $collapsed: boolean }>`
     min-width: ${props => props.$collapsed ? '0' : '320px'};
     background: ${darkTheme.backgroundDarkest};
     border-right: 0.5px solid ${darkTheme.border};
+    border-left: 0.5px solid ${darkTheme.border};
     display: flex;
     flex-direction: column;
     transition: width 0.3s ease, min-width 0.3s ease;
@@ -135,12 +136,12 @@ export const ChatListItem = styled.div<{ $selected: boolean }>`
     transition: background 0.2s;
     position: relative;
 
+    .chat-actions {
+        opacity: 1;
+    }
+
     &:hover {
         background: ${darkTheme.accent}20;
-        
-        .chat-actions {
-            opacity: 1;
-        }
     }
 
     .material-symbols-outlined {
@@ -773,6 +774,7 @@ export const ModalContent = styled.div`
 
 export const SettingGroup = styled.div`
     margin-bottom: 20px;
+    color: ${darkTheme.text.color};
 
     label {
         display: block;
@@ -897,5 +899,141 @@ export const LoadingState = styled.div`
         100% {
             transform: rotate(360deg);
         }
+    }
+`;
+
+// Delete Confirmation Modal
+export const DeleteConfirmModal = styled.div`
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+`;
+
+export const DeleteConfirmContent = styled.div`
+    background: ${darkTheme.backgroundDarkest};
+    border: 1px solid ${darkTheme.border};
+    border-radius: 8px;
+    padding: 24px;
+    max-width: 400px;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    h3 {
+        margin: 0;
+        color: ${darkTheme.accent};
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    p {
+        margin: 0;
+        color: ${darkTheme.text.color};
+        font-size: 14px;
+        line-height: 1.5;
+        opacity: 0.9;
+    }
+`;
+
+export const DeleteConfirmActions = styled.div`
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 8px;
+
+    button {
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        font-family: inherit;
+        transition: all 0.2s;
+
+        &:first-child {
+            background: transparent;
+            color: ${darkTheme.text.color};
+            border: 1px solid ${darkTheme.border};
+
+            &:hover {
+                background: ${darkTheme.accent}10;
+                border-color: ${darkTheme.accent};
+            }
+        }
+
+        &:last-child {
+            background: #e74c3c;
+            color: white;
+            border: none;
+
+            &:hover {
+                opacity: 0.9;
+            }
+        }
+    }
+
+    @media (max-width: 480px) {
+        flex-direction: column-reverse;
+
+        button {
+            width: 100%;
+        }
+    }
+`;
+
+// Rename Chat Styles (for header title)
+export const RenameChatWrapper = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    .rename-button {
+        opacity: 0.2;
+        padding: 4px;
+        transition: opacity 0.2s;
+
+        .material-symbols-outlined {
+            font-size: 16px;
+        }
+    }
+
+    &:hover .rename-button {
+        opacity: 0.6;
+
+        &:hover {
+            opacity: 1;
+        }
+    }
+`;
+
+export const RenameChatInput = styled.input`
+    background: ${darkTheme.backgroundDarker};
+    border: 1px solid ${darkTheme.accent};
+    border-radius: 4px;
+    color: ${darkTheme.text.color};
+    padding: 4px 8px;
+    font-size: 0.95em;
+    font-weight: 500;
+    font-family: inherit;
+    max-width: 500px;
+    outline: none;
+    width: 70vw;
+
+    &:focus {
+        border-color: ${darkTheme.accent};
+    }
+
+    @media (max-width: 768px) {
+        max-width: 150px;
+        font-size: 0.9em;
     }
 `;
