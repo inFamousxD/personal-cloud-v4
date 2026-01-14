@@ -56,6 +56,7 @@ export const RootScreen: React.FC = () => {
                             <Route path="/settings" element={<Settings />} />
                             <Route path="/tracker" element={<Trackers />} />
                             <Route path="/agent" element={<AgentChat />} />
+                            <Route path="/agent/:chatId" element={<AgentChat />} />
                         </Routes>
                     </ContentArea>
                     <BottomRibbonContainer />

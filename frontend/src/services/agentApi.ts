@@ -5,12 +5,28 @@ const API_URL = import.meta.env.VITE_API_URL;
 export interface Message {
     role: 'user' | 'assistant' | 'system';
     content: string;
+    timestamp?: Date;
+}
+
+export interface Chat {
+    _id: string;
+    userId: string;
+    title: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface ChatWithMessages {
+    chat: Chat;
+    messages: Message[];
 }
 
 export interface ChatRequest {
     model?: string;
     messages: Message[];
     stream?: boolean;
+    chatId?: string;
+    contextLimit?: number;
 }
 
 const getAuthHeader = () => {
@@ -45,7 +61,7 @@ const apiClient = createApiClient();
 export const agentApi = {
     streamChat: async (
         request: ChatRequest,
-        onChunk: (chunk: string) => void,
+        onChunk: (chunk: string, chatId?: string) => void,
         onComplete: () => void,
         onError: (error: Error) => void,
         abortController?: AbortController
@@ -68,6 +84,9 @@ export const agentApi = {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
+            const chatId = response.headers.get('X-Chat-Id');
+            const streamId = response.headers.get('X-Stream-Id');
+
             const reader = response.body?.getReader();
             const decoder = new TextDecoder();
 
@@ -88,7 +107,6 @@ export const agentApi = {
                 buffer += decoder.decode(value, { stream: true });
                 const lines = buffer.split('\n');
                 
-                // Keep the last incomplete line in buffer
                 buffer = lines.pop() || '';
 
                 for (const line of lines) {
@@ -97,7 +115,7 @@ export const agentApi = {
                     try {
                         const json = JSON.parse(line);
                         if (json.message?.content) {
-                            onChunk(json.message.content);
+                            onChunk(json.message.content, json.chatId || chatId || undefined);
                         }
                         if (json.done) {
                             onComplete();
@@ -115,6 +133,54 @@ export const agentApi = {
                 onError(error);
             }
         }
+    },
+
+    stopStream: async (streamId: string) => {
+        const response = await apiClient.post(
+            `${API_URL}/api/agent/chat/stop`,
+            { streamId },
+            { headers: getAuthHeader() }
+        );
+        return response.data;
+    },
+
+    getAllChats: async (): Promise<Chat[]> => {
+        const response = await apiClient.get(`${API_URL}/api/agent/chats`, {
+            headers: getAuthHeader(),
+        });
+        return response.data;
+    },
+
+    getChat: async (chatId: string): Promise<ChatWithMessages> => {
+        const response = await apiClient.get(`${API_URL}/api/agent/chats/${chatId}`, {
+            headers: getAuthHeader(),
+        });
+        return response.data;
+    },
+
+    createChat: async (): Promise<Chat> => {
+        const response = await apiClient.post(
+            `${API_URL}/api/agent/chats`,
+            {},
+            { headers: getAuthHeader() }
+        );
+        return response.data;
+    },
+
+    updateChatTitle: async (chatId: string, title: string): Promise<Chat> => {
+        const response = await apiClient.patch(
+            `${API_URL}/api/agent/chats/${chatId}`,
+            { title },
+            { headers: getAuthHeader() }
+        );
+        return response.data;
+    },
+
+    deleteChat: async (chatId: string) => {
+        const response = await apiClient.delete(`${API_URL}/api/agent/chats/${chatId}`, {
+            headers: getAuthHeader(),
+        });
+        return response.data;
     },
 
     getModels: async () => {
