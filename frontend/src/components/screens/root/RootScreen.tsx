@@ -47,6 +47,7 @@ export const RootScreen: React.FC = () => {
                 <MainContent>
                     <ContentArea>
                         <Routes>
+                            <Route index element={<Notes />} />
                             <Route path="/notes" element={<Notes />} />
                             <Route path="/journal" element={<Journal />} />
                             <Route path="/journal/:journalId" element={<Journal />} />

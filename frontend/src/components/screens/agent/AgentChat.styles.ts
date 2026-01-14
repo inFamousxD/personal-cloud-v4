@@ -361,8 +361,8 @@ export const MessagesArea = styled.div`
 
 export const MessagesContainer = styled.div`
     flex: 1;
-    overflow-y: auto;
-    padding: 24px 16px 180px 16px;
+    overflow-y: overlay;
+    padding: 24px 16px 140px 16px;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -371,7 +371,7 @@ export const MessagesContainer = styled.div`
     width: 100%;
 
     &::-webkit-scrollbar {
-        width: 4px;
+        width: 8px;
     }
 
     &::-webkit-scrollbar-track {
@@ -386,9 +386,10 @@ export const MessagesContainer = styled.div`
             background: ${darkTheme.accent}60;
         }
     }
-
+    
     @media (max-width: 768px) {
-        padding: 16px 0px 240px 0px;
+        padding: 16px 0px 140px 0px;
+        margin-right: -8px;
         gap: 12px;
     }
 `;
@@ -412,7 +413,7 @@ export const MessageBubble = styled.div<{ $role: string }>`
     line-height: 1.6;
 
     @media (max-width: 768px) {
-        max-width: 85%;
+        /* max-width: 85%; */
         padding: 12px 14px;
         margin: 0px 12px;
     }
