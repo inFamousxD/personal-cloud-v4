@@ -380,12 +380,7 @@ const AgentChat = () => {
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         // On mobile, always allow Enter to create new line
-        if (isMobile) {
-            return;
-        }
-        
-        // On desktop, Enter sends (unless Shift is held)
-        if (e.key === 'Enter' && !e.shiftKey) {
+        if (!isMobile && e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleSend();
         }
