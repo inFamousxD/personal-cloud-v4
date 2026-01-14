@@ -197,8 +197,8 @@ export const TextArea = styled.textarea`
     font-size: 14px;
     font-family: inherit;
     resize: none;
-    min-height: 32px;
-    max-height: 300px;
+    min-height: 24px;
+    max-height: 200px;
     line-height: 1.5;
 
     &:focus {
