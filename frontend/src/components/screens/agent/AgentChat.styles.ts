@@ -8,6 +8,7 @@ export const AgentContainer = styled.div`
     width: 100%;
     height: 100%;
     overflow: hidden;
+    position: relative;
 `;
 
 export const AgentHeader = styled.div`
@@ -64,12 +65,13 @@ export const ChatArea = styled.div`
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    position: relative;
 `;
 
 export const MessagesContainer = styled.div`
     flex: 1;
     overflow-y: auto;
-    padding: 16px;
+    padding: 16px 16px 140px 16px;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -88,6 +90,10 @@ export const MessagesContainer = styled.div`
         &:hover {
             background: ${darkTheme.accent}60;
         }
+    }
+
+    @media (max-width: 768px) {
+        padding: 16px 12px 140px 12px;
     }
 `;
 
@@ -117,10 +123,9 @@ export const MessageBubble = styled.div<{ $role: string }>`
     }
 
     code {
-        /* background: ${darkTheme.backgroundDarker}; */
         padding: 2px 6px;
         border-radius: 3px;
-        font-family: 'JetBrains Mono', monospace;
+        font-family: 'Fira Code', monospace;
         font-size: 0.9em;
     }
 
@@ -144,29 +149,60 @@ export const MessageBubble = styled.div<{ $role: string }>`
 `;
 
 export const InputArea = styled.div`
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px 16px;
+    background: linear-gradient(to top, ${darkTheme.backgroundDarker} 50%, transparent);
+    pointer-events: none;
+
+    @media (max-width: 768px) {
+        padding: 16px 12px;
+    }
+`;
+
+export const InputWrapper = styled.div`
     display: flex;
     gap: 8px;
-    padding: 12px;
-    border-top: 1px solid ${darkTheme.border};
+    align-items: flex-end;
+    width: 100%;
+    max-width: 800px;
     background: ${darkTheme.backgroundDarkest};
+    border: 1px solid ${darkTheme.border};
+    border-radius: 16px;
+    padding: 8px 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    pointer-events: auto;
+
+    &:focus-within {
+        border-color: ${darkTheme.accent};
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    @media (max-width: 768px) {
+        max-width: 100%;
+        border-radius: 16px;
+    }
 `;
 
 export const TextArea = styled.textarea`
     flex: 1;
-    background: ${darkTheme.backgroundDarker};
-    border: 1px solid ${darkTheme.border};
-    border-radius: 4px;
+    background: transparent;
+    border: none;
     color: ${darkTheme.text.color};
-    padding: 10px;
+    padding: 6px 6px;
     font-size: 14px;
     font-family: inherit;
     resize: none;
-    min-height: 60px;
-    max-height: 120px;
+    min-height: 32px;
+    max-height: 300px;
+    line-height: 1.5;
 
     &:focus {
         outline: none;
-        border-color: ${darkTheme.accent};
     }
 
     &:disabled {
@@ -178,29 +214,45 @@ export const TextArea = styled.textarea`
         color: ${darkTheme.text.color};
         opacity: 0.4;
     }
+
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: ${darkTheme.accent}40;
+        border-radius: 3px;
+    }
 `;
 
 export const SendButton = styled.button`
     background: ${darkTheme.accent};
     color: white;
     border: none;
-    border-radius: 4px;
-    padding: 10px 16px;
-    font-size: 14px;
-    font-weight: 600;
+    border-radius: 25%;
+    width: 32px;
+    height: 36px;
+    /* min-width: 32px;
+    min-height: 32px; */
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 6px;
+    justify-content: center;
     font-family: inherit;
-    transition: opacity 0.2s;
+    transition: all 0.2s;
+    flex-shrink: 0;
 
     &:hover:not(:disabled) {
         opacity: 0.9;
+        transform: scale(1.05);
     }
 
     &:disabled {
-        opacity: 0.5;
+        opacity: 0.3;
         cursor: not-allowed;
     }
 
@@ -209,6 +261,31 @@ export const SendButton = styled.button`
     }
 `;
 
-export const StopButton = styled(SendButton)`
+export const StopButton = styled.button`
     background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 25%;
+    /* padding: 6px 12px; */
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    width: 32px;
+    height: 36px;
+
+    &:hover {
+        opacity: 0.9;
+        transform: scale(1.02);
+    }
+
+    .material-symbols-outlined {
+        font-size: 18px;
+    }
 `;

@@ -12,6 +12,7 @@ import {
     MessagesContainer,
     MessageBubble,
     InputArea,
+    InputWrapper,
     TextArea,
     SendButton,
     StopButton,
@@ -196,24 +197,24 @@ const AgentChat = () => {
             </ChatArea>
 
             <InputArea>
-                <TextArea
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Type your message..."
-                    disabled={isStreaming || !isConnected}
-                />
-                {isStreaming ? (
-                    <StopButton onClick={handleStop}>
-                        <span className="material-symbols-outlined">stop</span>
-                        Stop
-                    </StopButton>
-                ) : (
-                    <SendButton onClick={handleSend} disabled={!input.trim() || !isConnected}>
-                        <span className="material-symbols-outlined">send</span>
-                        Send
-                    </SendButton>
-                )}
+                <InputWrapper>
+                    <TextArea
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Type your message..."
+                        disabled={isStreaming || !isConnected}
+                    />
+                    {isStreaming ? (
+                        <StopButton onClick={handleStop}>
+                            <span className="material-symbols-outlined">stop_circle</span>
+                        </StopButton>
+                    ) : (
+                        <SendButton onClick={handleSend} disabled={!input.trim() || !isConnected}>
+                            <span className="material-symbols-outlined">keyboard_arrow_up</span>
+                        </SendButton>
+                    )}
+                </InputWrapper>
             </InputArea>
         </AgentContainer>
     );

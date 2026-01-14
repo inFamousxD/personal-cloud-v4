@@ -25,7 +25,7 @@ const mainDockInitialState = {
         },
         {
             id: "agent",
-            icon: "smart_toy",
+            icon: "mark_unread_chat_alt",
             navigatesTo: "/agent"
         }
     ],
