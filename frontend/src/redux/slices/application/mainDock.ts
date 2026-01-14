@@ -22,6 +22,11 @@ const mainDockInitialState = {
             id: "tracker",
             icon: "track_changes",
             navigatesTo: "/tracker"
+        },
+        {
+            id: "agent",
+            icon: "smart_toy",
+            navigatesTo: "/agent"
         }
     ],
     dockBottomOptions: [
