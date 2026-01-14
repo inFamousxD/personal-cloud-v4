@@ -85,7 +85,7 @@ export const agentApi = {
             }
 
             const chatId = response.headers.get('X-Chat-Id');
-            const streamId = response.headers.get('X-Stream-Id');
+            // const streamId = response.headers.get('X-Stream-Id');
 
             const reader = response.body?.getReader();
             const decoder = new TextDecoder();
