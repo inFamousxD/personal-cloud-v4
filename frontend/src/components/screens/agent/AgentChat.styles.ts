@@ -371,7 +371,7 @@ export const MessagesContainer = styled.div`
     width: 100%;
 
     &::-webkit-scrollbar {
-        width: 8px;
+        width: 0px;
     }
 
     &::-webkit-scrollbar-track {
@@ -389,7 +389,7 @@ export const MessagesContainer = styled.div`
     
     @media (max-width: 768px) {
         padding: 16px 0px 140px 0px;
-        margin-right: -8px;
+        /* margin-right: -8px; */
         gap: 12px;
     }
 `;
