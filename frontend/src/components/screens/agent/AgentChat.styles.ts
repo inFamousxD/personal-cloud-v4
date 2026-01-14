@@ -387,7 +387,7 @@ export const MessagesContainer = styled.div`
     }
 
     @media (max-width: 768px) {
-        padding: 16px 12px 180px 12px;
+        padding: 16px 0px 240px 0px;
         gap: 12px;
     }
 `;
@@ -413,6 +413,7 @@ export const MessageBubble = styled.div<{ $role: string }>`
     @media (max-width: 768px) {
         max-width: 85%;
         padding: 12px 14px;
+        margin: 0px 12px;
     }
 
     /* Typography */
@@ -591,7 +592,7 @@ export const InputArea = styled.div`
     pointer-events: none;
 
     @media (max-width: 768px) {
-        padding: 20px 12px;
+        padding: 12px;
     }
 `;
 

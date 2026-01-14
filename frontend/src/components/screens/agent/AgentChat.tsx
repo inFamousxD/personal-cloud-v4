@@ -66,7 +66,7 @@ const AgentChat = () => {
     const [selectedModel, setSelectedModel] = useState('llama3.2');
     const [isConnected, setIsConnected] = useState(false);
     const [loading, setLoading] = useState(true);
-    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
     const [currentChatId, setCurrentChatId] = useState<string | null>(null);
     const [renderError, setRenderError] = useState<string | null>(null);
 
@@ -77,6 +77,19 @@ const AgentChat = () => {
     // Refs
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
+    const textAreaRef = useRef<HTMLTextAreaElement>(null);
+
+    // Detect if user is on mobile
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     // Initial load
     useEffect(() => {
@@ -221,6 +234,12 @@ const AgentChat = () => {
         const updatedMessages = [...messages, userMessage];
         setMessages(updatedMessages);
         setInput('');
+        
+        // Reset textarea height
+        if (textAreaRef.current) {
+            textAreaRef.current.style.height = 'auto';
+        }
+        
         setIsStreaming(true);
 
         const assistantMessage: Message = {
@@ -287,6 +306,12 @@ const AgentChat = () => {
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
+        // On mobile, always allow Enter to create new line
+        if (isMobile) {
+            return;
+        }
+        
+        // On desktop, Enter sends (unless Shift is held)
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleSend();
@@ -492,16 +517,18 @@ const AgentChat = () => {
                     <InputArea>
                         <InputWrapper>
                             <TextArea
+                                ref={textAreaRef}
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyDown={handleKeyDown}
-                                placeholder="Message Agent..."
+                                placeholder={chats.length > 1 ? `Reply to ${selectedModel}...` : `Ask ${selectedModel}...`}
                                 disabled={isStreaming || !isConnected}
                                 rows={1}
                                 onInput={(e) => {
                                     const target = e.target as HTMLTextAreaElement;
                                     target.style.height = 'auto';
-                                    target.style.height = Math.min(target.scrollHeight, 200) + 'px';
+                                    const maxHeight = isMobile ? 120 : 200;
+                                    target.style.height = Math.min(target.scrollHeight, maxHeight) + 'px';
                                 }}
                             />
                             {isStreaming ? (
