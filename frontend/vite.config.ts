@@ -12,8 +12,9 @@ export default defineConfig({
                 name: 'Personal Cloud V4',
                 short_name: 'Cloud V4',
                 description: 'Personal Cloud Application',
-                theme_color: '#1E2123',
-                background_color: '#1E2123',
+                theme_color: '#ff0000',
+                // theme_color: '#1E2123',
+                background_color: '#ff0000',
                 display: 'standalone',
                 icons: [
                     {
