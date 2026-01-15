@@ -347,7 +347,7 @@ export const NotesBody = styled.div`
     padding: 12px;
 
     &::-webkit-scrollbar {
-        width: 8px;
+        width: 0px;
     }
 
     &::-webkit-scrollbar-track {

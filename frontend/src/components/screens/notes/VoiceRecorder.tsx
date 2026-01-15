@@ -73,7 +73,7 @@ const StatusText = styled.span`
     opacity: 0.9;
     
     @media (max-width: 768px) {
-        display: none;
+        /* display: none; */
     }
 `;
 
@@ -357,7 +357,8 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, 
             return 'Processing...';
         }
         if (isRecording) return 'Stop';
-        return 'Voice Note';
+        const isMobile = window.innerWidth <= 768;
+        return useAI ? isMobile ? 'VN (AI)' : 'Voice Note (AI)' : isMobile ? 'Voice' : 'Voice Note';
     };
 
     const getButtonIcon = () => {

@@ -413,7 +413,7 @@ export const MessageBubble = styled.div<{ $role: string }>`
     line-height: 1.6;
 
     @media (max-width: 768px) {
-        /* max-width: 85%; */
+        max-width: calc(100vw - 54px); /* Account for container padding/margins */
         padding: 12px 14px;
         margin: 0px 12px;
     }
@@ -458,22 +458,24 @@ export const MessageBubble = styled.div<{ $role: string }>`
 
     /* Code */
     code {
-        background: ${darkTheme.backgroundDarker};
-        padding: 2px 6px;
+        background: ${darkTheme.accentDark};
+        padding: 0px 6px;
         border-radius: 4px;
-        font-family: 'Fira Code', 'Courier New', monospace;
-        font-size: 0.9em;
+        font-family: 'JetBrains Mono', monospace;
     }
 
     pre {
-        margin: 12px 0;
-        border-radius: 4px;
+        margin: 0px;
+        border-radius: 8px;
         overflow-x: auto;
-        background: ${darkTheme.backgroundDarker};
-
+        background: #1e1e1e;
+        padding: 0px 8px;
+        max-width: 100%; /* Constrain to bubble width */
+        
         code {
             background: transparent;
             padding: 0;
+            font-family: 'JetBrains Mono' !important;
         }
 
         &::-webkit-scrollbar {
@@ -843,6 +845,11 @@ export const ActionButton = styled.button<{ $variant?: 'primary' | 'danger' }>`
     font-size: 0.9em;
     font-weight: 500;
     transition: all 0.2s;
+
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    align-items: center;
 
     &:hover:not(:disabled) {
         opacity: 0.9;

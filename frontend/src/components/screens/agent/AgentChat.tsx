@@ -622,9 +622,9 @@ const AgentChat = () => {
                 <MessagesArea>
                     {messages.length === 0 ? (
                         <EmptyState>
-                            <span className="material-symbols-outlined">smart_toy</span>
+                            <span className="material-symbols-outlined">borg</span>
                             <h3>Start a conversation</h3>
-                            <p>Ask me anything. I'm here to help!</p>
+                            <p>Ask [{selectedModel}] anything!</p>
                         </EmptyState>
                     ) : (
                         <MessagesContainer>
