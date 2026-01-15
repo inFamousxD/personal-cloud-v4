@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { darkTheme } from '../../../theme/dark.colors';
 import axios from 'axios';
+import { agentApi } from '../../../services/agentApi';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -20,7 +21,6 @@ const VoiceButton = styled.button<{ $isRecording?: boolean; $isProcessing?: bool
         props.$isProcessing ? darkTheme.accentOrange : 
         darkTheme.accent};
     color: white;
-    /* border: none; */
     border-radius: ${props => props.$isRecording ? '4px 0 0 4px' : '4px'};
     padding: 6px 12px;
     font-size: 13px;
@@ -33,10 +33,6 @@ const VoiceButton = styled.button<{ $isRecording?: boolean; $isProcessing?: bool
     transition: all 0.3s ease;
     flex: 1;
 
-    ${props => props.$isRecording && `
-        animation: pulse 1.5s ease-in-out infinite;
-    `}
-
     &:hover {
         opacity: 0.9;
     }
@@ -48,15 +44,6 @@ const VoiceButton = styled.button<{ $isRecording?: boolean; $isProcessing?: bool
 
     .material-symbols-outlined {
         font-size: 16px;
-    }
-
-    @keyframes pulse {
-        0%, 100% {
-            box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7);
-        }
-        50% {
-            box-shadow: 0 0 0 8px rgba(231, 76, 60, 0);
-        }
     }
 `;
 
@@ -126,9 +113,10 @@ const CloseButton = styled.button`
     }
 `;
 
-interface OfflineVoiceRecorderProps {
+interface VoiceRecorderProps {
     onTranscriptionComplete: (text: string) => void;
     disabled?: boolean;
+    useAI?: boolean;
 }
 
 const getAuthHeader = () => {
@@ -140,12 +128,13 @@ const getAuthHeader = () => {
     return {};
 };
 
-const OfflineVoiceRecorder: React.FC<OfflineVoiceRecorderProps> = ({ onTranscriptionComplete, disabled }) => {
+const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onTranscriptionComplete, disabled, useAI = true }) => {
     const [isRecording, setIsRecording] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isSupported, setIsSupported] = useState(false);
     const [serviceAvailable, setServiceAvailable] = useState(false);
+    const [aiAvailable, setAiAvailable] = useState(false);
     
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
@@ -161,17 +150,42 @@ const OfflineVoiceRecorder: React.FC<OfflineVoiceRecorderProps> = ({ onTranscrip
         }
 
         try {
+            // Check Whisper service
             await axios.get(`${API_URL}/api/whisper/health`, {
                 headers: getAuthHeader(),
                 timeout: 3000
             });
             setServiceAvailable(true);
             setIsSupported(true);
+
+            // Check AI service
+            if (useAI) {
+                try {
+                    await agentApi.checkHealth();
+                    setAiAvailable(true);
+                } catch {
+                    setAiAvailable(false);
+                }
+            }
         } catch (err) {
             console.error('Whisper service unavailable:', err);
             setServiceAvailable(false);
             setIsSupported(false);
         }
+    };
+
+    const generateTitleFromText = (text: string): string => {
+        const cleaned = text.trim();
+        const sentences = cleaned.split(/[.!?]+/).filter(s => s.trim().length > 0);
+        
+        if (sentences.length === 0) return 'Voice Note';
+        
+        let title = sentences[0].trim();
+        if (title.length > 50) {
+            title = title.substring(0, 47) + '...';
+        }
+        
+        return title;
     };
 
     const startRecording = async () => {
@@ -229,9 +243,8 @@ const OfflineVoiceRecorder: React.FC<OfflineVoiceRecorderProps> = ({ onTranscrip
         if (mediaRecorderRef.current && isRecording) {
             mediaRecorderRef.current.stop();
             setIsRecording(false);
-            audioChunksRef.current = []; // Clear chunks without processing
+            audioChunksRef.current = [];
             
-            // Stop all tracks
             if (mediaRecorderRef.current.stream) {
                 mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
             }
@@ -250,10 +263,11 @@ const OfflineVoiceRecorder: React.FC<OfflineVoiceRecorderProps> = ({ onTranscrip
                 return;
             }
             
+            // Step 1: Transcribe audio
             const formData = new FormData();
             formData.append('audio', audioBlob, 'recording.webm');
 
-            const response = await axios.post(
+            const transcriptionResponse = await axios.post(
                 `${API_URL}/api/whisper/transcribe`,
                 formData,
                 {
@@ -265,13 +279,47 @@ const OfflineVoiceRecorder: React.FC<OfflineVoiceRecorderProps> = ({ onTranscrip
                 }
             );
 
-            if (response.data.text) {
-                const transcription = response.data.text.trim();
-                if (transcription.length > 0) {
-                    onTranscriptionComplete(transcription);
-                } else {
-                    setError('No speech detected.');
+            const transcription = transcriptionResponse.data.text?.trim();
+            
+            if (!transcription || transcription.length === 0) {
+                setError('No speech detected.');
+                setIsProcessing(false);
+                return;
+            }
+
+            // Step 2: Generate note using AI if available
+            if (useAI && aiAvailable) {
+                try {
+                    const noteData = await agentApi.generateNote({ transcription });
+                    
+                    // Return structured note data
+                    onTranscriptionComplete(JSON.stringify({
+                        title: noteData.title,
+                        content: noteData.content,
+                        tags: ['ai', 'voice'],
+                        useAI: true
+                    }));
+                } catch (aiError) {
+                    console.error('AI generation failed, falling back to basic transcription:', aiError);
+                    
+                    // Fallback to basic transcription
+                    const title = generateTitleFromText(transcription);
+                    onTranscriptionComplete(JSON.stringify({
+                        title,
+                        content: transcription,
+                        tags: ['voice'],
+                        useAI: false
+                    }));
                 }
+            } else {
+                // No AI available, use basic transcription
+                const title = generateTitleFromText(transcription);
+                onTranscriptionComplete(JSON.stringify({
+                    title,
+                    content: transcription,
+                    tags: ['voice'],
+                    useAI: false
+                }));
             }
         } catch (err: any) {
             console.error('Transcription failed:', err);
@@ -302,7 +350,12 @@ const OfflineVoiceRecorder: React.FC<OfflineVoiceRecorderProps> = ({ onTranscrip
     }
 
     const getButtonText = () => {
-        if (isProcessing) return 'Processing...';
+        if (isProcessing) {
+            if (aiAvailable && useAI) {
+                return 'Generating...';
+            }
+            return 'Processing...';
+        }
         if (isRecording) return 'Stop';
         return 'Voice Note';
     };
@@ -313,6 +366,12 @@ const OfflineVoiceRecorder: React.FC<OfflineVoiceRecorderProps> = ({ onTranscrip
         return 'mic';
     };
 
+    const getButtonTitle = () => {
+        if (!serviceAvailable) return 'Voice service unavailable';
+        if (aiAvailable && useAI) return 'Record AI-enhanced voice note';
+        return 'Record voice note';
+    };
+
     return (
         <>
             <VoiceButtonWrapper>
@@ -321,7 +380,7 @@ const OfflineVoiceRecorder: React.FC<OfflineVoiceRecorderProps> = ({ onTranscrip
                     disabled={disabled || isProcessing || !serviceAvailable}
                     $isRecording={isRecording}
                     $isProcessing={isProcessing}
-                    title={serviceAvailable ? 'Record voice note' : 'Voice service unavailable'}
+                    title={getButtonTitle()}
                 >
                     <span className="material-symbols-outlined">{getButtonIcon()}</span>
                     <StatusText>{getButtonText()}</StatusText>
@@ -347,4 +406,4 @@ const OfflineVoiceRecorder: React.FC<OfflineVoiceRecorderProps> = ({ onTranscrip
     );
 };
 
-export default OfflineVoiceRecorder;
+export default VoiceRecorder;

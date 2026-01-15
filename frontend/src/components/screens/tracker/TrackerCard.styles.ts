@@ -257,13 +257,14 @@ export const NumericValue = styled.div`
 `;
 
 export const NumericButton = styled.button`
-    background: repeating-linear-gradient(
+    /* background: repeating-linear-gradient(
         45deg,
         ${darkTheme.accent}80,
         ${darkTheme.accent}80 10px,
         ${darkTheme.accent}40 10px,
         ${darkTheme.accent}40 20px
-    );
+    ); */
+    background: transparent;
     color: white;
     border: none;
     border-radius: 4px;

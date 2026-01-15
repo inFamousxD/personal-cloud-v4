@@ -153,48 +153,47 @@ const Notes = () => {
         }
     };
 
-    const generateTitleFromText = (text: string): string => {
-        // Clean up the text
-        const cleaned = text.trim();
+    // const generateTitleFromText = (text: string): string => {
+    //     // Clean up the text
+    //     const cleaned = text.trim();
         
-        // Split into sentences
-        const sentences = cleaned.split(/[.!?]+/).filter(s => s.trim().length > 0);
+    //     // Split into sentences
+    //     const sentences = cleaned.split(/[.!?]+/).filter(s => s.trim().length > 0);
         
-        if (sentences.length === 0) return 'Voice Note';
+    //     if (sentences.length === 0) return 'Voice Note';
         
-        // Use first sentence as title
-        let title = sentences[0].trim();
+    //     // Use first sentence as title
+    //     let title = sentences[0].trim();
         
-        // Limit to 50 characters for title
-        if (title.length > 50) {
-            title = title.substring(0, 47) + '...';
-        }
+    //     // Limit to 50 characters for title
+    //     if (title.length > 50) {
+    //         title = title.substring(0, 47) + '...';
+    //     }
         
-        return title;
-    };
+    //     return title;
+    // };
 
-    const handleVoiceNote = async (transcription: string) => {
-        if (!transcription || transcription.trim().length === 0) {
+    const handleVoiceNote = async (transcriptionData: string) => {
+        if (!transcriptionData || transcriptionData.trim().length === 0) {
             console.log('Empty transcription received');
             return;
         }
 
         try {
-            // Generate title from first sentence
-            const title = generateTitleFromText(transcription);
+            // Parse the transcription data
+            const noteData = JSON.parse(transcriptionData);
             
-            // Create note with 'voice' tag
             const noteInput: CreateNoteInput = {
-                title,
-                content: transcription,
-                tags: ['voice']
+                title: noteData.title,
+                content: noteData.content,
+                tags: noteData.tags || ['voice']
             };
 
             const created = await notesApi.createNote(noteInput);
             setNotes([created, ...notes]);
             loadTags();
             
-            console.log('Voice note created successfully');
+            console.log(`Voice note created successfully${noteData.useAI ? ' (AI-enhanced)' : ''}`);
         } catch (error) {
             console.error('Error creating voice note:', error);
         }
@@ -359,6 +358,7 @@ const Notes = () => {
                         <VoiceRecorder 
                             onTranscriptionComplete={setVoiceTranscription}
                             disabled={loading}
+                            useAI={true}
                         />
                         <CreateButton onClick={handleCreateNote}>
                             <span className="material-symbols-outlined">add</span>

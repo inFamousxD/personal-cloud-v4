@@ -219,6 +219,7 @@ const TrackerCard: React.FC<TrackerCardProps> = ({ tracker, onEdit, onDelete, on
             }
         } else if (tracker.type === 'duration' && stats?.thisWeekCount && tracker.config.targetDuration) {
             // Simplified - would need to sum up actual durations
+            console.log(stats)
             return Math.min(100, (stats.thisWeekCount / 7) * 100);
         } else if (tracker.type === 'target' && stats?.thisWeekCount) {
             const target = tracker.config.targetDays || 0;

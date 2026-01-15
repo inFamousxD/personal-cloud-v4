@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { agentApi, Message, Chat } from '../../../services/agentApi';
+import { agentApi, Message, Chat, AgentSettings } from '../../../services/agentApi';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -53,6 +53,7 @@ import {
     DeleteConfirmActions,
     RenameChatInput,
     RenameChatWrapper,
+    WaitingIndicator,
 } from './AgentChat.styles';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
@@ -78,6 +79,15 @@ const AgentChat = () => {
     // Settings
     const [showSettings, setShowSettings] = useState(false);
     const [contextLimit, setContextLimit] = useState(20);
+
+    // New state for enhancements
+    const [activeSessions, setActiveSessions] = useState<{ count: number; hasSessions: boolean }>({ 
+        count: 0, 
+        hasSessions: false 
+    });
+    const [settings, setSettings] = useState<AgentSettings | null>(null);
+    const [showSystemPromptModal, setShowSystemPromptModal] = useState(false);
+    const [editingSystemPrompt, setEditingSystemPrompt] = useState('');
 
     // Delete confirmation
     const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; chatId: string | null }>({
@@ -134,6 +144,41 @@ const AgentChat = () => {
             renameInputRef.current.select();
         }
     }, [isRenaming]);
+
+    // Poll active sessions while streaming
+    useEffect(() => {
+        const pollActiveSessions = async () => {
+            try {
+                const sessions = await agentApi.getActiveSessions();
+                setActiveSessions(sessions);
+            } catch (error) {
+                console.error('Error polling active sessions:', error);
+            }
+        };
+
+        let interval: NodeJS.Timeout | null = null;
+        if (isStreaming) {
+            pollActiveSessions();
+            interval = setInterval(pollActiveSessions, 3000);
+        }
+
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [isStreaming]);
+
+    // Load settings on mount
+    useEffect(() => {
+        const loadSettings = async () => {
+            try {
+                const userSettings = await agentApi.getSettings();
+                setSettings(userSettings);
+            } catch (error) {
+                console.error('Error loading settings:', error);
+            }
+        };
+        loadSettings();
+    }, []);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -293,6 +338,20 @@ const AgentChat = () => {
             handleSaveRename();
         } else if (e.key === 'Escape') {
             handleCancelRename();
+        }
+    };
+
+    const handleSaveSystemPrompt = async () => {
+        if (!editingSystemPrompt.trim()) return;
+        
+        try {
+            const updated = await agentApi.updateSettings({
+                defaultSystemPrompt: editingSystemPrompt.trim()
+            });
+            setSettings(updated);
+            setShowSystemPromptModal(false);
+        } catch (error) {
+            console.error('Error saving system prompt:', error);
         }
     };
 
@@ -601,6 +660,19 @@ const AgentChat = () => {
                         </MessagesContainer>
                     )}
 
+                    {isStreaming && (
+                        <WaitingIndicator>
+                            <div className="dot"></div>
+                            <div className="dot"></div>
+                            <div className="dot"></div>
+                            <span>
+                                {activeSessions.hasSessions && activeSessions.count > 1
+                                    ? `${selectedModel} is responding to ${activeSessions.count} users...`
+                                    : `${selectedModel} is thinking...`}
+                            </span>
+                        </WaitingIndicator>
+                    )}
+
                     <InputArea>
                         <InputWrapper>
                             <TextArea
@@ -662,6 +734,23 @@ const AgentChat = () => {
                         </SettingGroup>
 
                         <SettingGroup>
+                            <label>System Prompt</label>
+                            <ActionButton 
+                                onClick={() => {
+                                    setEditingSystemPrompt(settings?.defaultSystemPrompt || '');
+                                    setShowSystemPromptModal(true);
+                                }}
+                                style={{ width: '100%', justifyContent: 'center' }}
+                            >
+                                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
+                                Edit System Prompt
+                            </ActionButton>
+                            <p style={{ fontSize: '0.85em', opacity: 0.7, marginTop: '8px' }}>
+                                Customize how the AI assistant responds
+                            </p>
+                        </SettingGroup>
+
+                        <SettingGroup>
                             <label>Current Model</label>
                             <p style={{ fontSize: '0.9em', opacity: 0.8 }}>
                                 {selectedModel}
@@ -678,6 +767,57 @@ const AgentChat = () => {
                         <ModalActions>
                             <ActionButton onClick={() => setShowSettings(false)}>
                                 Close
+                            </ActionButton>
+                        </ModalActions>
+                    </ModalContent>
+                </ModalOverlay>
+            )}
+
+            {/* System Prompt Modal */}
+            {showSystemPromptModal && (
+                <ModalOverlay onClick={() => setShowSystemPromptModal(false)}>
+                    <ModalContent onClick={(e) => e.stopPropagation()}>
+                        <h3>System Prompt</h3>
+                        
+                        <SettingGroup>
+                            <label>Default System Prompt</label>
+                            <p style={{ fontSize: '0.85em', opacity: 0.7, marginBottom: '8px' }}>
+                                This prompt guides how the AI responds in all new conversations.
+                            </p>
+                            <textarea
+                                value={editingSystemPrompt}
+                                onChange={(e) => setEditingSystemPrompt(e.target.value)}
+                                placeholder="You are a helpful AI assistant..."
+                                style={{
+                                    width: '100%',
+                                    minHeight: '120px',
+                                    background: 'var(--background-darker)',
+                                    border: '1px solid var(--border)',
+                                    borderRadius: '4px',
+                                    color: 'var(--text-color)',
+                                    padding: '10px',
+                                    fontSize: '13px',
+                                    fontFamily: 'inherit',
+                                    resize: 'vertical',
+                                    outline: 'none',
+                                    boxSizing: 'border-box'
+                                }}
+                            />
+                        </SettingGroup>
+
+                        <ModalActions>
+                            <ActionButton onClick={() => {
+                                setShowSystemPromptModal(false);
+                                setEditingSystemPrompt('');
+                            }}>
+                                Cancel
+                            </ActionButton>
+                            <ActionButton 
+                                $variant="primary"
+                                onClick={handleSaveSystemPrompt}
+                                disabled={!editingSystemPrompt.trim()}
+                            >
+                                Save
                             </ActionButton>
                         </ModalActions>
                     </ModalContent>

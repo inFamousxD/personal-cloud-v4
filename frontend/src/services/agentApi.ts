@@ -12,6 +12,7 @@ export interface Chat {
     _id: string;
     userId: string;
     title: string;
+    systemPrompt?: string;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -27,6 +28,23 @@ export interface ChatRequest {
     stream?: boolean;
     chatId?: string;
     contextLimit?: number;
+}
+
+export interface AgentSettings {
+    _id?: string;
+    userId: string;
+    defaultSystemPrompt: string;
+    updatedAt: Date;
+}
+
+export interface GenerateNoteRequest {
+    transcription: string;
+    model?: string;
+}
+
+export interface GenerateNoteResponse {
+    title: string;
+    content: string;
 }
 
 const getAuthHeader = () => {
@@ -59,6 +77,42 @@ const createApiClient = () => {
 const apiClient = createApiClient();
 
 export const agentApi = {
+    // Settings
+    getSettings: async (): Promise<AgentSettings> => {
+        const response = await apiClient.get(`${API_URL}/api/agent/settings`, {
+            headers: getAuthHeader(),
+        });
+        return response.data;
+    },
+
+    updateSettings: async (settings: Partial<AgentSettings>): Promise<AgentSettings> => {
+        const response = await apiClient.put(
+            `${API_URL}/api/agent/settings`,
+            settings,
+            { headers: getAuthHeader() }
+        );
+        return response.data;
+    },
+
+    // Active sessions
+    getActiveSessions: async (): Promise<{ count: number; hasSessions: boolean }> => {
+        const response = await apiClient.get(`${API_URL}/api/agent/active-sessions`, {
+            headers: getAuthHeader(),
+        });
+        return response.data;
+    },
+
+    // Generate note from transcription
+    generateNote: async (request: GenerateNoteRequest): Promise<GenerateNoteResponse> => {
+        const response = await apiClient.post(
+            `${API_URL}/api/agent/generate-note`,
+            request,
+            { headers: getAuthHeader() }
+        );
+        return response.data;
+    },
+
+    // Chat streaming
     streamChat: async (
         request: ChatRequest,
         onChunk: (chunk: string, chatId?: string) => void,
@@ -85,7 +139,6 @@ export const agentApi = {
             }
 
             const chatId = response.headers.get('X-Chat-Id');
-            // const streamId = response.headers.get('X-Stream-Id');
 
             const reader = response.body?.getReader();
             const decoder = new TextDecoder();
@@ -167,13 +220,17 @@ export const agentApi = {
         return response.data;
     },
 
-    updateChatTitle: async (chatId: string, title: string): Promise<Chat> => {
+    updateChat: async (chatId: string, updates: { title?: string; systemPrompt?: string }): Promise<Chat> => {
         const response = await apiClient.patch(
             `${API_URL}/api/agent/chats/${chatId}`,
-            { title },
+            updates,
             { headers: getAuthHeader() }
         );
         return response.data;
+    },
+
+    updateChatTitle: async (chatId: string, title: string): Promise<Chat> => {
+        return agentApi.updateChat(chatId, { title });
     },
 
     deleteChat: async (chatId: string) => {

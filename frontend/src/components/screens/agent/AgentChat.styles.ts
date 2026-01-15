@@ -1038,3 +1038,50 @@ export const RenameChatInput = styled.input`
         font-size: 0.9em;
     }
 `;
+
+export const WaitingIndicator = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: ${darkTheme.backgroundDarkest};
+    border: 1px solid ${darkTheme.border};
+    border-radius: 6px;
+    margin: 0 16px 12px 16px;
+    color: ${darkTheme.text.color};
+    font-size: 13px;
+    opacity: 0.8;
+
+    .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: ${darkTheme.accent};
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    .dot:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .dot:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            opacity: 0.3;
+            transform: scale(0.8);
+        }
+        50% {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+    }
+
+    @media (max-width: 768px) {
+        padding: 10px 14px;
+        font-size: 12px;
+        margin: 0 12px 12px 12px;
+    }
+`;
