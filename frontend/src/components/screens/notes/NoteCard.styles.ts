@@ -40,8 +40,6 @@ export const NoteCardContent = styled.p`
     line-height: 1.5;
     margin: 0;
     flex: 1;
-    word-wrap: break-word;
-    white-space: pre-wrap;
     overflow: hidden;
     display: -webkit-box;
     -webkit-box-orient: vertical;

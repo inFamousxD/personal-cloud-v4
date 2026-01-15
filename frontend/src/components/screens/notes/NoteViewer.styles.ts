@@ -124,6 +124,5 @@ export const ViewerBody = styled.div`
 export const ViewerContent = styled.div`
     font-size: 13px;
     line-height: 1.6;
-    white-space: pre-wrap;
     word-wrap: break-word;
 `;

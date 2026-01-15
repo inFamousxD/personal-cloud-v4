@@ -3,6 +3,8 @@ import { Note } from '../../../services/notesApi';
 import { NoteCardStyled, NoteCardTitle, NoteCardContent, NoteCardFooter, NoteCardActions } from './NoteCard.styles';
 import styled from 'styled-components';
 import { darkTheme } from '../../../theme/dark.colors';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const TagsContainer = styled.div`
     display: flex;
@@ -53,17 +55,6 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onView, onEdit, onDelete }) =
         return 4;
     }, [note.content, note.title]);
 
-    // Calculate line clamp based on row span
-    const lineClamp = useMemo(() => {
-        const linesPerRowSpan = {
-            1: visibleTags.length > 0 ? 2 : 3,
-            2: visibleTags.length > 0 ? 6 : 8,
-            3: visibleTags.length > 0 ? 11 : 13,
-            4: visibleTags.length > 0 ? 16 : 18
-        };
-        return linesPerRowSpan[rowSpan as keyof typeof linesPerRowSpan] || 3;
-    }, [rowSpan, visibleTags.length]);
-
     const handleCardClick = (e: React.MouseEvent) => {
         if ((e.target as HTMLElement).closest('.material-symbols-outlined')) {
             return;
@@ -95,8 +86,12 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onView, onEdit, onDelete }) =
                 </TagsContainer>
             )}
             {note.content && note.content !== '' && (
-                <NoteCardContent style={{ WebkitLineClamp: lineClamp }}>
-                    {note.content}
+                <NoteCardContent>
+                    <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                    >
+                        {note.content}
+                    </ReactMarkdown>
                 </NoteCardContent>
             )}
             <NoteCardFooter>
