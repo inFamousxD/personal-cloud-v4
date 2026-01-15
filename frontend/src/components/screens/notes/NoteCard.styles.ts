@@ -32,17 +32,22 @@ export const NoteCardTitle = styled.h3`
     text-overflow: ellipsis;
     white-space: nowrap;
     flex-shrink: 0;
-`;
+    `;
 
 export const NoteCardContent = styled.p`
-    color: ${darkTheme.text.color};
     font-size: 13px;
-    line-height: 1.5;
+    line-height: 1.6;
+    word-wrap: break-word;
+    color: ${darkTheme.text.color};
+    overflow: hidden;
     margin: 0;
     flex: 1;
-    overflow: hidden;
+
+    /* 
     display: -webkit-box;
-    -webkit-box-orient: vertical;
+    font-size: 13px;
+    line-height: 1.5;
+    */
 
     /* Typography */
     p {

@@ -370,7 +370,7 @@ export const NotesBody = styled.div`
 export const NotesGrid = styled.div`
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    grid-auto-rows: 180px;
+    grid-auto-rows: 200px;
     grid-auto-flow: dense;
     gap: 12px;
     width: 100%;
