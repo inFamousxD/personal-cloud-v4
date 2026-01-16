@@ -478,15 +478,15 @@ export const MessageBubble = styled.div<{ $role: string }>`
             font-family: 'JetBrains Mono' !important;
         }
 
-        &::-webkit-scrollbar {
+        ::-webkit-scrollbar {
             height: 8px;
         }
 
-        &::-webkit-scrollbar-track {
+        ::-webkit-scrollbar-track {
             background: ${darkTheme.backgroundDarker};
         }
 
-        &::-webkit-scrollbar-thumb {
+        ::-webkit-scrollbar-thumb {
             background: ${darkTheme.accent}40;
             border-radius: 4px;
         }
