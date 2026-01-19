@@ -2,8 +2,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import {
     SettingsContainer,
-    SettingsHeader,
-    SettingsTitle,
     SettingsBody,
     SettingsSection,
     SectionTitle,
@@ -23,7 +21,7 @@ import {
     VersionRow,
     Badge
 } from './Settings.styles';
-import { CreateButton } from '../notes/Notes.styles';
+import { CreateButton, CreateButtonGroup, NotesHeader, NotesHeaderLeft, NotesHeaderTop, NotesTitle } from '../notes/Notes.styles';
 import { usePermissions } from '../../../contexts/PermissionsContext';
 
 const Settings = () => {
@@ -59,19 +57,25 @@ const Settings = () => {
 
     return (
         <SettingsContainer>
-            <SettingsHeader>
-                <SettingsTitle>
-                    <span className="material-symbols-outlined">settings</span>
-                    Settings
-                </SettingsTitle>
-                {
-                    !isLoading && hasAccess('admin') && isAdmin &&
-                    <CreateButton onClick={() => navigate("/admin")}>
-                        <span className="material-symbols-outlined">admin_panel_settings</span>
-                        Admin Panel
-                    </CreateButton>
-                }
-            </SettingsHeader>
+            <NotesHeader>
+                <NotesHeaderTop>
+                    <NotesHeaderLeft>
+                        <NotesTitle>
+                            <span className="material-symbols-outlined">settings</span>
+                            Settings
+                        </NotesTitle>
+                    </NotesHeaderLeft>
+                    {
+                        !isLoading && hasAccess('admin') && isAdmin &&
+                        <CreateButtonGroup>
+                            <CreateButton onClick={() => navigate("/admin")}>
+                                <span className="material-symbols-outlined">admin_panel_settings</span>
+                                Admin Panel
+                            </CreateButton>
+                        </CreateButtonGroup>
+                    }
+                </NotesHeaderTop>
+            </NotesHeader>
             <SettingsBody>
                 {/* Account Section */}
                 <SettingsSection>

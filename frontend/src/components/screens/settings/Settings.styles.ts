@@ -17,6 +17,10 @@ export const SettingsHeader = styled.div`
     padding: 8px 12px;
     border-bottom: 1px solid ${darkTheme.border};
     background: ${darkTheme.backgroundDarkest};
+    @media (max-width: 768px) {
+        flex-direction: column;
+        gap: 8px;
+    }
 `;
 
 export const SettingsTitle = styled.div`

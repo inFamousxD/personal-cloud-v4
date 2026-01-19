@@ -123,7 +123,7 @@ export const MobileNavScrollable = styled.div`
 export const MobileNavFixed = styled.div`
     @media (max-width: 768px) {
         display: flex;
-        /* border-left: 0.5px solid #434557; */
+        border-left: 0.5px solid #434557;
         overflow-y: hidden;
         background: ${darkTheme.backgroundDarkest};
     }
