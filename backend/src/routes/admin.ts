@@ -20,6 +20,26 @@ const router = Router();
 router.use(authenticateToken);
 
 // ============================================
+// CURRENT USER PERMISSIONS (non-admin) - MUST BE BEFORE PARAMETERIZED ROUTES
+// ============================================
+
+// GET current user's effective permissions
+router.get('/me', async (req: AuthRequest, res: Response) => {
+    try {
+        if (!req.userId) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+        
+        const effective = await getEffectivePermissions(req.userId);
+        
+        res.json(effective);
+    } catch (error) {
+        console.error('Error fetching current user permissions:', error);
+        res.status(500).json({ error: 'Failed to fetch permissions' });
+    }
+});
+
+// ============================================
 // DEFAULT PERMISSIONS MANAGEMENT
 // ============================================
 
@@ -293,26 +313,6 @@ router.put('/users/:userId', requireAdmin, async (req: AuthRequest, res: Respons
     } catch (error) {
         console.error('Error updating user permissions:', error);
         res.status(500).json({ error: 'Failed to update user permissions' });
-    }
-});
-
-// ============================================
-// CURRENT USER PERMISSIONS (non-admin)
-// ============================================
-
-// GET current user's effective permissions
-router.get('/me', async (req: AuthRequest, res: Response) => {
-    try {
-        if (!req.userId) {
-            return res.status(401).json({ error: 'Authentication required' });
-        }
-        
-        const effective = await getEffectivePermissions(req.userId);
-        
-        res.json(effective);
-    } catch (error) {
-        console.error('Error fetching current user permissions:', error);
-        res.status(500).json({ error: 'Failed to fetch permissions' });
     }
 });
 

@@ -107,7 +107,7 @@ export const MobileNavScrollable = styled.div`
         overflow-y: hidden;
         
         &::-webkit-scrollbar {
-            height: 2px;
+            height: 0px;
         }
 
         &::-webkit-scrollbar-track {
