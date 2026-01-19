@@ -58,7 +58,7 @@ app.use('/api/journals', withFeature('journal', journalsRouter));
 app.use('/api/lists', withFeature('lists', listsRouter));
 app.use('/api/trackers', withFeature('tracker', trackersRouter));
 app.use('/api/server', withFeature('server', serverRouter));
-app.use('/api/agent', withFeature('agent', agentRouter));
+app.use('/api/agent', agentRouter);
 app.use('/api/terminal', withFeature('terminal', terminalRouter));
 
 // Routes without feature restrictions

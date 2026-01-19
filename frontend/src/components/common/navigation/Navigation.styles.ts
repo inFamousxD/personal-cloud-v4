@@ -62,7 +62,7 @@ export const NavigationDockStyled = styled.div`
         flex-direction: row;
         justify-content: flex-start;
         z-index: 999;
-        padding: 0;
+        padding: 0px;
         
         div {
             /* margin: 0; */
@@ -123,7 +123,7 @@ export const MobileNavScrollable = styled.div`
 export const MobileNavFixed = styled.div`
     @media (max-width: 768px) {
         display: flex;
-        /* border-left: 0.5px solid #434557; */
+        border-left: 0.5px solid #434557;
         overflow-y: hidden;
         background: ${darkTheme.backgroundDarkest};
     }

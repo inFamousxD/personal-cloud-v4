@@ -23,6 +23,8 @@ import {
     VersionRow,
     Badge
 } from './Settings.styles';
+import { CreateButton } from '../notes/Notes.styles';
+import { usePermissions } from '../../../contexts/PermissionsContext';
 
 const Settings = () => {
     const { user, logout } = useAuth();
@@ -53,6 +55,7 @@ const Settings = () => {
     const tokenPayload = user?.token ? decodeToken(user.token) : null;
     const tokenExpiry = tokenPayload?.exp ? new Date(tokenPayload.exp * 1000) : null;
     const tokenIssued = tokenPayload?.iat ? new Date(tokenPayload.iat * 1000) : null;
+    const { hasAccess, isAdmin, isLoading } = usePermissions();
 
     return (
         <SettingsContainer>
@@ -61,8 +64,14 @@ const Settings = () => {
                     <span className="material-symbols-outlined">settings</span>
                     Settings
                 </SettingsTitle>
+                {
+                    !isLoading && hasAccess('admin') && isAdmin &&
+                    <CreateButton onClick={() => navigate("/admin")}>
+                        <span className="material-symbols-outlined">admin_panel_settings</span>
+                        Admin Panel
+                    </CreateButton>
+                }
             </SettingsHeader>
-
             <SettingsBody>
                 {/* Account Section */}
                 <SettingsSection>

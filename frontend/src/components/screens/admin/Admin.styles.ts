@@ -147,7 +147,7 @@ export const UserList = styled.div`
     display: flex;
     flex-direction: column;
     gap: 8px;
-    max-height: 400px;
+    /* max-height: 400px; */
     overflow-y: auto;
 
     &::-webkit-scrollbar {
@@ -168,7 +168,7 @@ export const UserCard = styled.div<{ $expanded?: boolean }>`
     background: ${darkTheme.backgroundDarker};
     border: 1px solid ${darkTheme.border};
     border-radius: 4px;
-    overflow: hidden;
+    /* overflow: hidden; */
 
     ${props => props.$expanded && `
         border-color: ${darkTheme.accent};
