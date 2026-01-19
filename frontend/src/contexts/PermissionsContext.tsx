@@ -34,13 +34,28 @@ interface PermissionsProviderProps {
     children: React.ReactNode;
 }
 
+// Default permissions when not authenticated or on error
+const DEFAULT_PERMISSIONS: EffectivePermissions = {
+    userId: '',
+    isAdmin: false,
+    deniedFeatures: ['agent', 'terminal', 'server'],
+    allowedFeatures: ['notes', 'journal', 'lists', 'tracker', 'settings'],
+    useDefaults: true,
+};
+
 export const PermissionsProvider: React.FC<PermissionsProviderProps> = ({ children }) => {
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, isLoading: authLoading } = useAuth();
     const [permissions, setPermissions] = useState<EffectivePermissions | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     const fetchPermissions = useCallback(async () => {
+        // Wait for auth to finish loading
+        if (authLoading) {
+            return;
+        }
+
+        // If not authenticated, set default permissions and stop loading
         if (!isAuthenticated || !user?.token) {
             setPermissions(null);
             setIsLoading(false);
@@ -57,6 +72,15 @@ export const PermissionsProvider: React.FC<PermissionsProviderProps> = ({ childr
                 },
             });
 
+            if (response.status === 401 || response.status === 403) {
+                // Token might be invalid but don't trigger logout from here
+                // Just use default permissions
+                console.warn('Permission fetch returned auth error, using defaults');
+                setPermissions({ ...DEFAULT_PERMISSIONS, userId: user.email || '' });
+                setIsLoading(false);
+                return;
+            }
+
             if (!response.ok) {
                 throw new Error('Failed to fetch permissions');
             }
@@ -66,32 +90,28 @@ export const PermissionsProvider: React.FC<PermissionsProviderProps> = ({ childr
         } catch (err) {
             console.error('Error fetching permissions:', err);
             setError(err instanceof Error ? err.message : 'Failed to fetch permissions');
-            // Set default restrictive permissions on error
-            setPermissions({
-                userId: user?.email || '',
-                isAdmin: false,
-                deniedFeatures: ['agent', 'terminal', 'server'],
-                allowedFeatures: ['notes', 'journal', 'lists', 'tracker', 'settings'],
-                useDefaults: true,
-            });
+            // Set default permissions on error - don't break the app
+            setPermissions({ ...DEFAULT_PERMISSIONS, userId: user?.email || '' });
         } finally {
             setIsLoading(false);
         }
-    }, [isAuthenticated, user?.token, user?.email]);
+    }, [isAuthenticated, authLoading, user?.token, user?.email]);
 
     useEffect(() => {
         fetchPermissions();
     }, [fetchPermissions]);
 
     const hasAccess = useCallback((feature: string): boolean => {
-        if (!permissions) return false;
+        // While loading, allow access to prevent flash of restricted content
+        if (isLoading || authLoading) return true;
+        if (!permissions) return true; // Not authenticated, let ProtectedRoute handle it
         if (permissions.isAdmin) return true;
         return !permissions.deniedFeatures.includes(feature);
-    }, [permissions]);
+    }, [permissions, isLoading, authLoading]);
 
     const value: PermissionsContextType = {
         permissions,
-        isLoading,
+        isLoading: isLoading || authLoading,
         error,
         hasAccess,
         isAdmin: permissions?.isAdmin ?? false,

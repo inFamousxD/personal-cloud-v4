@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, Router } from 'express';
 import { createServer } from 'http';
 import { writeFileSync } from 'fs';
 import dotenv from 'dotenv';
@@ -45,21 +45,24 @@ app.post('/post-test', (req: Request, res: Response) => {
     res.send(200);
 });
 
-// Mount routes - all features check permissions
-// Note: authenticateToken is already applied inside each router, 
-// but we add requireFeature for permission checking
-app.use('/api/notes', authenticateToken, requireFeature('notes'), notesRouter);
-app.use('/api/journals', authenticateToken, requireFeature('journal'), journalsRouter);
-app.use('/api/lists', authenticateToken, requireFeature('lists'), listsRouter);
-app.use('/api/trackers', authenticateToken, requireFeature('tracker'), trackersRouter);
-app.use('/api/whisper', authenticateToken, whisperRouter); // Utility, no feature gate
+// Helper to wrap router with feature check
+const withFeature = (feature: string, router: Router): Router => {
+    const wrapper = Router();
+    wrapper.use(authenticateToken, requireFeature(feature), router);
+    return wrapper;
+};
 
-// Restricted features (denied by default)
-app.use('/api/server', authenticateToken, requireFeature('server'), serverRouter);
-app.use('/api/agent', authenticateToken, requireFeature('agent'), agentRouter);
-app.use('/api/terminal', authenticateToken, requireFeature('terminal'), terminalRouter);
+// Routes with feature restrictions (auth + permission check)
+app.use('/api/notes', withFeature('notes', notesRouter));
+app.use('/api/journals', withFeature('journal', journalsRouter));
+app.use('/api/lists', withFeature('lists', listsRouter));
+app.use('/api/trackers', withFeature('tracker', trackersRouter));
+app.use('/api/server', withFeature('server', serverRouter));
+app.use('/api/agent', withFeature('agent', agentRouter));
+app.use('/api/terminal', withFeature('terminal', terminalRouter));
 
-// Admin routes
+// Routes without feature restrictions
+app.use('/api/whisper', whisperRouter);
 app.use('/api/admin', adminRouter);
 
 process.on('SIGINT', async () => {
