@@ -126,10 +126,10 @@ const Terminal: React.FC = () => {
         window.addEventListener('resize', handleResize);
 
         // Welcome message
-        xterm.write('\x1b[1;35m╔══════════════════════════════════════╗\x1b[0m\r\n');
-        xterm.write('\x1b[1;35m║\x1b[0m    \x1b[1;36mCloud Terminal\x1b[0m                    \x1b[1;35m║\x1b[0m\r\n');
-        xterm.write('\x1b[1;35m║\x1b[0m    Press \x1b[1;32mConnect\x1b[0m to start a session   \x1b[1;35m║\x1b[0m\r\n');
-        xterm.write('\x1b[1;35m╚══════════════════════════════════════╝\x1b[0m\r\n\r\n');
+        xterm.write('\x1b[1;35m╔════════════════════════════════════════╗\x1b[0m\r\n');
+        xterm.write('\x1b[1;35m║\x1b[0m    \x1b[1;36mTerminal\x1b[0m                            \x1b[1;35m║\x1b[0m\r\n');
+        xterm.write('\x1b[1;35m║\x1b[0m    Press \x1b[1;32mConnect\x1b[0m to start a session    \x1b[1;35m║\x1b[0m\r\n');
+        xterm.write('\x1b[1;35m╚════════════════════════════════════════╝\x1b[0m\r\n\r\n');
 
         return () => {
             window.removeEventListener('resize', handleResize);

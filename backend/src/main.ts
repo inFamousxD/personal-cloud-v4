@@ -10,8 +10,11 @@ import serverRouter from './routes/server.js';
 import whisperRouter from './routes/whisper.js';
 import trackersRouter from './routes/trackers.js';
 import agentRouter from './routes/agent.js';
+import adminRouter from './routes/admin.js';
 import terminalRouter, { initTerminalWebSocket } from './routes/terminal.js';
 import { client, connectDB } from './db.js';
+import { authenticateToken } from './middleware/auth.js';
+import { requireFeature } from './middleware/permissions.js';
 
 dotenv.config();
 
@@ -42,15 +45,22 @@ app.post('/post-test', (req: Request, res: Response) => {
     res.send(200);
 });
 
-// Mount routes
-app.use('/api/notes', notesRouter);
-app.use('/api/journals', journalsRouter);
-app.use('/api/lists', listsRouter);
-app.use('/api/server', serverRouter);
-app.use('/api/whisper', whisperRouter);
-app.use('/api/trackers', trackersRouter);
-app.use('/api/agent', agentRouter);
-app.use('/api/terminal', terminalRouter);
+// Mount routes - all features check permissions
+// Note: authenticateToken is already applied inside each router, 
+// but we add requireFeature for permission checking
+app.use('/api/notes', authenticateToken, requireFeature('notes'), notesRouter);
+app.use('/api/journals', authenticateToken, requireFeature('journal'), journalsRouter);
+app.use('/api/lists', authenticateToken, requireFeature('lists'), listsRouter);
+app.use('/api/trackers', authenticateToken, requireFeature('tracker'), trackersRouter);
+app.use('/api/whisper', authenticateToken, whisperRouter); // Utility, no feature gate
+
+// Restricted features (denied by default)
+app.use('/api/server', authenticateToken, requireFeature('server'), serverRouter);
+app.use('/api/agent', authenticateToken, requireFeature('agent'), agentRouter);
+app.use('/api/terminal', authenticateToken, requireFeature('terminal'), terminalRouter);
+
+// Admin routes
+app.use('/api/admin', adminRouter);
 
 process.on('SIGINT', async () => {
     await client.close();

@@ -1,16 +1,25 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { MobileNavFixed, MobileNavScrollable, MobileNavWrapper, NavigationDockStyled } from "./Navigation.styles";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../redux/store";
 import mainDock from "../../../redux/slices/application/mainDock";
+import { usePermissions } from "../../../contexts/PermissionsContext";
+
+interface DockOption {
+    id: string;
+    icon: string;
+    navigatesTo: string;
+    feature?: string; // Maps to permission feature key
+}
 
 const NavigationDock: React.FC = () => {
     const navigate = useNavigate();
-    const topOptions = useSelector((state: RootState) => state.mainDock.dockTopOptions);
-    const bottomOptions = useSelector((state: RootState) => state.mainDock.dockBottomOptions);
+    const topOptions = useSelector((state: RootState) => state.mainDock.dockTopOptions) as DockOption[];
+    const bottomOptions = useSelector((state: RootState) => state.mainDock.dockBottomOptions) as DockOption[];
     const selectedOption = useSelector((state: RootState) => state.mainDock.selected);
     const dispatch: AppDispatch = useDispatch();
+    const { hasAccess, isAdmin, isLoading } = usePermissions();
 
     const dockOptionOnClick = (navigateTo: string, id: string) => {
         dispatch(mainDock.actions.selectFromDock({ selected: id }));
@@ -21,17 +30,40 @@ const NavigationDock: React.FC = () => {
 
     useEffect(() => {
         dispatch(mainDock.actions.selectFromDock({ selected: location.pathname.split('/')[1] }))
-    }, [location])
+    }, [location, dispatch])
+
+    // Filter options based on permissions
+    const filteredTopOptions = useMemo(() => {
+        if (isLoading) return [];
+        return topOptions.filter(option => {
+            if (!option.feature) return true; // No feature restriction
+            return hasAccess(option.feature);
+        });
+    }, [topOptions, hasAccess, isLoading]);
+
+    const filteredBottomOptions = useMemo(() => {
+        if (isLoading) return [];
+        return bottomOptions.filter(option => {
+            if (!option.feature) return true;
+            // Special case: admin page only for admins
+            if (option.id === 'admin') return isAdmin;
+            return hasAccess(option.feature);
+        });
+    }, [bottomOptions, hasAccess, isAdmin, isLoading]);
 
     // Check if mobile
     const isMobile = window.innerWidth <= 768;
+
+    if (isLoading) {
+        return <NavigationDockStyled />;
+    }
 
     if (isMobile) {
         return (
             <NavigationDockStyled>
                 <MobileNavWrapper>
                     <MobileNavScrollable>
-                        {topOptions.map(option => (
+                        {filteredTopOptions.map(option => (
                             <div
                                 key={option.id}
                                 className={"material-symbols-outlined"}
@@ -42,7 +74,7 @@ const NavigationDock: React.FC = () => {
                         ))}
                     </MobileNavScrollable>
                     <MobileNavFixed>
-                        {bottomOptions.map(option => (
+                        {filteredBottomOptions.map(option => (
                             <div
                                 key={option.id}
                                 className={"material-symbols-outlined"}
@@ -60,7 +92,7 @@ const NavigationDock: React.FC = () => {
     return (
         <NavigationDockStyled>
             {
-                topOptions.map(option => {
+                filteredTopOptions.map(option => {
                     return (
                         <div
                             key={option.id}
@@ -74,7 +106,7 @@ const NavigationDock: React.FC = () => {
             }
             <div style={{ flex: 'auto' }} ></div>
             {
-                bottomOptions.map(option => {
+                filteredBottomOptions.map(option => {
                     return (
                         <div
                             key={option.id}

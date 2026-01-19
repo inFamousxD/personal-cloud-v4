@@ -1,49 +1,76 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const mainDockInitialState = {
+interface DockOption {
+    id: string;
+    icon: string;
+    navigatesTo: string;
+    feature?: string; // Maps to permission feature key
+}
+
+interface MainDockState {
+    selected: string | null;
+    dockTopOptions: DockOption[];
+    dockBottomOptions: DockOption[];
+}
+
+const mainDockInitialState: MainDockState = {
     selected: null,
     dockTopOptions: [
         {
             id: "notes",
             icon: "add_notes",
-            navigatesTo: "/notes"
+            navigatesTo: "/notes",
+            feature: "notes"
         },
         {
             id: "journal",
             icon: "history_edu",
-            navigatesTo: "/journal"
+            navigatesTo: "/journal",
+            feature: "journal"
         },
         {
             id: "lists",
             icon: "format_list_bulleted_add",
-            navigatesTo: "/lists"
+            navigatesTo: "/lists",
+            feature: "lists"
         },
         {
             id: "tracker",
             icon: "track_changes",
-            navigatesTo: "/tracker"
+            navigatesTo: "/tracker",
+            feature: "tracker"
         },
         {
             id: "agent",
             icon: "mark_unread_chat_alt",
-            navigatesTo: "/agent"
+            navigatesTo: "/agent",
+            feature: "agent"  // Restricted by default
         },
         {
             id: "terminal",
             icon: "terminal",
-            navigatesTo: "/terminal"
+            navigatesTo: "/terminal",
+            feature: "terminal"  // Restricted by default
         }
     ],
     dockBottomOptions: [
         {
             id: "server",
             icon: "dns",
-            navigatesTo: "/server"
+            navigatesTo: "/server",
+            feature: "server"  // Restricted by default
+        },
+        {
+            id: "admin",
+            icon: "admin_panel_settings",
+            navigatesTo: "/admin",
+            feature: "admin"  // Admin only - handled specially in Navigation
         },
         {
             id: "settings",
             icon: "settings",
-            navigatesTo: "/settings"
+            navigatesTo: "/settings",
+            feature: "settings"  // Always allowed
         }
     ]
 }
