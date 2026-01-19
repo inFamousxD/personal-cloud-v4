@@ -11,6 +11,7 @@ import ProtectedRoute from "../../ProtectedRoute";
 import styled from "styled-components";
 import Trackers from "../tracker/Tracker";
 import AgentChat from "../agent/AgentChat";
+import Terminal from "../terminal/Terminal";
 
 const RootContainer = styled.div`
     display: flex;
@@ -58,6 +59,7 @@ export const RootScreen: React.FC = () => {
                             <Route path="/tracker" element={<Trackers />} />
                             <Route path="/agent" element={<AgentChat />} />
                             <Route path="/agent/:chatId" element={<AgentChat />} />
+                            <Route path="/terminal" element={<Terminal />} />
                         </Routes>
                     </ContentArea>
                     <BottomRibbonContainer />

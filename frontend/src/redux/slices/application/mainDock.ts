@@ -27,6 +27,11 @@ const mainDockInitialState = {
             id: "agent",
             icon: "mark_unread_chat_alt",
             navigatesTo: "/agent"
+        },
+        {
+            id: "terminal",
+            icon: "terminal",
+            navigatesTo: "/terminal"
         }
     ],
     dockBottomOptions: [
