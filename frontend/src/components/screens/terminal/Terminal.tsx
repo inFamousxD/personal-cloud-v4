@@ -21,6 +21,8 @@ import {
 import { useTerminalWebSocket } from './useTerminalWebSocket';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
+import { useTheme } from '../../../contexts/ThemeContext';
+import { getTerminalTheme } from '../../../theme/themes';
 
 const Terminal: React.FC = () => {
     const terminalRef = useRef<HTMLDivElement>(null);
@@ -33,6 +35,10 @@ const Terminal: React.FC = () => {
     const topOptions = useSelector((state: RootState) => state.mainDock.dockTopOptions);
     const bottomOptions = useSelector((state: RootState) => state.mainDock.dockBottomOptions);
     const terminalOption = [...topOptions, ...bottomOptions].find(o => o.id === 'terminal');
+
+    // Get current theme for terminal colors
+    const { currentTheme } = useTheme();
+    const terminalTheme = getTerminalTheme(currentTheme);
 
     const {
         status,
@@ -65,29 +71,7 @@ const Terminal: React.FC = () => {
             cursorStyle: 'bar',
             fontSize: 14,
             fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Menlo, Monaco, 'Courier New', monospace",
-            theme: {
-                background: '#0d0d0d',
-                foreground: '#e0e0e0',
-                cursor: '#a855f7',
-                cursorAccent: '#0d0d0d',
-                selectionBackground: '#a855f740',
-                black: '#1a1a2e',
-                red: '#e74c3c',
-                green: '#2ecc71',
-                yellow: '#f1c40f',
-                blue: '#3498db',
-                magenta: '#a855f7',
-                cyan: '#00d9ff',
-                white: '#ecf0f1',
-                brightBlack: '#636e72',
-                brightRed: '#ff6b6b',
-                brightGreen: '#55efc4',
-                brightYellow: '#ffeaa7',
-                brightBlue: '#74b9ff',
-                brightMagenta: '#d63384',
-                brightCyan: '#81ecec',
-                brightWhite: '#ffffff',
-            },
+            theme: terminalTheme,
             allowProposedApi: true,
             scrollback: 10000,
             convertEol: true,
@@ -137,7 +121,14 @@ const Terminal: React.FC = () => {
             xtermRef.current = null;
             fitAddonRef.current = null;
         };
-    }, [sendInput, sendResize]);
+    }, [sendInput, sendResize]); // Note: terminalTheme intentionally excluded to prevent re-init
+
+    // Update terminal theme when app theme changes
+    useEffect(() => {
+        if (xtermRef.current && isInitialized) {
+            xtermRef.current.options.theme = terminalTheme;
+        }
+    }, [terminalTheme, isInitialized]);
 
     // Refit terminal when becoming visible
     useEffect(() => {
@@ -235,7 +226,7 @@ const Terminal: React.FC = () => {
                 </TerminalActions>
             </TerminalHeader>
 
-            <TerminalBody>
+            <TerminalBody $isLight={terminalTheme.background === '#fafafa'}>
                 <div ref={terminalRef} style={{ height: '100%', width: '100%' }} />
                 
                 {status === 'connecting' && (

@@ -24,7 +24,157 @@ export interface AppTheme {
     values: ThemeValues;
 }
 
-// Default dark theme (original)
+// ============ THEME DETECTION UTILITIES ============
+
+/**
+ * Parse a color string to RGB values
+ * Supports: #RGB, #RRGGBB, #RRGGBBAA, rgb(), rgba(), and named colors
+ */
+export const parseColorToRGB = (color: string): { r: number; g: number; b: number } | null => {
+    // Handle hex colors
+    if (color.startsWith('#')) {
+        let hex = color.slice(1);
+        
+        // Handle shorthand #RGB
+        if (hex.length === 3) {
+            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        }
+        
+        // Handle #RRGGBBAA (ignore alpha)
+        if (hex.length === 8) {
+            hex = hex.slice(0, 6);
+        }
+        
+        if (hex.length === 6) {
+            const r = parseInt(hex.slice(0, 2), 16);
+            const g = parseInt(hex.slice(2, 4), 16);
+            const b = parseInt(hex.slice(4, 6), 16);
+            if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+                return { r, g, b };
+            }
+        }
+    }
+    
+    // Handle rgb() and rgba()
+    const rgbMatch = color.match(/rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+    if (rgbMatch) {
+        return {
+            r: parseInt(rgbMatch[1]),
+            g: parseInt(rgbMatch[2]),
+            b: parseInt(rgbMatch[3])
+        };
+    }
+    
+    // Handle common named colors (for fallback)
+    const namedColors: Record<string, { r: number; g: number; b: number }> = {
+        'white': { r: 255, g: 255, b: 255 },
+        'black': { r: 0, g: 0, b: 0 },
+        'azure': { r: 240, g: 255, b: 255 },
+        'snow': { r: 255, g: 250, b: 250 },
+        'ivory': { r: 255, g: 255, b: 240 },
+    };
+    
+    const lowerColor = color.toLowerCase();
+    if (namedColors[lowerColor]) {
+        return namedColors[lowerColor];
+    }
+    
+    return null;
+};
+
+/**
+ * Calculate relative luminance using WCAG formula
+ * Returns a value between 0 (black) and 1 (white)
+ */
+export const getLuminance = (r: number, g: number, b: number): number => {
+    const [rs, gs, bs] = [r, g, b].map(c => {
+        const s = c / 255;
+        return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+};
+
+/**
+ * Determine if a theme is light based on its background color
+ * Uses the backgroundDarkest value as the primary indicator
+ */
+export const isLightTheme = (theme: AppTheme): boolean => {
+    const rgb = parseColorToRGB(theme.values.backgroundDarkest);
+    if (!rgb) {
+        // Fallback: check if theme name contains 'light'
+        return theme.name.toLowerCase().includes('light') || 
+               theme.id.toLowerCase().includes('light') ||
+               theme.id.toLowerCase().includes('latte') ||
+               theme.id.toLowerCase().includes('paper');
+    }
+    
+    const luminance = getLuminance(rgb.r, rgb.g, rgb.b);
+    // Threshold of 0.4 - anything brighter is considered "light"
+    return luminance > 0.4;
+};
+
+/**
+ * Get appropriate terminal theme based on app theme
+ */
+export const getTerminalTheme = (theme: AppTheme) => {
+    const isLight = isLightTheme(theme);
+    const accent = theme.values.accent;
+    
+    if (isLight) {
+        return {
+            background: '#fafafa',
+            foreground: '#383a42',
+            cursor: accent,
+            cursorAccent: '#fafafa',
+            selectionBackground: `${accent}30`,
+            black: '#383a42',
+            red: '#e45649',
+            green: '#50a14f',
+            yellow: '#c18401',
+            blue: '#4078f2',
+            magenta: '#a626a4',
+            cyan: '#0184bc',
+            white: '#fafafa',
+            brightBlack: '#a0a1a7',
+            brightRed: '#e06c75',
+            brightGreen: '#98c379',
+            brightYellow: '#e5c07b',
+            brightBlue: '#61afef',
+            brightMagenta: '#c678dd',
+            brightCyan: '#56b6c2',
+            brightWhite: '#ffffff',
+        };
+    }
+    
+    // Dark theme
+    return {
+        background: '#0d0d0d',
+        foreground: '#e0e0e0',
+        cursor: accent,
+        cursorAccent: '#0d0d0d',
+        selectionBackground: `${accent}40`,
+        black: '#1a1a2e',
+        red: '#e74c3c',
+        green: '#2ecc71',
+        yellow: '#f1c40f',
+        blue: '#3498db',
+        magenta: '#a855f7',
+        cyan: '#00d9ff',
+        white: '#ecf0f1',
+        brightBlack: '#636e72',
+        brightRed: '#ff6b6b',
+        brightGreen: '#55efc4',
+        brightYellow: '#ffeaa7',
+        brightBlue: '#74b9ff',
+        brightMagenta: '#d63384',
+        brightCyan: '#81ecec',
+        brightWhite: '#ffffff',
+    };
+};
+
+// ============ DARK THEMES ============
+
+// Default dark theme (original - keeping untouched)
 export const defaultDarkTheme: AppTheme = {
     id: 'default-dark',
     name: 'Default Dark',

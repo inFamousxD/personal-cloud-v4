@@ -140,11 +140,12 @@ export const ActionButton = styled.button<{ $variant?: 'primary' | 'secondary' |
     }
 `;
 
-export const TerminalBody = styled.div`
+export const TerminalBody = styled.div<{ $isLight?: boolean }>`
     flex: 1;
     overflow: hidden;
-    background: #0d0d0d;
+    background: ${props => props.$isLight ? '#fafafa' : '#0d0d0d'};
     position: relative;
+    transition: background 0.2s ease;
 
     /* xterm.js container */
     .xterm {
@@ -156,11 +157,11 @@ export const TerminalBody = styled.div`
         background: transparent !important;
         
         &::-webkit-scrollbar {
-            width: 8px;
+            width: 0px;
         }
 
         &::-webkit-scrollbar-track {
-            background: ${darkTheme.backgroundDarker};
+            background: ${props => props.$isLight ? '#e0e0e0' : darkTheme.backgroundDarker};
         }
 
         &::-webkit-scrollbar-thumb {
