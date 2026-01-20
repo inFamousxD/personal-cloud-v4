@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -294,21 +294,32 @@ Start writing your thoughts here...`;
     };
 
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const handleSaveRef = useRef(handleSaveJournal);
 
-    const debouncedSave = useCallback(() => {
+    useEffect(() => {
+        handleSaveRef.current = handleSaveJournal;
+    }, [handleSaveJournal]);
+
+    useEffect(() => {
+        return () => {
+            if (saveTimeoutRef.current) {
+                clearTimeout(saveTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    const debouncedSave = () => {
         if (saveTimeoutRef.current) {
             clearTimeout(saveTimeoutRef.current);
         }
-        
         saveTimeoutRef.current = setTimeout(() => {
-            handleSaveJournal();
-        }, 1500); // 2 second delay
-    }, []);
+            handleSaveRef.current();
+        }, 1500);
+    };
 
     const handleContentChange = (value: string) => {
         setContent(value);
         setHasUnsavedChanges(true);
-
         debouncedSave();
     };
 
