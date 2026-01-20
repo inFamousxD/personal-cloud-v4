@@ -38,15 +38,18 @@ export const NavigationDockStyled = styled.div`
         user-select: none;
         padding: 4px;
         transition: all ease-in-out 100ms;
+        color: ${darkTheme.text.color};
         
         &#selected {
             background: ${darkTheme.accent};
             border-radius: 4px;
+            color: ${ darkTheme.backgroundDarkest };
         }
         
         &:hover {
             background: ${darkTheme.accent};
             border-radius: 4px;
+            color: ${ darkTheme.backgroundDarkest };
         }
     }
 
