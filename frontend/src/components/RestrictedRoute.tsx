@@ -79,6 +79,7 @@ const LoadingContainer = styled.div`
     min-height: 200px;
     background: ${darkTheme.backgroundDarker};
     color: ${darkTheme.accent};
+    width: 100%;
 `;
 
 const AccessDeniedPage: React.FC<{ feature: string }> = ({ feature }) => {

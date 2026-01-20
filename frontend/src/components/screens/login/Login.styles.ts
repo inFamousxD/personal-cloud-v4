@@ -29,7 +29,7 @@ export const LoginTitle = styled.h1`
 `;
 
 export const LoginDescription = styled.p`
-    color: ${darkTheme.accent}cc;
+    color: ${darkTheme.text.color};
     font-size: 16px;
     margin: 0;
     text-align: center;
