@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -175,8 +175,11 @@ Start writing your thoughts here...`;
         }
     };
 
+    const [isSaving, setIsSaving] = useState(false);
+
     const handleSaveJournal = async () => {
         if (!currentJournal || !currentJournal._id) return;
+        setIsSaving(true);
 
         // Parse title and subtitle from content
         const lines = content.split('\n');
@@ -221,6 +224,8 @@ Start writing your thoughts here...`;
             setHasUnsavedChanges(false);
         } catch (error) {
             console.error('Error saving journal:', error);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -288,9 +293,24 @@ Start writing your thoughts here...`;
         setExpandedJournals(newExpanded);
     };
 
+    const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    const debouncedSave = useCallback(() => {
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+        }
+        
+        saveTimeoutRef.current = setTimeout(() => {
+            handleSaveJournal();
+            setHasUnsavedChanges(false);
+        }, 1500); // 2 second delay
+    }, []);
+
     const handleContentChange = (value: string) => {
         setContent(value);
         setHasUnsavedChanges(true);
+
+        debouncedSave();
     };
 
     const rootJournals = useMemo(() => {
@@ -485,7 +505,7 @@ Start writing your thoughts here...`;
 
                             <ActionButton onClick={handleSaveJournal} $variant="primary" disabled={!hasUnsavedChanges}>
                                 <span className="material-symbols-outlined">save</span>
-                                {hasUnsavedChanges ? 'Save' : 'Saved'}
+                                {hasUnsavedChanges ? 'Save' : isSaving ? 'Saving...' : 'Saved'}
                             </ActionButton>
                             <ActionButton 
                                 onClick={() => setDeleteConfirm({
