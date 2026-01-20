@@ -23,6 +23,7 @@ import {
 } from './Settings.styles';
 import { CreateButton, CreateButtonGroup, NotesHeader, NotesHeaderLeft, NotesHeaderTop, NotesTitle } from '../notes/Notes.styles';
 import { usePermissions } from '../../../contexts/PermissionsContext';
+import ThemeSettings from './ThemeSettings';
 
 const Settings = () => {
     const { user, logout } = useAuth();
@@ -120,6 +121,9 @@ const Settings = () => {
                     )}
                 </SettingsSection>
 
+                {/* Theme Section */}
+                <ThemeSettings />
+
                 {/* Application Info */}
                 <SettingsSection>
                     <SectionTitle>
@@ -190,27 +194,20 @@ const Settings = () => {
                 </SettingsSection>
 
                 {/* Danger Zone */}
-                {/* <SettingsSection> */}
-                    {/* <SectionTitle>
-                        <span className="material-symbols-outlined">warning</span>
-                        Danger Zone
-                    </SectionTitle> */}
-
-                    <DangerZone>
-                        <DangerZoneTitle>
-                            <span className="material-symbols-outlined">logout</span>
-                            Sign Out
-                        </DangerZoneTitle>
-                        <DangerZoneDescription>
-                            This will end your current session and remove your authentication credentials from this device. 
-                            You will need to sign in again to access your notes.
-                        </DangerZoneDescription>
-                        <LogoutButton onClick={handleLogout}>
-                            <span className="material-symbols-outlined">logout</span>
-                            Sign Out
-                        </LogoutButton>
-                    </DangerZone>
-                {/* </SettingsSection> */}
+                <DangerZone>
+                    <DangerZoneTitle>
+                        <span className="material-symbols-outlined">logout</span>
+                        Sign Out
+                    </DangerZoneTitle>
+                    <DangerZoneDescription>
+                        This will end your current session and remove your authentication credentials from this device. 
+                        You will need to sign in again to access your notes.
+                    </DangerZoneDescription>
+                    <LogoutButton onClick={handleLogout}>
+                        <span className="material-symbols-outlined">logout</span>
+                        Sign Out
+                    </LogoutButton>
+                </DangerZone>
             </SettingsBody>
         </SettingsContainer>
     );

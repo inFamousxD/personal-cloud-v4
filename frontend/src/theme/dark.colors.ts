@@ -1,17 +1,19 @@
+// This file now exports CSS variable references instead of actual values.
+// The actual values are injected at runtime by ThemeProvider.
+// This allows theming without modifying any .styles.ts files.
+
 export const darkTheme = {
-    backgroundDarker: '#191a1bff',
-    // backgroundDarker: '#1c1f25',
-    backgroundDarkest: '#1E2123',
-    // backgroundDarkest: '#20232A',
-    border: '#434557',
+    backgroundDarker: 'var(--theme-backgroundDarker)',
+    backgroundDarkest: 'var(--theme-backgroundDarkest)',
+    border: 'var(--theme-border)',
     text: {
-        color: 'azure',
-        fontSize: '14px',
-        fontWeightSemiBold: '600'
+        color: 'var(--theme-text-color)',
+        fontSize: 'var(--theme-text-fontSize)',
+        fontWeightSemiBold: 'var(--theme-text-fontWeightSemiBold)'
     },
-    accent: '#0b6aa8',
-    accentDark: '#063554',
-    panelBorder: '#434557',
-    accentGreen: '#27AE60',
-    accentOrange: '#B95A1A'
-}
+    accent: 'var(--theme-accent)',
+    accentDark: 'var(--theme-accentDark)',
+    panelBorder: 'var(--theme-panelBorder)',
+    accentGreen: 'var(--theme-accentGreen)',
+    accentOrange: 'var(--theme-accentOrange)'
+};

@@ -11,6 +11,7 @@ import whisperRouter from './routes/whisper.js';
 import trackersRouter from './routes/trackers.js';
 import agentRouter from './routes/agent.js';
 import adminRouter from './routes/admin.js';
+import settingsRouter from './routes/settings.js';
 import terminalRouter, { initTerminalWebSocket } from './routes/terminal.js';
 import { client, connectDB } from './db.js';
 import { authenticateToken } from './middleware/auth.js';
@@ -61,9 +62,10 @@ app.use('/api/server', withFeature('server', serverRouter));
 app.use('/api/agent', agentRouter);
 app.use('/api/terminal', withFeature('terminal', terminalRouter));
 
-// Routes without feature restrictions
+// Routes without feature restrictions (but still need auth)
 app.use('/api/whisper', whisperRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/settings', settingsRouter); // Settings route - auth handled internally
 
 process.on('SIGINT', async () => {
     await client.close();

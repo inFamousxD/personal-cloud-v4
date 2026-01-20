@@ -40,6 +40,7 @@ import {
     ModalActions,
     SidebarOverlay
 } from './Journal.styles';
+import remarkIndent from '../../../utils/remarkIndent';
 
 const Journals = () => {
     const { journalId } = useParams<{ journalId?: string }>();
@@ -157,7 +158,9 @@ ${defaultDate}
 
 ---
 
-Start writing your thoughts here...`;
+:::indent Start writing your thoughts here. Use :::indent at the start of a paragraph to create a nice indent.
+
+:::indent This is another indented paragraph to demonstrate the feature.`;
 
         const newJournalInput: CreateJournalInput = {
             title: 'Untitled Journal',
@@ -543,12 +546,12 @@ Start writing your thoughts here...`;
 
 Subtitle
 
-Write your thoughts in markdown..."
+:::indent Write your thoughts here with paragraph indentation..."
                             />
                         ) : (
                             <MarkdownPreview>
                                 <ReactMarkdown
-                                    remarkPlugins={[remarkGfm]}
+                                    remarkPlugins={[remarkGfm, remarkIndent]}
                                     components={{
                                         code({ node, inline, className, children, ...props }: any) {
                                             const match = /language-(\w+)/.exec(className || '');
@@ -579,6 +582,9 @@ Write your thoughts in markdown..."
                         <span className="material-symbols-outlined">history_edu</span>
                         <h3>No journal selected</h3>
                         <p>Select a journal from the sidebar or create a new one to start writing.</p>
+                        <p style={{ fontSize: '12px', opacity: 0.6, marginTop: '8px' }}>
+                            Tip: Use <code style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '3px' }}>:::indent</code> at the start of a paragraph for indentation.
+                        </p>
                     </EmptyState>
                 )}
             </JournalContent>
