@@ -302,7 +302,6 @@ Start writing your thoughts here...`;
         
         saveTimeoutRef.current = setTimeout(() => {
             handleSaveJournal();
-            setHasUnsavedChanges(false);
         }, 1500); // 2 second delay
     }, []);
 
