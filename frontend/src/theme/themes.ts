@@ -46,113 +46,201 @@ export const defaultDarkTheme: AppTheme = {
     }
 };
 
-// Midnight Blue theme
-export const midnightBlueTheme: AppTheme = {
-    id: 'midnight-blue',
-    name: 'Midnight Blue',
+// Nord theme - Arctic, north-bluish color palette
+export const nordTheme: AppTheme = {
+    id: 'nord',
+    name: 'Nord',
     isCustom: false,
     values: {
-        backgroundDarker: '#0d1117',
-        backgroundDarkest: '#010409',
-        border: '#30363d',
+        backgroundDarker: '#2e3440',
+        backgroundDarkest: '#242933',
+        border: '#3b4252',
         text: {
-            color: '#c9d1d9',
+            color: '#eceff4',
             fontSize: '14px',
             fontWeightSemiBold: '600'
         },
-        accent: '#58a6ff',
-        accentDark: '#1f6feb',
-        panelBorder: '#30363d',
-        accentGreen: '#3fb950',
-        accentOrange: '#d29922'
+        accent: '#88c0d0',
+        accentDark: '#5e81ac',
+        panelBorder: '#4c566a',
+        accentGreen: '#a3be8c',
+        accentOrange: '#d08770'
     }
 };
 
-// Forest theme
-export const forestTheme: AppTheme = {
-    id: 'forest',
-    name: 'Forest',
+// One Dark Pro - Atom's iconic dark theme
+export const oneDarkTheme: AppTheme = {
+    id: 'one-dark',
+    name: 'One Dark',
     isCustom: false,
     values: {
-        backgroundDarker: '#1a1f1a',
-        backgroundDarkest: '#141814',
-        border: '#2d3d2d',
+        backgroundDarker: '#282c34',
+        backgroundDarkest: '#21252b',
+        border: '#3e4451',
         text: {
-            color: '#d4e4d4',
+            color: '#abb2bf',
             fontSize: '14px',
             fontWeightSemiBold: '600'
         },
-        accent: '#4a9f4a',
-        accentDark: '#2d6b2d',
-        panelBorder: '#2d3d2d',
-        accentGreen: '#5cb85c',
-        accentOrange: '#c4a35a'
+        accent: '#61afef',
+        accentDark: '#528bce',
+        panelBorder: '#4b5263',
+        accentGreen: '#98c379',
+        accentOrange: '#e5c07b'
     }
 };
 
-// Monokai theme
-export const monokaiTheme: AppTheme = {
-    id: 'monokai',
-    name: 'Monokai',
+// VS Code Dark+ - Microsoft's default dark theme
+export const vscodeDarkTheme: AppTheme = {
+    id: 'vscode-dark',
+    name: 'VS Code Dark',
     isCustom: false,
     values: {
-        backgroundDarker: '#272822',
-        backgroundDarkest: '#1e1f1c',
-        border: '#49483e',
+        backgroundDarker: '#1e1e1e',
+        backgroundDarkest: '#181818',
+        border: '#3c3c3c',
         text: {
-            color: '#f8f8f2',
+            color: '#d4d4d4',
             fontSize: '14px',
             fontWeightSemiBold: '600'
         },
-        accent: '#ae81ff',
-        accentDark: '#7c5cc4',
-        panelBorder: '#49483e',
-        accentGreen: '#a6e22e',
-        accentOrange: '#fd971f'
+        accent: '#569cd6',
+        accentDark: '#264f78',
+        panelBorder: '#454545',
+        accentGreen: '#6a9955',
+        accentOrange: '#ce9178'
     }
 };
 
-// Dracula theme
-export const draculaTheme: AppTheme = {
-    id: 'dracula',
-    name: 'Dracula',
+// Tokyo Night - A clean visual studio code theme
+export const tokyoNightTheme: AppTheme = {
+    id: 'tokyo-night',
+    name: 'Tokyo Night',
     isCustom: false,
     values: {
-        backgroundDarker: '#282a36',
-        backgroundDarkest: '#21222c',
-        border: '#44475a',
+        backgroundDarker: '#1a1b26',
+        backgroundDarkest: '#16161e',
+        border: '#292e42',
         text: {
-            color: '#f8f8f2',
+            color: '#a9b1d6',
             fontSize: '14px',
             fontWeightSemiBold: '600'
         },
-        accent: '#bd93f9',
-        accentDark: '#6272a4',
-        panelBorder: '#44475a',
-        accentGreen: '#50fa7b',
-        accentOrange: '#ffb86c'
+        accent: '#7aa2f7',
+        accentDark: '#3d59a1',
+        panelBorder: '#33467c',
+        accentGreen: '#9ece6a',
+        accentOrange: '#ff9e64'
     }
 };
 
-// Solarized Dark theme
-export const solarizedDarkTheme: AppTheme = {
-    id: 'solarized-dark',
-    name: 'Solarized Dark',
+// Catppuccin Mocha - Soothing pastel dark theme
+export const catppuccinMochaTheme: AppTheme = {
+    id: 'catppuccin-mocha',
+    name: 'Catppuccin',
     isCustom: false,
     values: {
-        backgroundDarker: '#002b36',
-        backgroundDarkest: '#001e26',
-        border: '#073642',
+        backgroundDarker: '#1e1e2e',
+        backgroundDarkest: '#181825',
+        border: '#313244',
         text: {
-            color: '#839496',
+            color: '#cdd6f4',
             fontSize: '14px',
             fontWeightSemiBold: '600'
         },
-        accent: '#268bd2',
-        accentDark: '#073642',
-        panelBorder: '#073642',
-        accentGreen: '#859900',
-        accentOrange: '#cb4b16'
+        accent: '#cba6f7',
+        accentDark: '#9399b2',
+        panelBorder: '#45475a',
+        accentGreen: '#a6e3a1',
+        accentOrange: '#fab387'
+    }
+};
+
+// GitHub Dark Dimmed - GitHub's softer dark theme
+export const githubDarkDimmedTheme: AppTheme = {
+    id: 'github-dark-dimmed',
+    name: 'GitHub Dimmed',
+    isCustom: false,
+    values: {
+        backgroundDarker: '#22272e',
+        backgroundDarkest: '#1c2128',
+        border: '#373e47',
+        text: {
+            color: '#adbac7',
+            fontSize: '14px',
+            fontWeightSemiBold: '600'
+        },
+        accent: '#539bf5',
+        accentDark: '#316dca',
+        panelBorder: '#444c56',
+        accentGreen: '#57ab5a',
+        accentOrange: '#c69026'
+    }
+};
+
+// Gruvbox Dark - Retro groove color scheme
+export const gruvboxDarkTheme: AppTheme = {
+    id: 'gruvbox-dark',
+    name: 'Gruvbox',
+    isCustom: false,
+    values: {
+        backgroundDarker: '#282828',
+        backgroundDarkest: '#1d2021',
+        border: '#3c3836',
+        text: {
+            color: '#ebdbb2',
+            fontSize: '14px',
+            fontWeightSemiBold: '600'
+        },
+        accent: '#83a598',
+        accentDark: '#458588',
+        panelBorder: '#504945',
+        accentGreen: '#b8bb26',
+        accentOrange: '#fe8019'
+    }
+};
+
+// Ayu Dark - Modern elegant dark theme
+export const ayuDarkTheme: AppTheme = {
+    id: 'ayu-dark',
+    name: 'Ayu Dark',
+    isCustom: false,
+    values: {
+        backgroundDarker: '#0d1017',
+        backgroundDarkest: '#0a0e14',
+        border: '#1d222c',
+        text: {
+            color: '#bfbdb6',
+            fontSize: '14px',
+            fontWeightSemiBold: '600'
+        },
+        accent: '#39bae6',
+        accentDark: '#59c2ff',
+        panelBorder: '#2d3640',
+        accentGreen: '#7fd962',
+        accentOrange: '#ffb454'
+    }
+};
+
+// Palenight - Material palenight theme
+export const palenightTheme: AppTheme = {
+    id: 'palenight',
+    name: 'Palenight',
+    isCustom: false,
+    values: {
+        backgroundDarker: '#292d3e',
+        backgroundDarkest: '#1b1e2b',
+        border: '#3a3f58',
+        text: {
+            color: '#a6accd',
+            fontSize: '14px',
+            fontWeightSemiBold: '600'
+        },
+        accent: '#82aaff',
+        accentDark: '#6182b8',
+        panelBorder: '#4e5579',
+        accentGreen: '#c3e88d',
+        accentOrange: '#ffcb6b'
     }
 };
 
@@ -268,21 +356,71 @@ export const nordLightTheme: AppTheme = {
     }
 };
 
+// One Light theme
+export const oneLightTheme: AppTheme = {
+    id: 'one-light',
+    name: 'One Light',
+    isCustom: false,
+    values: {
+        backgroundDarker: '#eaeaeb',
+        backgroundDarkest: '#fafafa',
+        border: '#dbdbdc',
+        text: {
+            color: '#383a42',
+            fontSize: '14px',
+            fontWeightSemiBold: '600'
+        },
+        accent: '#4078f2',
+        accentDark: '#2b5fc8',
+        panelBorder: '#d0d0d1',
+        accentGreen: '#50a14f',
+        accentOrange: '#c18401'
+    }
+};
+
+// Catppuccin Latte - Light version of Catppuccin
+export const catppuccinLatteTheme: AppTheme = {
+    id: 'catppuccin-latte',
+    name: 'Latte',
+    isCustom: false,
+    values: {
+        backgroundDarker: '#e6e9ef',
+        backgroundDarkest: '#eff1f5',
+        border: '#ccd0da',
+        text: {
+            color: '#4c4f69',
+            fontSize: '14px',
+            fontWeightSemiBold: '600'
+        },
+        accent: '#8839ef',
+        accentDark: '#7287fd',
+        panelBorder: '#bcc0cc',
+        accentGreen: '#40a02b',
+        accentOrange: '#fe640b'
+    }
+};
+
 // All preset themes
 export const presetThemes: AppTheme[] = [
     // Dark themes
     defaultDarkTheme,
-    midnightBlueTheme,
-    forestTheme,
-    monokaiTheme,
-    draculaTheme,
-    solarizedDarkTheme,
+    nordTheme,
+    oneDarkTheme,
+    vscodeDarkTheme,
+    tokyoNightTheme,
+    catppuccinMochaTheme,
+    githubDarkDimmedTheme,
+    gruvboxDarkTheme,
+    ayuDarkTheme,
+    palenightTheme,
     // Light themes
     lightDefaultTheme,
     solarizedLightTheme,
     githubLightTheme,
     paperTheme,
-    nordLightTheme
+    nordLightTheme,
+    oneLightTheme,
+    catppuccinLatteTheme
 ];
 
 // Create a blank custom theme template

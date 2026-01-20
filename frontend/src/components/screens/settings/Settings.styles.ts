@@ -12,14 +12,32 @@ export const SettingsContainer = styled.div`
 
 export const SettingsHeader = styled.div`
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 8px;
     padding: 8px 12px;
     border-bottom: 1px solid ${darkTheme.border};
     background: ${darkTheme.backgroundDarkest};
+`;
+
+export const SettingsHeaderTop = styled.div`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
     @media (max-width: 768px) {
         flex-direction: column;
         gap: 8px;
+    }
+`;
+
+export const SettingsHeaderLeft = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    @media (max-width: 768px) {
+        width: 100%;
+        justify-content: space-between;
     }
 `;
 
@@ -37,6 +55,45 @@ export const SettingsTitle = styled.div`
 
     @media (max-width: 768px) {
         font-size: 1em;
+    }
+`;
+
+export const ButtonGroup = styled.div`
+    display: flex;
+    gap: 8px;
+    align-items: center;
+
+    @media (max-width: 768px) {
+        width: 100%;
+    }
+`;
+
+export const AdminButton = styled.button`
+    background: ${darkTheme.accent};
+    color: white;
+    border: 1px solid ${darkTheme.accent};
+    border-radius: 4px;
+    padding: 5.5px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: inherit;
+    transition: opacity 0.2s ease-in-out;
+
+    &:hover {
+        opacity: 0.9;
+    }
+
+    .material-symbols-outlined {
+        font-size: 16px;
+    }
+
+    @media (max-width: 768px) {
+        flex: 1;
+        justify-content: center;
     }
 `;
 
@@ -241,6 +298,11 @@ export const VersionRow = styled.div`
     span:last-child {
         font-family: 'JetBrains Mono', monospace;
         font-weight: 600;
+    }
+
+    @media (max-width: 480px) {
+        flex-direction: column;
+        gap: 2px;
     }
 `;
 

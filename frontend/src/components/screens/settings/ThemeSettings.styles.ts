@@ -12,9 +12,19 @@ export const ThemeSection = styled.div`
 `;
 
 export const ThemeSelector = styled.div`
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 12px;
+
+    @media (max-width: 768px) {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 10px;
+    }
+
+    @media (max-width: 480px) {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
 `;
 
 export const ThemeCard = styled.button<{ $selected: boolean; $previewBg: string; $previewAccent: string }>`
@@ -28,10 +38,15 @@ export const ThemeCard = styled.button<{ $selected: boolean; $previewBg: string;
     background: ${darkTheme.backgroundDarker};
     cursor: pointer;
     transition: all 0.2s;
-    min-width: 150px;
+    min-width: 0; /* Allow shrinking in grid */
 
     &:hover {
         border-color: ${props => props.$previewAccent};
+    }
+
+    @media (max-width: 480px) {
+        padding: 10px 8px;
+        gap: 6px;
     }
 `;
 
@@ -61,12 +76,33 @@ export const ThemePreview = styled.div<{ $bg: string; $accent: string; $text: st
         background: ${props => props.$accent};
         margin-left: 6px;
     }
+
+    @media (max-width: 480px) {
+        width: 50px;
+        height: 34px;
+
+        &::before {
+            font-size: 12px;
+        }
+
+        &::after {
+            width: 6px;
+            height: 6px;
+            margin-left: 4px;
+        }
+    }
 `;
 
 export const ThemeName = styled.span`
     color: ${darkTheme.text.color};
     font-size: 12px;
     font-weight: 500;
+    text-align: center;
+    word-break: break-word;
+
+    @media (max-width: 480px) {
+        font-size: 11px;
+    }
 `;
 
 export const CustomThemeSection = styled.div`
@@ -80,6 +116,12 @@ export const CustomThemeHeader = styled.div`
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
+    gap: 12px;
+
+    @media (max-width: 768px) {
+        flex-direction: column;
+        align-items: stretch;
+    }
 `;
 
 export const CustomThemeTitle = styled.h4`
@@ -99,6 +141,16 @@ export const CustomThemeTitle = styled.h4`
 export const CustomThemeActions = styled.div`
     display: flex;
     gap: 8px;
+    flex-wrap: wrap;
+
+    @media (max-width: 768px) {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    @media (max-width: 480px) {
+        flex-direction: column;
+    }
 `;
 
 export const ThemeFieldsGrid = styled.div`
@@ -119,6 +171,12 @@ export const ThemeFieldRow = styled.div`
     background: ${darkTheme.backgroundDarker};
     border: 1px solid ${darkTheme.border};
     border-radius: 4px;
+
+    @media (max-width: 480px) {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
 `;
 
 export const ThemeFieldLabel = styled.label`
@@ -129,6 +187,10 @@ export const ThemeFieldLabel = styled.label`
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+
+    @media (max-width: 480px) {
+        white-space: normal;
+    }
 `;
 
 export const ThemeFieldInput = styled.input`
@@ -152,12 +214,29 @@ export const ThemeFieldInput = styled.input`
         padding: 2px;
         cursor: pointer;
     }
+
+    @media (max-width: 480px) {
+        width: 100%;
+        box-sizing: border-box;
+
+        &[type="color"] {
+            width: 40px;
+        }
+    }
 `;
 
 export const ColorInputWrapper = styled.div`
     display: flex;
     align-items: center;
     gap: 8px;
+
+    @media (max-width: 480px) {
+        width: 100%;
+
+        ${ThemeFieldInput}:not([type="color"]) {
+            flex: 1;
+        }
+    }
 `;
 
 export const ColorPreview = styled.div<{ $color: string }>`
@@ -179,9 +258,11 @@ export const SaveButton = styled.button`
     cursor: pointer;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     font-family: inherit;
     transition: opacity 0.2s;
+    white-space: nowrap;
 
     &:hover {
         opacity: 0.9;
@@ -194,6 +275,15 @@ export const SaveButton = styled.button`
 
     .material-symbols-outlined {
         font-size: 16px;
+    }
+
+    @media (max-width: 768px) {
+        flex: 1;
+        min-width: 0;
+    }
+
+    @media (max-width: 480px) {
+        width: 100%;
     }
 `;
 
@@ -208,9 +298,11 @@ export const ResetButton = styled.button`
     cursor: pointer;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     font-family: inherit;
     transition: all 0.2s;
+    white-space: nowrap;
 
     &:hover {
         background: ${darkTheme.backgroundDarker};
@@ -218,6 +310,15 @@ export const ResetButton = styled.button`
 
     .material-symbols-outlined {
         font-size: 16px;
+    }
+
+    @media (max-width: 768px) {
+        flex: 1;
+        min-width: 0;
+    }
+
+    @media (max-width: 480px) {
+        width: 100%;
     }
 `;
 
@@ -239,6 +340,15 @@ export const CopyFromSelect = styled.select`
     option {
         background: ${darkTheme.backgroundDarkest};
         color: ${darkTheme.text.color};
+    }
+
+    @media (max-width: 768px) {
+        flex: 1;
+        min-width: 0;
+    }
+
+    @media (max-width: 480px) {
+        width: 100%;
     }
 `;
 

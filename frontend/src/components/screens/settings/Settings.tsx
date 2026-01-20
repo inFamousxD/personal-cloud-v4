@@ -2,6 +2,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import {
     SettingsContainer,
+    SettingsHeader,
+    SettingsHeaderTop,
+    SettingsHeaderLeft,
+    SettingsTitle,
     SettingsBody,
     SettingsSection,
     SectionTitle,
@@ -19,9 +23,10 @@ import {
     DangerZoneDescription,
     VersionInfo,
     VersionRow,
-    Badge
+    Badge,
+    AdminButton,
+    ButtonGroup
 } from './Settings.styles';
-import { CreateButton, CreateButtonGroup, NotesHeader, NotesHeaderLeft, NotesHeaderTop, NotesTitle } from '../notes/Notes.styles';
 import { usePermissions } from '../../../contexts/PermissionsContext';
 import ThemeSettings from './ThemeSettings';
 
@@ -58,25 +63,24 @@ const Settings = () => {
 
     return (
         <SettingsContainer>
-            <NotesHeader>
-                <NotesHeaderTop>
-                    <NotesHeaderLeft>
-                        <NotesTitle>
+            <SettingsHeader>
+                <SettingsHeaderTop>
+                    <SettingsHeaderLeft>
+                        <SettingsTitle>
                             <span className="material-symbols-outlined">settings</span>
                             Settings
-                        </NotesTitle>
-                    </NotesHeaderLeft>
-                    {
-                        !isLoading && hasAccess('admin') && isAdmin &&
-                        <CreateButtonGroup>
-                            <CreateButton onClick={() => navigate("/admin")}>
+                        </SettingsTitle>
+                    </SettingsHeaderLeft>
+                    {!isLoading && hasAccess('admin') && isAdmin && (
+                        <ButtonGroup>
+                            <AdminButton onClick={() => navigate("/admin")}>
                                 <span className="material-symbols-outlined">admin_panel_settings</span>
                                 Admin Panel
-                            </CreateButton>
-                        </CreateButtonGroup>
-                    }
-                </NotesHeaderTop>
-            </NotesHeader>
+                            </AdminButton>
+                        </ButtonGroup>
+                    )}
+                </SettingsHeaderTop>
+            </SettingsHeader>
             <SettingsBody>
                 {/* Account Section */}
                 <SettingsSection>
