@@ -106,12 +106,14 @@ export const CreateButtonGroup = styled.div`
 
 export const HiddenNoteButton = styled.button`
     background: repeating-linear-gradient(
-        45deg,
-        ${darkTheme.accent}40,
-        ${darkTheme.accent}40 10px,
-        ${darkTheme.accent}20 10px,
-        ${darkTheme.accent}20 20px
+        -45deg,
+        color-mix(in srgb, ${darkTheme.accent} 0%, transparent) 0px,
+        color-mix(in srgb, ${darkTheme.accent} 0%, transparent) 7px,
+        color-mix(in srgb, ${darkTheme.accent} 12%, transparent) 7px,
+        color-mix(in srgb, ${darkTheme.accent} 12%, transparent) 14px
     );
+    background-size: 200% 200%;
+    background-position: 0% 0%;
     color: ${darkTheme.accent};
     border: 1px solid ${darkTheme.accent};
     border-radius: 4px;
@@ -123,15 +125,10 @@ export const HiddenNoteButton = styled.button`
     align-items: center;
     justify-content: center;
     font-family: inherit;
+    transition: background-position 0.35s ease-in-out;
 
     &:hover {
-        background: repeating-linear-gradient(
-            45deg,
-            ${darkTheme.accent}60,
-            ${darkTheme.accent}60 10px,
-            ${darkTheme.accent}40 10px,
-            ${darkTheme.accent}40 20px
-        );
+        background-position: 100% 100%;
     }
 
     .material-symbols-outlined {
