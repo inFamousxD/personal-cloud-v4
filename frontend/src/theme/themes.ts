@@ -148,7 +148,7 @@ export const getTerminalTheme = (theme: AppTheme) => {
     
     // Dark theme
     return {
-        background: '#0d0d0d',
+        background: '#202020',
         foreground: '#e0e0e0',
         cursor: accent,
         cursorAccent: '#0d0d0d',
