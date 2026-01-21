@@ -133,7 +133,7 @@ export const HeatmapDay = styled.div<{ $status?: 'completed' | 'partial' | 'miss
     aspect-ratio: 1;
     background: ${props => {
         switch (props.$status) {
-            case 'completed': return darkTheme.accentGreen + '30';
+            case 'completed': return darkTheme.accentGreen;
             case 'partial': return '#F59E0B30';
             case 'missed': return '#EF444430';
             default: return darkTheme.backgroundDarker;

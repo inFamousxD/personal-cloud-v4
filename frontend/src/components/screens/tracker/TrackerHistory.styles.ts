@@ -391,7 +391,7 @@ export const CalendarDay = styled.div<{
     
     background: ${props => {
         switch (props.$status) {
-            case 'completed': return darkTheme.accentGreen + '30';
+            case 'completed': return darkTheme.accentGreen;
             case 'partial': return '#F59E0B30';
             case 'missed': return '#EF444430';
             case 'skipped': return darkTheme.backgroundDarkest;
