@@ -8,6 +8,7 @@ export interface Note {
     title: string;
     content: string;
     tags: string[];
+    isPinned: boolean;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -16,12 +17,14 @@ export interface CreateNoteInput {
     title: string;
     content: string;
     tags?: string[];
+    isPinned?: boolean;
 }
 
 export interface UpdateNoteInput {
     title?: string;
     content?: string;
     tags?: string[];
+    isPinned?: boolean;
 }
 
 const getAuthHeader = () => {

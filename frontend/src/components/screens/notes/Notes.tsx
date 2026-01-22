@@ -82,12 +82,10 @@ const Notes = () => {
             }
         };
 
-        // Only add listener if dropdown is open
         if (showTagFilter) {
             document.addEventListener('mousedown', handleClickOutside);
         }
 
-        // Cleanup
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
@@ -116,7 +114,6 @@ const Notes = () => {
     const loadTags = async () => {
         try {
             const tags = await notesApi.getAllTags();
-            // Always include 'hidden' and 'voice' in the tags list
             const uniqueTags = Array.from(new Set([...tags, 'hidden', 'voice']));
             setAllTags(uniqueTags);
         } catch (error) {
@@ -153,26 +150,6 @@ const Notes = () => {
         }
     };
 
-    // const generateTitleFromText = (text: string): string => {
-    //     // Clean up the text
-    //     const cleaned = text.trim();
-        
-    //     // Split into sentences
-    //     const sentences = cleaned.split(/[.!?]+/).filter(s => s.trim().length > 0);
-        
-    //     if (sentences.length === 0) return 'Voice Note';
-        
-    //     // Use first sentence as title
-    //     let title = sentences[0].trim();
-        
-    //     // Limit to 50 characters for title
-    //     if (title.length > 50) {
-    //         title = title.substring(0, 47) + '...';
-    //     }
-        
-    //     return title;
-    // };
-
     const handleVoiceNote = async (transcriptionData: string) => {
         if (!transcriptionData || transcriptionData.trim().length === 0) {
             console.log('Empty transcription received');
@@ -180,7 +157,6 @@ const Notes = () => {
         }
 
         try {
-            // Parse the transcription data
             const noteData = JSON.parse(transcriptionData);
             
             const noteInput: CreateNoteInput = {
@@ -206,10 +182,8 @@ const Notes = () => {
         const hasHiddenFilter = selectedTags.includes('hidden');
         
         if (hasHiddenFilter) {
-            // If 'hidden' tag is selected, ONLY show notes with 'hidden' tag
             filtered = filtered.filter(note => note.tags.includes('hidden'));
         } else {
-            // If 'hidden' tag is NOT selected, exclude all notes with 'hidden' tag
             filtered = filtered.filter(note => !note.tags.includes('hidden'));
         }
 
@@ -225,7 +199,7 @@ const Notes = () => {
             });
         }
 
-        // Filter by other selected tags (excluding 'hidden' which is already handled)
+        // Filter by other selected tags (excluding 'hidden')
         const otherSelectedTags = selectedTags.filter(tag => tag !== 'hidden');
         if (otherSelectedTags.length > 0) {
             filtered = filtered.filter(note => 
@@ -233,8 +207,13 @@ const Notes = () => {
             );
         }
 
-        // Sort by date
+        // Sort by pinned status first, then by date
         const sorted = [...filtered].sort((a, b) => {
+            // Pinned notes always come first
+            if (a.isPinned && !b.isPinned) return -1;
+            if (!a.isPinned && b.isPinned) return 1;
+            
+            // Within pinned/unpinned groups, sort by date
             const dateA = new Date(a.updatedAt).getTime();
             const dateB = new Date(b.updatedAt).getTime();
             return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
@@ -262,7 +241,7 @@ const Notes = () => {
 
     const handleEditNote = (note: Note) => {
         setEditingNote(note);
-        setIsCreatingHidden(false); // Reset this when editing
+        setIsCreatingHidden(false);
         setIsEditorOpen(true);
     };
 
@@ -281,6 +260,20 @@ const Notes = () => {
             loadTags();
         } catch (error) {
             console.error('Error saving note:', error);
+        }
+    };
+
+    const handleTogglePin = async (note: Note) => {
+        try {
+            const updated = await notesApi.updateNote(note._id!, {
+                isPinned: !note.isPinned
+            });
+            setNotes(notes.map(n => n._id === updated._id ? updated : n));
+            if (viewingNote && viewingNote._id === note._id) {
+                setViewingNote(updated);
+            }
+        } catch (error) {
+            console.error('Error toggling pin:', error);
         }
     };
 
@@ -507,6 +500,7 @@ const Notes = () => {
                 }}
                 onEdit={handleEditNote}
                 onDelete={handleDeleteNote}
+                onTogglePin={handleTogglePin}
                 note={viewingNote}
             />
 

@@ -71,10 +71,10 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
 // POST create a new note
 router.post('/', async (req: AuthRequest, res: Response) => {
     try {
-        const { title, content, tags }: CreateNoteInput = req.body;
+        const { title, content, tags, isPinned }: CreateNoteInput = req.body;
 
         if (!title) {
-            return res.status(400).json({ error: 'Title and content are required' });
+            return res.status(400).json({ error: 'Title is required' });
         }
 
         const now = new Date();
@@ -86,6 +86,7 @@ router.post('/', async (req: AuthRequest, res: Response) => {
             title,
             content: noteContent,
             tags: noteTags,
+            isPinned: isPinned || false,
             createdAt: now,
             updatedAt: now,
         };
@@ -106,13 +107,13 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 router.put('/:id', async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
-        const { title, content, tags }: UpdateNoteInput = req.body;
+        const { title, content, tags, isPinned }: UpdateNoteInput = req.body;
 
         if (!ObjectId.isValid(id)) {
             return res.status(400).json({ error: 'Invalid note ID' });
         }
 
-        if (!title && !content && !tags) {
+        if (!title && !content && !tags && isPinned === undefined) {
             return res.status(400).json({ error: 'Nothing to update' });
         }
 
@@ -121,10 +122,11 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
         };
 
         if (title) updateData.title = title;
-        if (content) updateData.content = content;
+        if (content !== undefined) updateData.content = content;
         if (tags !== undefined) {
             updateData.tags = tags.length > 0 ? tags : ['default'];
         }
+        if (isPinned !== undefined) updateData.isPinned = isPinned;
 
         const result = await db.collection<Note>('notes').findOneAndUpdate(
             {

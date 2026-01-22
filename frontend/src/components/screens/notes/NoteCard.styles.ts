@@ -3,11 +3,12 @@ import { darkTheme } from '../../../theme/dark.colors';
 
 interface NoteCardStyledProps {
     $rowSpan: number;
+    $isPinned: boolean;
 }
 
 export const NoteCardStyled = styled.div<NoteCardStyledProps>`
     background: ${darkTheme.backgroundDarkest};
-    border: 1px solid ${darkTheme.border};
+    border: 1px solid ${props => props.$isPinned ? darkTheme.accent : darkTheme.border};
     border-radius: 4px;
     padding: 12px;
     display: flex;
@@ -23,6 +24,19 @@ export const NoteCardStyled = styled.div<NoteCardStyledProps>`
     }
 `;
 
+export const NoteCardHeader = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+`;
+
+export const PinIcon = styled.span`
+    color: ${darkTheme.accent};
+    font-size: 14px;
+    flex-shrink: 0;
+`;
+
 export const NoteCardTitle = styled.h3`
     color: ${darkTheme.accent};
     font-size: 14px;
@@ -31,8 +45,8 @@ export const NoteCardTitle = styled.h3`
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    flex-shrink: 0;
-    `;
+    flex: 1;
+`;
 
 export const NoteCardContent = styled.p`
     font-size: 13px;
@@ -42,12 +56,6 @@ export const NoteCardContent = styled.p`
     overflow: hidden;
     margin: 0;
     flex: 1;
-
-    /* 
-    display: -webkit-box;
-    font-size: 13px;
-    line-height: 1.5;
-    */
 
     /* Typography */
     p {
@@ -101,7 +109,7 @@ export const NoteCardContent = styled.p`
         overflow-x: auto;
         background: #1e1e1e;
         padding: 0px 8px;
-        max-width: 100%; /* Constrain to bubble width */
+        max-width: 100%;
         
         code {
             background: transparent;

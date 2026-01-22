@@ -1,6 +1,14 @@
 import React, { useMemo } from 'react';
 import { Note } from '../../../services/notesApi';
-import { NoteCardStyled, NoteCardTitle, NoteCardContent, NoteCardFooter, NoteCardActions } from './NoteCard.styles';
+import { 
+    NoteCardStyled, 
+    NoteCardHeader,
+    PinIcon,
+    NoteCardTitle, 
+    NoteCardContent, 
+    NoteCardFooter, 
+    NoteCardActions 
+} from './NoteCard.styles';
 import styled from 'styled-components';
 import { darkTheme } from '../../../theme/dark.colors';
 import ReactMarkdown from 'react-markdown';
@@ -75,8 +83,13 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onView, onEdit, onDelete }) =
     };
 
     return (
-        <NoteCardStyled $rowSpan={rowSpan} onClick={handleCardClick}>
-            <NoteCardTitle>{note.title || 'Untitled Note'}</NoteCardTitle>
+        <NoteCardStyled $rowSpan={rowSpan} $isPinned={note.isPinned} onClick={handleCardClick}>
+            <NoteCardHeader>
+                {note.isPinned && (
+                    <PinIcon className="material-symbols-outlined">push_pin</PinIcon>
+                )}
+                <NoteCardTitle>{note.title || 'Untitled Note'}</NoteCardTitle>
+            </NoteCardHeader>
             {visibleTags.length > 0 && (
                 <TagsContainer>
                     {visibleTags.slice(0, 3).map(tag => (

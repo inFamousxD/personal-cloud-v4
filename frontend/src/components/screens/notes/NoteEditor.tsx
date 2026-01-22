@@ -14,6 +14,36 @@ import {
     EditorButton,
     CharacterCount
 } from './NoteEditor.styles';
+import styled from 'styled-components';
+import { darkTheme } from '../../../theme/dark.colors';
+
+const PinToggle = styled.button<{ $isPinned: boolean }>`
+    background: transparent;
+    border: none;
+    color: ${props => props.$isPinned ? darkTheme.accent : darkTheme.text.color};
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: ${props => props.$isPinned ? 1 : 0.5};
+    transition: all 0.2s;
+
+    &:hover {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+
+    .material-symbols-outlined {
+        font-size: 20px;
+    }
+`;
+
+const HeaderActions = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 4px;
+`;
 
 interface NoteEditorProps {
     isOpen: boolean;
@@ -35,21 +65,25 @@ const NoteEditor: React.FC<NoteEditorProps> = ({
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [tags, setTags] = useState<string[]>(['default']);
+    const [isPinned, setIsPinned] = useState(false);
 
     useEffect(() => {
         if (editingNote) {
             setTitle(editingNote.title);
             setContent(editingNote.content);
             setTags(editingNote.tags || ['default']);
+            setIsPinned(editingNote.isPinned || false);
         } else if (initialHiddenTag) {
             // When creating a new hidden note, pre-populate with 'hidden' tag
             setTitle('');
             setContent('');
             setTags(['hidden']);
+            setIsPinned(false);
         } else {
             setTitle('');
             setContent('');
             setTags(['default']);
+            setIsPinned(false);
         }
     }, [editingNote, isOpen, initialHiddenTag]);
 
@@ -63,18 +97,21 @@ const NoteEditor: React.FC<NoteEditorProps> = ({
             content: content.trim(),
             tags: tags.filter(tag => tag !== 'default').length > 0 
                 ? tags.filter(tag => tag !== 'default') 
-                : ['default']
+                : ['default'],
+            isPinned
         });
 
         setTitle('');
         setContent('');
         setTags(['default']);
+        setIsPinned(false);
     };
 
     const handleCancel = () => {
         setTitle('');
         setContent('');
         setTags(['default']);
+        setIsPinned(false);
         onClose();
     };
 
@@ -86,6 +123,10 @@ const NoteEditor: React.FC<NoteEditorProps> = ({
         }
     };
 
+    const togglePin = () => {
+        setIsPinned(!isPinned);
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -95,9 +136,20 @@ const NoteEditor: React.FC<NoteEditorProps> = ({
                     <EditorTitle>
                         {editingNote ? 'Edit Note' : initialHiddenTag ? 'Create Hidden Note' : 'Create New Note'}
                     </EditorTitle>
-                    <CloseButton onClick={handleCancel}>
-                        <span className="material-symbols-outlined">close</span>
-                    </CloseButton>
+                    <HeaderActions>
+                        <PinToggle 
+                            $isPinned={isPinned} 
+                            onClick={togglePin}
+                            title={isPinned ? 'Unpin note' : 'Pin note'}
+                        >
+                            <span className="material-symbols-outlined">
+                                {isPinned ? 'push_pin' : 'push_pin'}
+                            </span>
+                        </PinToggle>
+                        <CloseButton onClick={handleCancel}>
+                            <span className="material-symbols-outlined">close</span>
+                        </CloseButton>
+                    </HeaderActions>
                 </EditorHeader>
 
                 <EditorBody>

@@ -34,15 +34,26 @@ const TagPill = styled.span`
     font-weight: 600;
 `;
 
+const PinToggle = styled.span<{ $isPinned: boolean }>`
+    color: ${props => props.$isPinned ? darkTheme.accent : darkTheme.text.color};
+    opacity: ${props => props.$isPinned ? 1 : 0.5};
+    cursor: pointer;
+    
+    &:hover {
+        opacity: 1;
+    }
+`;
+
 interface NoteViewerProps {
     isOpen: boolean;
     onClose: () => void;
     onEdit: (note: Note) => void;
     onDelete: (id: string) => void;
+    onTogglePin?: (note: Note) => void;
     note: Note | null;
 }
 
-const NoteViewer: React.FC<NoteViewerProps> = ({ isOpen, onClose, onEdit, onDelete, note }) => {
+const NoteViewer: React.FC<NoteViewerProps> = ({ isOpen, onClose, onEdit, onDelete, onTogglePin, note }) => {
     if (!isOpen || !note) return null;
 
     const formatDate = (date: Date) => {
@@ -73,12 +84,29 @@ const NoteViewer: React.FC<NoteViewerProps> = ({ isOpen, onClose, onEdit, onDele
         onDelete(note._id!);
     };
 
+    const handleTogglePin = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (onTogglePin) {
+            onTogglePin(note);
+        }
+    };
+
     return (
         <ViewerOverlay onClick={onClose}>
             <ViewerModal onClick={(e) => e.stopPropagation()} onKeyDown={handleKeyDown}>
                 <ViewerHeader>
                     <ViewerTitle>{note.title || 'Untitled Note'}</ViewerTitle>
                     <ViewerActions>
+                        {onTogglePin && (
+                            <PinToggle 
+                                $isPinned={note.isPinned}
+                                className="material-symbols-outlined"
+                                onClick={handleTogglePin}
+                                title={note.isPinned ? 'Unpin note' : 'Pin note'}
+                            >
+                                push_pin
+                            </PinToggle>
+                        )}
                         <span 
                             className="material-symbols-outlined"
                             onClick={handleEdit}
