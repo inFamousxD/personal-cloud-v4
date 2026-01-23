@@ -81,9 +81,9 @@ export class NotificationScheduler {
     private async sendReminderNotification(note: Note, reminder: NoteReminder) {
         try {
             await pushService.sendNotification(note.userId, {
-                title: '🔔 Reminder',
-                body: note.title || 'Untitled Note',
-                tag: `reminder-${note._id}-${reminder.id}`,
+                title: note.title || 'Untitled Note',
+                body: note.content || 'You have a reminder for your note.',
+                tag: `reminder-${note._id}-${reminder.id}-${Date.now()}`, // Add timestamp
                 noteId: note._id!.toString(),
                 reminderId: reminder.id,
                 data: {
