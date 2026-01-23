@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { notesApi, Note, CreateNoteInput } from '../../../services/notesApi';
+import { notesApi, Note, CreateNoteInput, NoteReminder } from '../../../services/notesApi';
+import { pushNotificationService } from '../../../services/pushNotificationService';
 import NoteCard from './NoteCard';
 import NoteEditor from './NoteEditor';
 import NoteViewer from './NoteViewer';
@@ -37,6 +38,60 @@ import {
 import { useSelector } from 'react-redux';
 import { RootState } from "../../../redux/store";
 import VoiceRecorder from './VoiceRecorder';
+import styled from 'styled-components';
+import { darkTheme } from '../../../theme/dark.colors';
+
+const NotificationBanner = styled.div<{ $show: boolean }>`
+    display: ${props => props.$show ? 'flex' : 'none'};
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: ${darkTheme.accentOrange}20;
+    border: 1px solid ${darkTheme.accentOrange};
+    border-radius: 4px;
+    margin: 8px 12px 0;
+    gap: 8px;
+`;
+
+const BannerText = styled.div`
+    color: ${darkTheme.text.color};
+    font-size: 12px;
+    flex: 1;
+`;
+
+const BannerButton = styled.button`
+    background: ${darkTheme.accentOrange};
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+
+    &:hover {
+        opacity: 0.9;
+    }
+`;
+
+const BannerClose = styled.button`
+    background: transparent;
+    border: none;
+    color: ${darkTheme.text.color};
+    cursor: pointer;
+    padding: 4px;
+    opacity: 0.5;
+
+    &:hover {
+        opacity: 1;
+    }
+
+    .material-symbols-outlined {
+        font-size: 16px;
+    }
+`;
 
 type SortOrder = 'newest' | 'oldest';
 
@@ -54,6 +109,7 @@ const Notes = () => {
     });
     const [isCreatingHidden, setIsCreatingHidden] = useState(false);
     const [voiceTranscription, setVoiceTranscription] = useState<string | null>(null);
+    const [showNotificationBanner, setShowNotificationBanner] = useState(false);
 
     // Filter and sort states
     const [searchQuery, setSearchQuery] = useState('');
@@ -62,7 +118,6 @@ const Notes = () => {
     const [favoriteTags, setFavoriteTags] = useState<string[]>([]);
     const [showTagFilter, setShowTagFilter] = useState(false);
 
-    // Ref for click-outside detection
     const tagFilterRef = useRef<HTMLDivElement>(null);
     const topOptions = useSelector((state: RootState) => state.mainDock.dockTopOptions);
 
@@ -72,9 +127,9 @@ const Notes = () => {
         loadNotes();
         loadTags();
         loadFavoriteTags();
+        checkNotificationPermission();
     }, []);
 
-    // Click-outside detection for tag filter dropdown
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (tagFilterRef.current && !tagFilterRef.current.contains(event.target as Node)) {
@@ -91,13 +146,29 @@ const Notes = () => {
         };
     }, [showTagFilter]);
 
-    // Handle voice transcription
     useEffect(() => {
         if (voiceTranscription) {
             handleVoiceNote(voiceTranscription);
             setVoiceTranscription(null);
         }
     }, [voiceTranscription]);
+
+    const checkNotificationPermission = async () => {
+        const permission = pushNotificationService.getPermission();
+        const isSubscribed = await pushNotificationService.isSubscribed();
+        
+        // Show banner if notifications are not granted or not subscribed
+        if (permission !== 'granted' || !isSubscribed) {
+            setShowNotificationBanner(true);
+        }
+    };
+
+    const handleEnableNotifications = async () => {
+        const success = await pushNotificationService.subscribe();
+        if (success) {
+            setShowNotificationBanner(false);
+        }
+    };
 
     const loadNotes = async () => {
         try {
@@ -178,7 +249,6 @@ const Notes = () => {
     const filteredAndSortedNotes = useMemo(() => {
         let filtered = notes;
 
-        // Handle hidden notes filtering
         const hasHiddenFilter = selectedTags.includes('hidden');
         
         if (hasHiddenFilter) {
@@ -187,7 +257,6 @@ const Notes = () => {
             filtered = filtered.filter(note => !note.tags.includes('hidden'));
         }
 
-        // Filter by search query
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
             filtered = filtered.filter(note => {
@@ -199,7 +268,6 @@ const Notes = () => {
             });
         }
 
-        // Filter by other selected tags (excluding 'hidden')
         const otherSelectedTags = selectedTags.filter(tag => tag !== 'hidden');
         if (otherSelectedTags.length > 0) {
             filtered = filtered.filter(note => 
@@ -207,13 +275,10 @@ const Notes = () => {
             );
         }
 
-        // Sort by pinned status first, then by date
         const sorted = [...filtered].sort((a, b) => {
-            // Pinned notes always come first
             if (a.isPinned && !b.isPinned) return -1;
             if (!a.isPinned && b.isPinned) return 1;
             
-            // Within pinned/unpinned groups, sort by date
             const dateA = new Date(a.updatedAt).getTime();
             const dateB = new Date(b.updatedAt).getTime();
             return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
@@ -245,14 +310,23 @@ const Notes = () => {
         setIsEditorOpen(true);
     };
 
-    const handleSaveNote = async (noteInput: CreateNoteInput) => {
+    const handleSaveNote = async (noteInput: CreateNoteInput, reminders?: NoteReminder[]) => {
         try {
             if (editingNote) {
-                const updated = await notesApi.updateNote(editingNote._id!, noteInput);
+                const updated = await notesApi.updateNote(editingNote._id!, {
+                    ...noteInput,
+                    reminders
+                });
                 setNotes(notes.map(n => n._id === updated._id ? updated : n));
             } else {
                 const created = await notesApi.createNote(noteInput);
-                setNotes([created, ...notes]);
+                // If reminders were added, update the note with them
+                if (reminders && reminders.length > 0) {
+                    const withReminders = await notesApi.updateNote(created._id!, { reminders });
+                    setNotes([withReminders, ...notes]);
+                } else {
+                    setNotes([created, ...notes]);
+                }
             }
             setIsEditorOpen(false);
             setEditingNote(null);
@@ -331,6 +405,18 @@ const Notes = () => {
 
     return (
         <NotesContainer>
+            <NotificationBanner $show={showNotificationBanner}>
+                <BannerText>
+                    Enable notifications to receive reminders for your pinned notes
+                </BannerText>
+                <BannerButton onClick={handleEnableNotifications}>
+                    Enable
+                </BannerButton>
+                <BannerClose onClick={() => setShowNotificationBanner(false)}>
+                    <span className="material-symbols-outlined">close</span>
+                </BannerClose>
+            </NotificationBanner>
+
             <NotesHeader>
                 <NotesHeaderTop>
                     <NotesHeaderLeft>

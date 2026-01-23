@@ -2,6 +2,21 @@ import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+export interface NoteReminder {
+    id: string;
+    enabled: boolean;
+    dateTime: Date;
+    isRecurring: boolean;
+    recurringPattern?: {
+        frequency: 'daily' | 'weekly' | 'monthly';
+        interval: number;
+        daysOfWeek?: number[];
+        endDate: Date;
+    };
+    completedAt?: Date;
+    lastModified: Date;
+}
+
 export interface Note {
     _id?: string;
     userId: string;
@@ -9,6 +24,7 @@ export interface Note {
     content: string;
     tags: string[];
     isPinned: boolean;
+    reminders: NoteReminder[];
     createdAt: Date;
     updatedAt: Date;
 }
@@ -25,6 +41,7 @@ export interface UpdateNoteInput {
     content?: string;
     tags?: string[];
     isPinned?: boolean;
+    reminders?: NoteReminder[];
 }
 
 const getAuthHeader = () => {
@@ -40,16 +57,12 @@ const getAuthHeader = () => {
 const createApiClient = () => {
     const client = axios.create();
 
-    // Add response interceptor to handle auth errors
     client.interceptors.response.use(
         (response) => response,
         (error) => {
-            // If we get 401 or 403, the token is invalid/expired
             if (error.response?.status === 401 || error.response?.status === 403) {
                 console.error('Authentication failed - token invalid or expired');
-                // Clear invalid token from storage
                 localStorage.removeItem('user');
-                // Redirect to login
                 window.location.href = '/login';
             }
             return Promise.reject(error);
@@ -101,5 +114,32 @@ export const notesApi = {
         await apiClient.delete(`${API_URL}/api/notes/${id}`, {
             headers: getAuthHeader(),
         });
+    },
+
+    // Reminder-specific endpoints
+    addReminder: async (noteId: string, reminder: NoteReminder): Promise<Note> => {
+        const response = await apiClient.post(
+            `${API_URL}/api/notes/${noteId}/reminders`,
+            reminder,
+            { headers: getAuthHeader() }
+        );
+        return response.data;
+    },
+
+    updateReminder: async (noteId: string, reminderId: string, updates: Partial<NoteReminder>): Promise<Note> => {
+        const response = await apiClient.put(
+            `${API_URL}/api/notes/${noteId}/reminders/${reminderId}`,
+            updates,
+            { headers: getAuthHeader() }
+        );
+        return response.data;
+    },
+
+    deleteReminder: async (noteId: string, reminderId: string): Promise<Note> => {
+        const response = await apiClient.delete(
+            `${API_URL}/api/notes/${noteId}/reminders/${reminderId}`,
+            { headers: getAuthHeader() }
+        );
+        return response.data;
     },
 };

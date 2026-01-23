@@ -12,10 +12,12 @@ import trackersRouter from './routes/trackers.js';
 import agentRouter from './routes/agent.js';
 import adminRouter from './routes/admin.js';
 import settingsRouter from './routes/settings.js';
+import pushRouter from './routes/push.js';
 import terminalRouter, { initTerminalWebSocket } from './routes/terminal.js';
 import { client, connectDB } from './db.js';
 import { authenticateToken } from './middleware/auth.js';
 import { requireFeature } from './middleware/permissions.js';
+import { notificationScheduler } from './services/notificationScheduler.js';
 
 dotenv.config();
 
@@ -65,9 +67,11 @@ app.use('/api/terminal', withFeature('terminal', terminalRouter));
 // Routes without feature restrictions (but still need auth)
 app.use('/api/whisper', whisperRouter);
 app.use('/api/admin', adminRouter);
-app.use('/api/settings', settingsRouter); // Settings route - auth handled internally
+app.use('/api/settings', settingsRouter);
+app.use('/api/push', pushRouter); // Push notification routes
 
 process.on('SIGINT', async () => {
+    notificationScheduler.stop();
     await client.close();
     console.log('MongoDB connection closed');
     process.exit(0);
@@ -75,16 +79,23 @@ process.on('SIGINT', async () => {
 
 // For Vercel serverless deployment (WebSocket won't work)
 if (process.env.VERCEL) {
-    connectDB();
+    connectDB().then(() => {
+        // Start notification scheduler
+        notificationScheduler.start();
+    });
 } else {
     // For local/server development - with WebSocket support
     connectDB().then(() => {
+        // Start notification scheduler
+        notificationScheduler.start();
+        
         // Initialize WebSocket server for terminal
         initTerminalWebSocket(server);
         
         server.listen(PORT, () => {
             console.log(`Server is running on port ${PORT}`);
             console.log(`WebSocket terminal available at ws://localhost:${PORT}/ws/terminal`);
+            console.log('Notification scheduler is active');
         });
     });
 }

@@ -2,7 +2,7 @@ import { Router, Response } from 'express';
 import { ObjectId } from 'mongodb';
 import { db } from '../db.js';
 import { authenticateToken, AuthRequest } from '../middleware/auth.js';
-import { Note, CreateNoteInput, UpdateNoteInput } from '../models/Note.js';
+import { Note, CreateNoteInput, UpdateNoteInput, NoteReminder } from '../models/Note.js';
 
 const router = Router();
 
@@ -54,7 +54,7 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
 
         const note = await db.collection<Note>('notes').findOne({
             _id: new ObjectId(id),
-            userId: req.userId, // Ensure user owns the note
+            userId: req.userId,
         });
 
         if (!note) {
@@ -87,6 +87,7 @@ router.post('/', async (req: AuthRequest, res: Response) => {
             content: noteContent,
             tags: noteTags,
             isPinned: isPinned || false,
+            reminders: [],
             createdAt: now,
             updatedAt: now,
         };
@@ -107,13 +108,13 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 router.put('/:id', async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
-        const { title, content, tags, isPinned }: UpdateNoteInput = req.body;
+        const { title, content, tags, isPinned, reminders }: UpdateNoteInput = req.body;
 
         if (!ObjectId.isValid(id)) {
             return res.status(400).json({ error: 'Invalid note ID' });
         }
 
-        if (!title && !content && !tags && isPinned === undefined) {
+        if (!title && !content && !tags && isPinned === undefined && !reminders) {
             return res.status(400).json({ error: 'Nothing to update' });
         }
 
@@ -127,11 +128,12 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
             updateData.tags = tags.length > 0 ? tags : ['default'];
         }
         if (isPinned !== undefined) updateData.isPinned = isPinned;
+        if (reminders !== undefined) updateData.reminders = reminders;
 
         const result = await db.collection<Note>('notes').findOneAndUpdate(
             {
                 _id: new ObjectId(id),
-                userId: req.userId, // Ensure user owns the note
+                userId: req.userId,
             },
             { $set: updateData },
             { returnDocument: 'after' }
@@ -159,7 +161,7 @@ router.delete('/:id', async (req: AuthRequest, res: Response) => {
 
         const result = await db.collection<Note>('notes').deleteOne({
             _id: new ObjectId(id),
-            userId: req.userId, // Ensure user owns the note
+            userId: req.userId,
         });
 
         if (result.deletedCount === 0) {
@@ -170,6 +172,125 @@ router.delete('/:id', async (req: AuthRequest, res: Response) => {
     } catch (error) {
         console.error('Error deleting note:', error);
         res.status(500).json({ error: 'Failed to delete note' });
+    }
+});
+
+// POST add a reminder to a note
+router.post('/:id/reminders', async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const reminder: NoteReminder = req.body;
+
+        if (!ObjectId.isValid(id)) {
+            return res.status(400).json({ error: 'Invalid note ID' });
+        }
+
+        if (!reminder.dateTime) {
+            return res.status(400).json({ error: 'Reminder dateTime is required' });
+        }
+
+        // Generate ID if not provided
+        if (!reminder.id) {
+            reminder.id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        }
+
+        reminder.lastModified = new Date();
+
+        const result = await db.collection<Note>('notes').findOneAndUpdate(
+            {
+                _id: new ObjectId(id),
+                userId: req.userId,
+            },
+            { 
+                $push: { reminders: reminder },
+                $set: { updatedAt: new Date() }
+            },
+            { returnDocument: 'after' }
+        );
+
+        if (!result) {
+            return res.status(404).json({ error: 'Note not found' });
+        }
+
+        res.json(result);
+    } catch (error) {
+        console.error('Error adding reminder:', error);
+        res.status(500).json({ error: 'Failed to add reminder' });
+    }
+});
+
+// PUT update a specific reminder
+router.put('/:id/reminders/:reminderId', async (req: AuthRequest, res: Response) => {
+    try {
+        const { id, reminderId } = req.params;
+        const updates = req.body;
+
+        if (!ObjectId.isValid(id)) {
+            return res.status(400).json({ error: 'Invalid note ID' });
+        }
+
+        // Build update object for the specific reminder
+        const updateFields: any = {};
+        Object.keys(updates).forEach(key => {
+            updateFields[`reminders.$.${key}`] = updates[key];
+        });
+        updateFields['reminders.$.lastModified'] = new Date();
+
+        const result = await db.collection<Note>('notes').findOneAndUpdate(
+            {
+                _id: new ObjectId(id),
+                userId: req.userId,
+                'reminders.id': reminderId
+            },
+            { 
+                $set: {
+                    ...updateFields,
+                    updatedAt: new Date()
+                }
+            },
+            { returnDocument: 'after' }
+        );
+
+        if (!result) {
+            return res.status(404).json({ error: 'Note or reminder not found' });
+        }
+
+        res.json(result);
+    } catch (error) {
+        console.error('Error updating reminder:', error);
+        res.status(500).json({ error: 'Failed to update reminder' });
+    }
+});
+
+// DELETE a specific reminder
+router.delete('/:id/reminders/:reminderId', async (req: AuthRequest, res: Response) => {
+    try {
+        const { id, reminderId } = req.params;
+
+        if (!ObjectId.isValid(id)) {
+            return res.status(400).json({ error: 'Invalid note ID' });
+        }
+
+        const result = await db.collection<Note>('notes').findOneAndUpdate(
+            {
+                _id: new ObjectId(id),
+                userId: req.userId,
+            },
+            { 
+                $pull: { reminders: { id: reminderId } },
+                $set: { updatedAt: new Date() }
+            },
+            { returnDocument: 'after' }
+        );
+
+        if (!result) {
+            return res.status(404).json({ error: 'Note not found' });
+        }
+
+        res.json(result);
+    } catch (error) {
+        console.error('Error deleting reminder:', error);
+        res.status(500).json({ error: 'Failed to delete reminder' });
     }
 });
 

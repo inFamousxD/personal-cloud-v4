@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Note, CreateNoteInput } from '../../../services/notesApi';
+import { Note, CreateNoteInput, NoteReminder } from '../../../services/notesApi';
 import TagInput from './TagInput';
+import ReminderList from './ReminderList';
 import {
     EditorOverlay,
     EditorModal,
@@ -48,7 +49,7 @@ const HeaderActions = styled.div`
 interface NoteEditorProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (note: CreateNoteInput) => Promise<void> | void;
+    onSave: (note: CreateNoteInput, reminders?: NoteReminder[]) => Promise<void> | void;
     editingNote: Note | null;
     availableTags: string[];
     initialHiddenTag?: boolean;
@@ -66,6 +67,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({
     const [content, setContent] = useState('');
     const [tags, setTags] = useState<string[]>(['default']);
     const [isPinned, setIsPinned] = useState(false);
+    const [reminders, setReminders] = useState<NoteReminder[]>([]);
 
     useEffect(() => {
         if (editingNote) {
@@ -73,17 +75,19 @@ const NoteEditor: React.FC<NoteEditorProps> = ({
             setContent(editingNote.content);
             setTags(editingNote.tags || ['default']);
             setIsPinned(editingNote.isPinned || false);
+            setReminders(editingNote.reminders || []);
         } else if (initialHiddenTag) {
-            // When creating a new hidden note, pre-populate with 'hidden' tag
             setTitle('');
             setContent('');
             setTags(['hidden']);
             setIsPinned(false);
+            setReminders([]);
         } else {
             setTitle('');
             setContent('');
             setTags(['default']);
             setIsPinned(false);
+            setReminders([]);
         }
     }, [editingNote, isOpen, initialHiddenTag]);
 
@@ -92,19 +96,22 @@ const NoteEditor: React.FC<NoteEditorProps> = ({
             return;
         }
 
-        onSave({
+        const noteData: CreateNoteInput = {
             title: title.trim() || 'Untitled Note',
             content: content.trim(),
             tags: tags.filter(tag => tag !== 'default').length > 0 
                 ? tags.filter(tag => tag !== 'default') 
                 : ['default'],
             isPinned
-        });
+        };
+
+        onSave(noteData, reminders);
 
         setTitle('');
         setContent('');
         setTags(['default']);
         setIsPinned(false);
+        setReminders([]);
     };
 
     const handleCancel = () => {
@@ -112,6 +119,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({
         setContent('');
         setTags(['default']);
         setIsPinned(false);
+        setReminders([]);
         onClose();
     };
 
@@ -176,6 +184,11 @@ const NoteEditor: React.FC<NoteEditorProps> = ({
                     <CharacterCount>
                         {content.length} / 5000 characters
                     </CharacterCount>
+
+                    <ReminderList 
+                        reminders={reminders} 
+                        onChange={setReminders}
+                    />
                 </EditorBody>
 
                 <EditorFooter>
