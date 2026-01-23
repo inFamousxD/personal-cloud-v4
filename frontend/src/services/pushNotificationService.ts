@@ -11,215 +11,180 @@ const getAuthHeader = () => {
     return {};
 };
 
-export interface PushSubscriptionInfo {
-    endpoint: string;
-    keys: {
-        p256dh: string;
-        auth: string;
-    };
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(new ArrayBuffer(rawData.length));
+
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
 }
 
 class PushNotificationService {
-    private registration: ServiceWorkerRegistration | null = null;
-    private subscription: PushSubscription | null = null;
+    private vapidPublicKey: string | null = null;
 
-    /**
-     * Initialize push notifications
-     */
-    async init(): Promise<boolean> {
+    async initialize(): Promise<boolean> {
         try {
-            // Check if service workers are supported
-            if (!('serviceWorker' in navigator)) {
-                console.log('Service workers not supported');
-                return false;
-            }
-
+            console.log('[Push] Initializing push notification service...');
+            
             // Check if push notifications are supported
-            if (!('PushManager' in window)) {
-                console.log('Push notifications not supported');
-                return false;
-            }
-
-            // Register service worker
-            this.registration = await navigator.serviceWorker.register('/sw.js', {
-                scope: '/'
-            });
-
-            console.log('Service Worker registered:', this.registration);
-
-            // Wait for service worker to be ready
-            await navigator.serviceWorker.ready;
-
-            return true;
-        } catch (error) {
-            console.error('Error initializing push notifications:', error);
-            return false;
-        }
-    }
-
-    /**
-     * Request permission and subscribe to push notifications
-     */
-    async subscribe(): Promise<boolean> {
-        try {
-            if (!this.registration) {
-                const initialized = await this.init();
-                if (!initialized) return false;
-            }
-
-            // Check if already subscribed
-            const existingSubscription = await this.registration!.pushManager.getSubscription();
-            if (existingSubscription) {
-                this.subscription = existingSubscription;
-                console.log('Already subscribed to push notifications');
-                return true;
-            }
-
-            // Request permission
-            const permission = await Notification.requestPermission();
-            if (permission !== 'granted') {
-                console.log('Notification permission denied');
+            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                console.warn('[Push] Push notifications not supported');
                 return false;
             }
 
             // Get VAPID public key from server
-            const vapidResponse = await axios.get(`${API_URL}/api/push/vapid-public-key`, {
+            const response = await axios.get(`${API_URL}/api/push/vapid-public-key`, {
                 headers: getAuthHeader()
             });
 
-            if (!vapidResponse.data.configured) {
-                console.log('Push notifications not configured on server');
+            if (!response.data.configured) {
+                console.warn('[Push] Push service not configured on server');
                 return false;
             }
 
-            const publicKey = vapidResponse.data.publicKey;
+            this.vapidPublicKey = response.data.publicKey;
+            console.log('[Push] VAPID public key retrieved');
+            return true;
+        } catch (error) {
+            console.error('[Push] Failed to initialize:', error);
+            return false;
+        }
+    }
+
+    async subscribe(): Promise<boolean> {
+        try {
+            console.log('[Push] Starting subscription process...');
+            
+            // Request notification permission
+            const permission = await Notification.requestPermission();
+            console.log('[Push] Notification permission:', permission);
+            
+            if (permission !== 'granted') {
+                console.log('[Push] Notification permission denied');
+                return false;
+            }
+
+            // Ensure we have the VAPID key
+            if (!this.vapidPublicKey) {
+                const initialized = await this.initialize();
+                if (!initialized) {
+                    console.error('[Push] Could not initialize push service');
+                    return false;
+                }
+            }
+
+            // Wait for service worker to be ready
+            console.log('[Push] Waiting for service worker...');
+            const registration = await navigator.serviceWorker.ready;
+            console.log('[Push] Service worker ready:', registration);
+
+            // Check for existing subscription
+            let subscription = await registration.pushManager.getSubscription();
+            console.log('[Push] Existing subscription:', subscription ? 'Found' : 'Not found');
+
+            if (subscription) {
+                console.log('[Push] Unsubscribing from existing subscription');
+                await subscription.unsubscribe();
+            }
 
             // Subscribe to push notifications
-            this.subscription = await this.registration!.pushManager.subscribe({
+            console.log('[Push] Creating new subscription...');
+            subscription = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
-                applicationServerKey: this.urlBase64ToUint8Array(publicKey) as BufferSource
+                applicationServerKey: urlBase64ToUint8Array(this.vapidPublicKey!) as BufferSource
             });
 
-            // Send subscription to server
-            const subscriptionInfo: PushSubscriptionInfo = {
-                endpoint: this.subscription.endpoint,
-                keys: {
-                    p256dh: btoa(String.fromCharCode(...new Uint8Array(this.subscription.getKey('p256dh')!))),
-                    auth: btoa(String.fromCharCode(...new Uint8Array(this.subscription.getKey('auth')!)))
-                }
-            };
+            console.log('[Push] Subscription created:', subscription.endpoint.substring(0, 50) + '...');
 
+            // Send subscription to server
             await axios.post(
                 `${API_URL}/api/push/subscribe`,
-                { subscription: subscriptionInfo },
+                { subscription: subscription.toJSON() },
                 { headers: getAuthHeader() }
             );
 
-            console.log('Successfully subscribed to push notifications');
+            console.log('[Push] Subscription saved to server');
             return true;
-        } catch (error) {
-            console.error('Error subscribing to push notifications:', error);
+        } catch (error: any) {
+            console.error('[Push] Subscription failed:', error);
+            
+            if (error.name === 'NotAllowedError') {
+                console.error('[Push] Permission denied by user');
+            } else if (error.name === 'NotSupportedError') {
+                console.error('[Push] Push not supported');
+            }
+            
             return false;
         }
     }
 
-    /**
-     * Unsubscribe from push notifications
-     */
     async unsubscribe(): Promise<boolean> {
         try {
-            if (!this.subscription) {
-                const existingSubscription = await this.registration?.pushManager.getSubscription();
-                if (existingSubscription) {
-                    this.subscription = existingSubscription;
-                }
-            }
+            const registration = await navigator.serviceWorker.ready;
+            const subscription = await registration.pushManager.getSubscription();
 
-            if (this.subscription) {
-                // Unsubscribe from browser
-                await this.subscription.unsubscribe();
-
-                // Notify server
+            if (subscription) {
                 await axios.post(
                     `${API_URL}/api/push/unsubscribe`,
-                    { endpoint: this.subscription.endpoint },
+                    { endpoint: subscription.endpoint },
                     { headers: getAuthHeader() }
                 );
 
-                this.subscription = null;
-                console.log('Successfully unsubscribed from push notifications');
+                await subscription.unsubscribe();
+                console.log('[Push] Unsubscribed successfully');
+                return true;
             }
 
-            return true;
+            return false;
         } catch (error) {
-            console.error('Error unsubscribing from push notifications:', error);
+            console.error('[Push] Unsubscribe failed:', error);
             return false;
         }
     }
 
-    /**
-     * Check if currently subscribed
-     */
     async isSubscribed(): Promise<boolean> {
         try {
-            if (!this.registration) {
-                await this.init();
+            if (!('serviceWorker' in navigator)) {
+                return false;
             }
 
-            if (!this.registration) return false;
-
-            const subscription = await this.registration.pushManager.getSubscription();
-            this.subscription = subscription;
-            return !!subscription;
+            const registration = await navigator.serviceWorker.ready;
+            const subscription = await registration.pushManager.getSubscription();
+            
+            const subscribed = !!subscription;
+            console.log('[Push] Subscription status:', subscribed);
+            return subscribed;
         } catch (error) {
-            console.error('Error checking subscription status:', error);
+            console.error('[Push] Failed to check subscription:', error);
             return false;
         }
     }
 
-    /**
-     * Get permission status
-     */
     getPermission(): NotificationPermission {
         return Notification.permission;
     }
 
-    /**
-     * Send test notification
-     */
-    async sendTestNotification(): Promise<boolean> {
+    async testNotification(): Promise<boolean> {
         try {
             await axios.post(
                 `${API_URL}/api/push/test`,
                 {},
                 { headers: getAuthHeader() }
             );
+            console.log('[Push] Test notification sent');
             return true;
         } catch (error) {
-            console.error('Error sending test notification:', error);
+            console.error('[Push] Test notification failed:', error);
             return false;
         }
     }
-
-    /**
-     * Convert VAPID public key to Uint8Array
-     */
-    private urlBase64ToUint8Array(base64String: string): Uint8Array {
-        const padding = '='.repeat((4 - base64String.length % 4) % 4);
-        const base64 = (base64String + padding)
-            .replace(/-/g, '+')
-            .replace(/_/g, '/');
-
-        const rawData = window.atob(base64);
-        const outputArray = new Uint8Array(rawData.length);
-
-        for (let i = 0; i < rawData.length; ++i) {
-            outputArray[i] = rawData.charCodeAt(i);
-        }
-
-        return outputArray;
-    }
 }
 
-// Export singleton instance
 export const pushNotificationService = new PushNotificationService();

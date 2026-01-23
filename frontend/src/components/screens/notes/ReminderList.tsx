@@ -192,7 +192,7 @@ interface ReminderListProps {
 }
 
 const ReminderList: React.FC<ReminderListProps> = ({ reminders, onChange }) => {
-    const [expanded, setExpanded] = useState(true);
+    const [expanded, setExpanded] = useState(false);
     const [showCompleted, setShowCompleted] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
     const [editingReminder, setEditingReminder] = useState<NoteReminder | null>(null);

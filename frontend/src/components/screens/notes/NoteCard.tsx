@@ -33,6 +33,24 @@ const TagPill = styled.span`
     font-weight: 600;
 `;
 
+const ReminderBadge = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    background: ${darkTheme.accentOrange}30;
+    color: ${darkTheme.accentOrange};
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-left: auto;
+    flex-shrink: 0;
+
+    .material-symbols-outlined {
+        font-size: 12px;
+    }
+`;
+
 interface NoteCardProps {
     note: Note;
     onView: (note: Note) => void;
@@ -52,6 +70,10 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onView, onEdit, onDelete }) =
     const visibleTags = useMemo(() => {
         return (note.tags || []).filter(tag => tag !== 'default');
     }, [note.tags]);
+
+    const activeRemindersCount = useMemo(() => {
+        return (note.reminders || []).filter(r => r.enabled).length;
+    }, [note.reminders]);
 
     // Calculate row span based on content length
     const rowSpan = useMemo(() => {
@@ -89,6 +111,12 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onView, onEdit, onDelete }) =
                     <PinIcon className="material-symbols-outlined">push_pin</PinIcon>
                 )}
                 <NoteCardTitle>{note.title || 'Untitled Note'}</NoteCardTitle>
+                {activeRemindersCount > 0 && (
+                    <ReminderBadge title={`${activeRemindersCount} active reminder${activeRemindersCount !== 1 ? 's' : ''}`}>
+                        <span className="material-symbols-outlined">notifications</span>
+                        {activeRemindersCount}
+                    </ReminderBadge>
+                )}
             </NoteCardHeader>
             {visibleTags.length > 0 && (
                 <TagsContainer>

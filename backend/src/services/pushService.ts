@@ -13,6 +13,9 @@ if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
         VAPID_PUBLIC_KEY,
         VAPID_PRIVATE_KEY
     );
+    console.log('[Push Service] VAPID details configured');
+} else {
+    console.warn('[Push Service] WARNING: VAPID keys not configured - push notifications will not work');
 }
 
 export interface NotificationPayload {
@@ -30,6 +33,8 @@ export const pushService = {
      */
     async subscribe(userId: string, subscription: any): Promise<void> {
         try {
+            console.log(`[Push Service] Subscribing user ${userId} with endpoint: ${subscription.endpoint.substring(0, 50)}...`);
+            
             const existingSub = await db.collection<PushSubscription>('pushSubscriptions').findOne({
                 userId,
                 endpoint: subscription.endpoint
@@ -46,6 +51,7 @@ export const pushService = {
                         } 
                     }
                 );
+                console.log(`[Push Service] Updated existing subscription for user ${userId}`);
             } else {
                 // Create new subscription
                 await db.collection<PushSubscription>('pushSubscriptions').insertOne({
@@ -54,9 +60,10 @@ export const pushService = {
                     keys: subscription.keys,
                     createdAt: new Date()
                 });
+                console.log(`[Push Service] Created new subscription for user ${userId}`);
             }
         } catch (error) {
-            console.error('Error saving push subscription:', error);
+            console.error('[Push Service] Error saving push subscription:', error);
             throw error;
         }
     },
@@ -70,8 +77,9 @@ export const pushService = {
                 userId,
                 endpoint
             });
+            console.log(`[Push Service] Unsubscribed user ${userId}`);
         } catch (error) {
-            console.error('Error removing push subscription:', error);
+            console.error('[Push Service] Error removing push subscription:', error);
             throw error;
         }
     },
@@ -81,12 +89,16 @@ export const pushService = {
      */
     async sendNotification(userId: string, payload: NotificationPayload): Promise<void> {
         try {
+            console.log(`[Push Service] Attempting to send notification to user ${userId}`);
+            
             const subscriptions = await db.collection<PushSubscription>('pushSubscriptions')
                 .find({ userId })
                 .toArray();
 
+            console.log(`[Push Service] Found ${subscriptions.length} subscription(s) for user ${userId}`);
+
             if (subscriptions.length === 0) {
-                console.log(`No subscriptions found for user ${userId}`);
+                console.log(`[Push Service] No subscriptions found for user ${userId}`);
                 return;
             }
 
@@ -103,9 +115,13 @@ export const pushService = {
                 }
             });
 
-            const sendPromises = subscriptions.map(async (sub) => {
+            console.log(`[Push Service] Notification payload:`, notificationPayload);
+
+            const sendPromises = subscriptions.map(async (sub, index) => {
                 try {
-                    await webpush.sendNotification(
+                    console.log(`[Push Service] Sending to subscription ${index + 1}/${subscriptions.length}: ${sub.endpoint.substring(0, 50)}...`);
+                    
+                    const result = await webpush.sendNotification(
                         {
                             endpoint: sub.endpoint,
                             keys: {
@@ -115,20 +131,23 @@ export const pushService = {
                         },
                         notificationPayload
                     );
+                    
+                    console.log(`[Push Service] Successfully sent notification to subscription ${index + 1}, status: ${result.statusCode}`);
                 } catch (error: any) {
+                    console.error(`[Push Service] Error sending to subscription ${index + 1}:`, error.message);
+                    
                     // If subscription is invalid, remove it
                     if (error.statusCode === 410 || error.statusCode === 404) {
-                        console.log(`Removing invalid subscription: ${sub.endpoint}`);
+                        console.log(`[Push Service] Removing invalid subscription: ${sub.endpoint.substring(0, 50)}...`);
                         await this.unsubscribe(userId, sub.endpoint);
-                    } else {
-                        console.error('Error sending push notification:', error);
                     }
                 }
             });
 
             await Promise.all(sendPromises);
+            console.log(`[Push Service] Completed sending notifications to user ${userId}`);
         } catch (error) {
-            console.error('Error in sendNotification:', error);
+            console.error('[Push Service] Error in sendNotification:', error);
             throw error;
         }
     },
@@ -144,6 +163,8 @@ export const pushService = {
      * Check if push service is configured
      */
     isConfigured(): boolean {
-        return !!(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY);
+        const configured = !!(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY);
+        console.log(`[Push Service] Configuration check: ${configured ? 'CONFIGURED' : 'NOT CONFIGURED'}`);
+        return configured;
     }
 };

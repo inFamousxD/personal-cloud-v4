@@ -47,6 +47,8 @@ export class NotificationScheduler {
                 .find({ 'reminders.enabled': true })
                 .toArray();
 
+            console.log(`[Scheduler ${currentMinute.toISOString()}] Found ${notes.length} notes with enabled reminders`);
+
             for (const note of notes) {
                 for (const reminder of note.reminders) {
                     if (!reminder.enabled) continue;
@@ -62,6 +64,7 @@ export class NotificationScheduler {
 
                     // Check if this reminder should fire now
                     if (currentMinute.getTime() === reminderMinute.getTime()) {
+                        console.log(`[Scheduler] Firing reminder ${reminder.id} for note ${note._id}, user ${note.userId}`);
                         await this.sendReminderNotification(note, reminder);
                         await this.handleReminderAfterFiring(note, reminder);
                     }
@@ -88,9 +91,9 @@ export class NotificationScheduler {
                 }
             });
 
-            console.log(`Sent reminder notification for note ${note._id}, reminder ${reminder.id}`);
+            console.log(`[Scheduler] Sent reminder notification for note ${note._id}, reminder ${reminder.id}`);
         } catch (error) {
-            console.error('Error sending reminder notification:', error);
+            console.error('[Scheduler] Error sending reminder notification:', error);
         }
     }
 
@@ -112,6 +115,7 @@ export class NotificationScheduler {
                         }
                     }
                 );
+                console.log(`[Scheduler] Marked non-recurring reminder ${reminder.id} as completed`);
             } else {
                 // Generate next reminder
                 const nextReminder = this.generateNextReminder(reminder);
@@ -133,6 +137,7 @@ export class NotificationScheduler {
                             }
                         }
                     );
+                    console.log(`[Scheduler] Generated next recurring reminder for ${reminder.id}, next: ${nextReminder.dateTime}`);
                 } else {
                     // Recurring ended, mark as completed
                     await db.collection<Note>('notes').updateOne(
@@ -144,10 +149,11 @@ export class NotificationScheduler {
                             }
                         }
                     );
+                    console.log(`[Scheduler] Recurring reminder ${reminder.id} ended`);
                 }
             }
         } catch (error) {
-            console.error('Error handling reminder after firing:', error);
+            console.error('[Scheduler] Error handling reminder after firing:', error);
         }
     }
 

@@ -1,11 +1,12 @@
-import React from 'react';
-import { Note } from '../../../services/notesApi';
+import React, { useState } from 'react';
+import { Note, NoteReminder } from '../../../services/notesApi';
 import styled from 'styled-components';
 import { darkTheme } from '../../../theme/dark.colors';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import ReminderList from './ReminderList';
 
 import {
     ViewerOverlay,
@@ -44,16 +45,37 @@ const PinToggle = styled.span<{ $isPinned: boolean }>`
     }
 `;
 
+const ReminderSection = styled.div`
+    margin: 24px 0px 0px 0px;
+`;
+
 interface NoteViewerProps {
     isOpen: boolean;
     onClose: () => void;
     onEdit: (note: Note) => void;
     onDelete: (id: string) => void;
     onTogglePin?: (note: Note) => void;
+    onUpdateReminders?: (noteId: string, reminders: NoteReminder[]) => void;
     note: Note | null;
 }
 
-const NoteViewer: React.FC<NoteViewerProps> = ({ isOpen, onClose, onEdit, onDelete, onTogglePin, note }) => {
+const NoteViewer: React.FC<NoteViewerProps> = ({ 
+    isOpen, 
+    onClose, 
+    onEdit, 
+    onDelete, 
+    onTogglePin, 
+    onUpdateReminders,
+    note 
+}) => {
+    const [reminders, setReminders] = useState<NoteReminder[]>(note?.reminders || []);
+
+    React.useEffect(() => {
+        if (note) {
+            setReminders(note.reminders || []);
+        }
+    }, [note]);
+
     if (!isOpen || !note) return null;
 
     const formatDate = (date: Date) => {
@@ -88,6 +110,13 @@ const NoteViewer: React.FC<NoteViewerProps> = ({ isOpen, onClose, onEdit, onDele
         e.stopPropagation();
         if (onTogglePin) {
             onTogglePin(note);
+        }
+    };
+
+    const handleRemindersChange = (updatedReminders: NoteReminder[]) => {
+        setReminders(updatedReminders);
+        if (onUpdateReminders && note._id) {
+            onUpdateReminders(note._id, updatedReminders);
         }
     };
 
@@ -143,6 +172,7 @@ const NoteViewer: React.FC<NoteViewerProps> = ({ isOpen, onClose, onEdit, onDele
                             ))}
                         </TagsContainer>
                     )}
+
                     <ViewerContent>
                         <ReactMarkdown
                             remarkPlugins={[remarkGfm]}
@@ -168,6 +198,16 @@ const NoteViewer: React.FC<NoteViewerProps> = ({ isOpen, onClose, onEdit, onDele
                             {note.content}
                         </ReactMarkdown>
                     </ViewerContent>
+     
+                    {onUpdateReminders && (
+                        <ReminderSection>
+                            <ReminderList 
+                                reminders={reminders}
+                                onChange={handleRemindersChange}
+                            />
+                        </ReminderSection>
+                    )}
+
                 </ViewerBody>
             </ViewerModal>
         </ViewerOverlay>

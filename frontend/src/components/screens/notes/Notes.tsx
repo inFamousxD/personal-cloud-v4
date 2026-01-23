@@ -163,6 +163,18 @@ const Notes = () => {
         }
     };
 
+    const handleUpdateReminders = async (noteId: string, reminders: NoteReminder[]) => {
+        try {
+            const updated = await notesApi.updateNote(noteId, { reminders });
+            setNotes(notes.map(n => n._id === updated._id ? updated : n));
+            if (viewingNote && viewingNote._id === noteId) {
+                setViewingNote(updated);
+            }
+        } catch (error) {
+            console.error('Error updating reminders:', error);
+        }
+    };
+
     const handleEnableNotifications = async () => {
         const success = await pushNotificationService.subscribe();
         if (success) {
@@ -587,6 +599,7 @@ const Notes = () => {
                 onEdit={handleEditNote}
                 onDelete={handleDeleteNote}
                 onTogglePin={handleTogglePin}
+                onUpdateReminders={handleUpdateReminders}
                 note={viewingNote}
             />
 
