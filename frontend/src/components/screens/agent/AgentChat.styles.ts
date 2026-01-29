@@ -362,10 +362,13 @@ export const MessagesArea = styled.div`
 export const MessagesContainer = styled.div`
     flex: 1;
     overflow-y: overlay;
-    padding: 24px max(16px, min(300px, calc((100vw - 900px) / 2))) 140px max(16px, min(300px, calc((100vw - 900px) / 2)));
+    padding: 24px 16px 140px 16px;
     display: flex;
     flex-direction: column;
     gap: 16px;
+    max-width: 920px;
+    margin: 0 auto;
+    width: 100%;
 
     &::-webkit-scrollbar {
         width: 0px;
@@ -395,13 +398,13 @@ export const ThinkingBlock = styled.div<{ $expanded: boolean }>`
     border-radius: 6px;
     background: ${darkTheme.backgroundDarkest};
     overflow: hidden;
-    /* width: ${props => props.$expanded ? '782px' : '200px'}; */
-    max-width: ${props => props.$expanded ? '782px' : '200px'};
+    /* width: ${props => props.$expanded ? '743px' : '200px'}; */
+    max-width: ${props => props.$expanded ? '743px' : '200px'};
     align-self: flex-start;
     transition: max-width 0.3s ease-in-out, margin 0.3s ease-in-out;
 
     @media (max-width: 768px) {
-        max-width: ${props => props.$expanded ? 'calc(100vw - 24px)' : '200px'};
+        max-width: ${props => props.$expanded ? 'calc(100vw - 27px)' : '200px'};
         margin: 0px 12px;
     }
 `;
