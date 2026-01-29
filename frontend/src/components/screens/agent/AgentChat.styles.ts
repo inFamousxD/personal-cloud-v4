@@ -521,7 +521,7 @@ export const ThinkingContent = styled.div<{ $expanded: boolean }>`
     }
 
     pre {
-        margin: 0px;
+        /* margin: 0px; */
         border-radius: 8px;
         overflow-x: auto;
         background: #1e1e1e;
@@ -673,7 +673,7 @@ export const MessageBubble = styled.div<{ $role: string }>`
     }
 
     pre {
-        margin: 0px;
+        /* margin: 0px; */
         border-radius: 8px;
         overflow-x: auto;
         background: #1e1e1e;
