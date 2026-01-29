@@ -133,9 +133,9 @@ const AgentChat = () => {
     }, [chatId]);
 
     // Auto-scroll when messages change
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
+    // useEffect(() => {
+    //     scrollToBottom();
+    // }, []);
 
     // Focus rename input when renaming starts
     useEffect(() => {
@@ -180,9 +180,9 @@ const AgentChat = () => {
         loadSettings();
     }, []);
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
+    // const scrollToBottom = () => {
+    //     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // };
 
     const loadInitialData = async () => {
         try {

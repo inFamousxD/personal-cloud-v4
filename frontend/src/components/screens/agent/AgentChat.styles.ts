@@ -397,12 +397,12 @@ export const MessagesContainer = styled.div`
 export const MessageBubble = styled.div<{ $role: string }>`
     background: ${props => 
         props.$role === 'user' 
-            ? darkTheme.accent + '15' 
+            ? `color-mix(in srgb, ${darkTheme.accent} 10%, transparent)`
             : darkTheme.backgroundDarkest};
-    border: 1px solid ${props => 
+    /* border: 1px solid ${props => 
         props.$role === 'user' 
-            ? darkTheme.accent + '30' 
-            : darkTheme.border};
+            ? darkTheme.accent 
+            : 'none'}; */
     border-radius: 6px;
     padding: 12px 16px;
     color: ${darkTheme.text.color};
