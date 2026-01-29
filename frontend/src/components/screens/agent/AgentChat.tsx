@@ -153,6 +153,15 @@ const AgentChat = () => {
         }
     }, [isRenaming]);
 
+    const thinkingEndRef = useRef<HTMLDivElement>(null);
+    
+    useEffect(() => {
+        // Auto-scroll when thinking content updates during streaming
+        if (isStreaming && thinkingEndRef.current) {
+            thinkingEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }, [messages, isStreaming]);
+
     // Poll active sessions while streaming
     useEffect(() => {
         const pollActiveSessions = async () => {
@@ -706,6 +715,10 @@ const AgentChat = () => {
                                                 >
                                                     {msg.thinking}
                                                 </ReactMarkdown>
+                                                {/* Add ref at the end of thinking content */}
+                                                {isStreaming && idx === messages.length - 1 && (
+                                                    <div ref={thinkingEndRef} />
+                                                )}
                                             </ThinkingContent>
                                         </ThinkingBlock>
                                     )}
