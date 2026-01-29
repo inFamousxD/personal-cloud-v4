@@ -5,6 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 export interface Message {
     role: 'user' | 'assistant' | 'system';
     content: string;
+    thinking?: string; // NEW: Optional thinking content
     timestamp?: Date;
 }
 
@@ -28,6 +29,7 @@ export interface ChatRequest {
     stream?: boolean;
     chatId?: string;
     contextLimit?: number;
+    enableThinking?: boolean;
 }
 
 export interface AgentSettings {
@@ -115,12 +117,15 @@ export const agentApi = {
     // Chat streaming
     streamChat: async (
         request: ChatRequest,
-        onChunk: (chunk: string, chatId?: string) => void,
+        onChunk: (chunk: string, chatId?: string, thinking?: string) => void,
         onComplete: () => void,
         onError: (error: Error) => void,
         abortController?: AbortController
     ) => {
         try {
+            console.log('=== FRONTEND: Starting stream ===');
+            console.log('Request:', { ...request, messages: `${request.messages.length} messages` });
+            
             const authHeaders = getAuthHeader();
             const headers: HeadersInit = {
                 'Content-Type': 'application/json',
@@ -139,6 +144,7 @@ export const agentApi = {
             }
 
             const chatId = response.headers.get('X-Chat-Id');
+            console.log('=== FRONTEND: Stream started, chatId:', chatId);
 
             const reader = response.body?.getReader();
             const decoder = new TextDecoder();
@@ -148,11 +154,13 @@ export const agentApi = {
             }
 
             let buffer = '';
+            let chunkCount = 0;
 
             while (true) {
                 const { done, value } = await reader.read();
                 
                 if (done) {
+                    console.log('=== FRONTEND: Stream done ===');
                     onComplete();
                     break;
                 }
@@ -167,22 +175,49 @@ export const agentApi = {
                     
                     try {
                         const json = JSON.parse(line);
-                        if (json.message?.content) {
-                            onChunk(json.message.content, json.chatId || chatId || undefined);
+                        chunkCount++;
+                        
+                        // LOG EVERY CHUNK
+                        if (chunkCount <= 5 || json.thinking?.content || json.done) {
+                            console.log(`=== FRONTEND CHUNK #${chunkCount} ===`);
+                            console.log('Has thinking:', !!json.thinking?.content);
+                            console.log('Has content:', !!json.message?.content);
+                            if (json.thinking?.content) {
+                                console.log('Thinking length:', json.thinking.content.length);
+                                console.log('Thinking preview:', json.thinking.content.substring(0, 50) + '...');
+                            }
+                            if (json.message?.content) {
+                                console.log('Content length:', json.message.content.length);
+                                console.log('Content preview:', json.message.content.substring(0, 50) + '...');
+                            }
+                        }
+                        
+                        if (json.message?.content !== undefined) {
+                            console.log('=== FRONTEND: Calling onChunk ===');
+                            console.log('Content:', json.message.content.substring(0, 50) + '...');
+                            console.log('Thinking:', json.thinking?.content?.substring(0, 50) || 'none');
+                            
+                            onChunk(
+                                json.message.content,
+                                json.chatId || chatId || undefined,
+                                json.thinking?.content
+                            );
                         }
                         if (json.done) {
+                            console.log('=== FRONTEND: Done flag received ===');
                             onComplete();
                             return;
                         }
                     } catch (e) {
-                        // Skip invalid JSON
+                        console.error('=== FRONTEND: Failed to parse chunk ===', e, 'Line:', line);
                     }
                 }
             }
         } catch (error: any) {
             if (error.name === 'AbortError') {
-                console.log('Request aborted');
+                console.log('=== FRONTEND: Request aborted ===');
             } else {
+                console.error('=== FRONTEND: Stream error ===', error);
                 onError(error);
             }
         }

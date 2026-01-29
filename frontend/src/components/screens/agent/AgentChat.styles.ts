@@ -362,13 +362,13 @@ export const MessagesArea = styled.div`
 export const MessagesContainer = styled.div`
     flex: 1;
     overflow-y: overlay;
-    padding: 24px 16px 140px 16px;
+    padding: 24px 300px 140px 300px;
     display: flex;
     flex-direction: column;
     gap: 16px;
-    max-width: 900px;
-    margin: 0 auto;
-    width: 100%;
+    /* max-width: 900px; */
+    /* margin: 0 auto; */
+    /* width: 100%; */
 
     &::-webkit-scrollbar {
         width: 0px;
@@ -386,11 +386,131 @@ export const MessagesContainer = styled.div`
             background: ${darkTheme.accent}60;
         }
     }
+
+    @media (max-width: 1600px) {
+        padding: 16px 160px 140px 160px;
+        gap: 12px;
+    }
+
+    @media (max-width: 1280px) {
+        padding: 16px 80px 140px 80px;
+        gap: 12px;
+    }
+
+    @media (max-width: 1024px) {
+        padding: 16px 40px 140px 40px;
+        gap: 12px;
+    }
     
     @media (max-width: 768px) {
         padding: 16px 0px 140px 0px;
-        /* margin-right: -8px; */
         gap: 12px;
+    }
+`;
+
+export const ThinkingBlock = styled.div<{ $expanded: boolean }>`
+    margin-bottom: 12px;
+    border: 1px solid ${darkTheme.border};
+    border-radius: 6px;
+    background: ${darkTheme.backgroundDarkest};
+    overflow: hidden;
+    max-width: 750px;
+    align-self: flex-start;
+
+    @media (max-width: 768px) {
+        max-width: calc(100vw - 54px);
+        margin: 0px 12px 12px 12px;
+    }
+`;
+
+export const ThinkingHeader = styled.button`
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    color: ${darkTheme.text.color};
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+
+    &:hover {
+        opacity: 1;
+        background: ${darkTheme.accent}10;
+    }
+
+    .material-symbols-outlined {
+        font-size: 16px;
+        transition: transform 0.2s;
+    }
+`;
+
+export const MessageWrapper = styled.div<{ $role: string }>`
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: ${props => props.$role === 'user' ? 'flex-end' : 'flex-start'};
+    width: 100%;
+`;
+
+export const ThinkingContent = styled.div<{ $expanded: boolean }>`
+    max-height: ${props => props.$expanded ? '400px' : '0'};
+    overflow-y: auto;
+    transition: max-height 0.3s ease;
+    padding: ${props => props.$expanded ? '0 12px 12px 12px' : '0 12px'};
+    font-size: 13px;
+    line-height: 1.6;
+    color: ${darkTheme.text.color};
+    opacity: 0.8;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: ${darkTheme.backgroundDarker};
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: ${darkTheme.accent}40;
+        border-radius: 3px;
+    }
+`;
+
+export const ThinkingDots = styled.span`
+    display: inline-flex;
+    gap: 3px;
+    margin-left: 4px;
+
+    .dot {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: ${darkTheme.accent};
+        animation: thinkingPulse 1.4s ease-in-out infinite;
+    }
+
+    .dot:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .dot:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+
+    @keyframes thinkingPulse {
+        0%, 100% {
+            opacity: 0.3;
+        }
+        50% {
+            opacity: 1;
+        }
     }
 `;
 
@@ -399,10 +519,6 @@ export const MessageBubble = styled.div<{ $role: string }>`
         props.$role === 'user' 
             ? `color-mix(in srgb, ${darkTheme.accent} 10%, transparent)`
             : darkTheme.backgroundDarkest};
-    /* border: 1px solid ${props => 
-        props.$role === 'user' 
-            ? darkTheme.accent 
-            : 'none'}; */
     border-radius: 6px;
     padding: 12px 16px;
     color: ${darkTheme.text.color};

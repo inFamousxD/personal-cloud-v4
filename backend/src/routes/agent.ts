@@ -164,8 +164,19 @@ async function generateChatTitle(messages: { role: string; content: string }[], 
 // POST /api/agent/chat - Send message and stream response
 router.post('/chat', async (req: AuthRequest, res: Response) => {
     try {
-        const { model = 'gemma3:4b', messages, chatId, contextLimit = 20 } = req.body;
+        const { 
+            model = 'gemma3:4b', 
+            messages, 
+            chatId, 
+            contextLimit = 20,
+            enableThinking = false
+        } = req.body;
         const userId = req.userId;
+
+        // console.log('=== CHAT REQUEST START ===');
+        // console.log('Model:', model);
+        // console.log('EnableThinking:', enableThinking);
+        // console.log('ChatId:', chatId);
 
         if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
@@ -189,9 +200,7 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
         
         // Create new chat if not provided
         if (!currentChatId) {
-            // Generate title using AI
             const title = await generateChatTitle(messages, model);
-            
             const now = new Date();
             const newChat: AgentChat = {
                 userId,
@@ -200,11 +209,9 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
                 createdAt: now,
                 updatedAt: now
             };
-
             const result = await db.collection<AgentChat>('agent_chats').insertOne(newChat);
             currentChatId = result.insertedId.toString();
         } else {
-            // Validate chatId exists and belongs to user
             if (!ObjectId.isValid(currentChatId)) {
                 activeSessions.delete(userId);
                 return res.status(400).json({ error: 'Invalid chat ID' });
@@ -220,13 +227,12 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
                 return res.status(404).json({ error: 'Chat not found' });
             }
 
-            // Use chat's system prompt if available
             if (chat.systemPrompt) {
                 systemPrompt = chat.systemPrompt;
             }
         }
 
-        // Save user message (last message in array)
+        // Save user message
         const userMessage = messages[messages.length - 1];
         if (userMessage.role === 'user') {
             const newMessage: AgentMessage = {
@@ -270,13 +276,23 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
         res.setHeader('X-Chat-Id', currentChatId);
         res.setHeader('X-Stream-Id', streamId);
 
+        // Prepare Ollama request
+        const ollamaRequest = {
+            model,
+            messages: messagesWithSystem,
+            stream: true,
+            think: true // HARDCODED FOR TESTING
+        };
+
+        // console.log('=== OLLAMA REQUEST ===');
+        // console.log('URL:', `${OLLAMA_URL}/api/chat`);
+        // console.log('Model:', ollamaRequest.model);
+        // console.log('Think:', ollamaRequest.think);
+        // console.log('Messages count:', ollamaRequest.messages.length);
+
         const response = await axios.post(
             `${OLLAMA_URL}/api/chat`,
-            {
-                model,
-                messages: messagesWithSystem,
-                stream: true
-            },
+            ollamaRequest,
             {
                 responseType: 'stream',
                 timeout: 120000,
@@ -284,8 +300,12 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
             }
         );
 
+        // console.log('=== OLLAMA RESPONSE STARTED ===');
+
         let fullText = '';
+        let fullThinking = '';
         let isComplete = false;
+        let chunkCount = 0;
 
         response.data.on('data', (chunk: Buffer) => {
             const lines = chunk.toString().split('\n').filter(line => line.trim());
@@ -293,35 +313,80 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
             for (const line of lines) {
                 try {
                     const json = JSON.parse(line);
+                    chunkCount++;
+                    
+                    // LOG EVERY CHUNK FROM OLLAMA
+                    if (chunkCount <= 5 || json.message?.thinking || json.done) {
+                        // console.log(`=== CHUNK #${chunkCount} ===`);
+                        // console.log('Has thinking:', !!json.message?.thinking);
+                        // console.log('Has content:', !!json.message?.content);
+                        // console.log('Done:', json.done);
+                        if (json.message?.thinking) {
+                            // console.log('Thinking preview:', json.message.thinking.substring(0, 50) + '...');
+                        }
+                        if (json.message?.content) {
+                            // console.log('Content preview:', json.message.content.substring(0, 50) + '...');
+                        }
+                    }
+                    
+                    // Handle thinking from Ollama
+                    if (json.message?.thinking) {
+                        fullThinking += json.message.thinking;
+                        // console.log(`=== SENDING THINKING TO CLIENT (length: ${fullThinking.length}) ===`);
+                        
+                        const payload = { 
+                            thinking: { content: fullThinking },
+                            message: { content: fullText },
+                            done: false,
+                            chatId: currentChatId
+                        };
+                        // console.log('Payload thinking length:', payload.thinking.content.length);
+                        res.write(JSON.stringify(payload) + '\n');
+                    }
+                    
+                    // Handle content
                     if (json.message?.content) {
                         fullText += json.message.content;
-                        res.write(JSON.stringify({ 
+                        // console.log(`=== SENDING CONTENT TO CLIENT (length: ${fullText.length}) ===`);
+                        
+                        const payload = { 
+                            thinking: fullThinking ? { content: fullThinking } : undefined,
                             message: { content: fullText },
                             done: json.done,
                             chatId: currentChatId
-                        }) + '\n');
+                        };
+                        if (fullThinking) {
+                            // console.log('Payload includes thinking, length:', payload.thinking?.content.length);
+                        }
+                        res.write(JSON.stringify(payload) + '\n');
                     }
+                    
                     if (json.done) {
                         isComplete = true;
+                        // console.log('=== STREAM COMPLETE ===');
+                        // console.log('Final thinking length:', fullThinking.length);
+                        // console.log('Final content length:', fullText.length);
                     }
                 } catch (e) {
-                    // Skip invalid JSON
+                    console.error('Failed to parse Ollama chunk:', e);
                 }
             }
         });
 
         response.data.on('end', async () => {
-            // Save assistant message
-            if (fullText) {
+            // console.log('=== RESPONSE END ===');
+            // console.log('Saving to DB - Thinking length:', fullThinking.length);
+            // console.log('Saving to DB - Content length:', fullText.length);
+            
+            if (fullText || fullThinking) {
                 const assistantMessage: AgentMessage = {
                     chatId: currentChatId!,
                     role: 'assistant',
                     content: fullText,
+                    ...(fullThinking && { thinking: fullThinking }),
                     timestamp: new Date()
                 };
                 await db.collection<AgentMessage>('agent_messages').insertOne(assistantMessage);
-
-                // Update chat timestamp
                 await db.collection<AgentChat>('agent_chats').updateOne(
                     { _id: new ObjectId(currentChatId) },
                     { $set: { updatedAt: new Date() } }
@@ -334,14 +399,14 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
         });
 
         response.data.on('error', async (error: Error) => {
-            console.error('Stream error:', error);
+            console.error('=== STREAM ERROR ===', error);
             
-            // Save partial response if any
-            if (fullText) {
+            if (fullText || fullThinking) {
                 const assistantMessage: AgentMessage = {
                     chatId: currentChatId!,
                     role: 'assistant',
                     content: fullText + '\n\n[Stream interrupted]',
+                    ...(fullThinking && { thinking: fullThinking }),
                     timestamp: new Date()
                 };
                 await db.collection<AgentMessage>('agent_messages').insertOne(assistantMessage);
@@ -352,13 +417,14 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
             res.end();
         });
 
-        // Handle client disconnect
         req.on('close', async () => {
-            if (!isComplete && fullText) {
+            console.log('=== CLIENT DISCONNECT ===');
+            if (!isComplete && (fullText || fullThinking)) {
                 const assistantMessage: AgentMessage = {
                     chatId: currentChatId!,
                     role: 'assistant',
                     content: fullText,
+                    ...(fullThinking && { thinking: fullThinking }),
                     timestamp: new Date()
                 };
                 await db.collection<AgentMessage>('agent_messages').insertOne(assistantMessage);
@@ -373,7 +439,7 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
         });
 
     } catch (error: any) {
-        console.error('Agent chat error:', error);
+        console.error('=== AGENT CHAT ERROR ===', error);
         
         if (req.userId) {
             activeSessions.delete(req.userId);
@@ -399,7 +465,7 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
 // POST /api/agent/generate-note - Generate note from transcription
 router.post('/generate-note', async (req: AuthRequest, res: Response) => {
     try {
-        const { transcription, model = 'gemma3:4b' } = req.body;
+        const { transcription, model = 'llama3.2:1b' } = req.body;
         const userId = req.userId;
 
         if (!userId) {

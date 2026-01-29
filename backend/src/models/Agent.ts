@@ -1,3 +1,4 @@
+// backend/src/models/Agent.ts
 import { ObjectId } from 'mongodb';
 
 // ===== AGENT CHAT INTERFACES =====
@@ -16,6 +17,7 @@ export interface AgentMessage {
     chatId: string;
     role: 'user' | 'assistant' | 'system';
     content: string;
+    thinking?: string; // NEW: Optional thinking content
     timestamp: Date;
 }
 

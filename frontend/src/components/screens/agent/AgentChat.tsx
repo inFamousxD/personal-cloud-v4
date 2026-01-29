@@ -54,9 +54,19 @@ import {
     RenameChatInput,
     RenameChatWrapper,
     WaitingIndicator,
+    ThinkingBlock,
+    ThinkingHeader,
+    ThinkingContent,
+    ThinkingDots,
+    MessageWrapper,
 } from './AgentChat.styles';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
+
+// Extended message interface for display
+interface DisplayMessage extends Message {
+    thinking?: string;
+}
 
 const AgentChat = () => {
     const { chatId } = useParams<{ chatId?: string }>();
@@ -65,7 +75,7 @@ const AgentChat = () => {
 
     // State
     const [chats, setChats] = useState<Chat[]>([]);
-    const [messages, setMessages] = useState<Message[]>([]);
+    const [messages, setMessages] = useState<DisplayMessage[]>([]);
     const [input, setInput] = useState('');
     const [isStreaming, setIsStreaming] = useState(false);
     const [models, setModels] = useState<string[]>([]);
@@ -99,6 +109,9 @@ const AgentChat = () => {
     const [isRenaming, setIsRenaming] = useState(false);
     const [renameValue, setRenameValue] = useState('');
 
+    // Thinking expansion state
+    const [expandedThinking, setExpandedThinking] = useState<Set<number>>(new Set());
+
     // Refs
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
@@ -131,11 +144,6 @@ const AgentChat = () => {
             setCurrentChatId(null);
         }
     }, [chatId]);
-
-    // Auto-scroll when messages change
-    // useEffect(() => {
-    //     scrollToBottom();
-    // }, []);
 
     // Focus rename input when renaming starts
     useEffect(() => {
@@ -179,10 +187,6 @@ const AgentChat = () => {
         };
         loadSettings();
     }, []);
-
-    // const scrollToBottom = () => {
-    //     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    // };
 
     const loadInitialData = async () => {
         try {
@@ -259,7 +263,7 @@ const AgentChat = () => {
             });
 
             console.log('Valid messages count:', validMessages.length);
-            setMessages(validMessages);
+            setMessages(validMessages as DisplayMessage[]);
             setCurrentChatId(id);
         } catch (error: any) {
             console.error('Error loading chat:', error);
@@ -358,7 +362,7 @@ const AgentChat = () => {
     const handleSend = async () => {
         if (!input.trim() || isStreaming || !isConnected) return;
 
-        const userMessage: Message = {
+        const userMessage: DisplayMessage = {
             role: 'user',
             content: input.trim(),
         };
@@ -367,20 +371,22 @@ const AgentChat = () => {
         setMessages(updatedMessages);
         setInput('');
         
-        // Reset textarea height
         if (textAreaRef.current) {
             textAreaRef.current.style.height = 'auto';
         }
         
         setIsStreaming(true);
 
-        const assistantMessage: Message = {
+        const assistantMessage: DisplayMessage = {
             role: 'assistant',
             content: '',
+            thinking: '',
         };
         setMessages([...updatedMessages, assistantMessage]);
 
         abortControllerRef.current = new AbortController();
+
+        console.log('=== COMPONENT: Calling streamChat ===');
 
         await agentApi.streamChat(
             {
@@ -388,8 +394,13 @@ const AgentChat = () => {
                 messages: updatedMessages,
                 chatId: currentChatId || undefined,
                 contextLimit,
+                enableThinking: true,
             },
-            (chunk, receivedChatId) => {
+            (chunk, receivedChatId, thinkingChunk) => {
+                console.log('=== COMPONENT: onChunk called ===');
+                console.log('Content length:', chunk.length);
+                console.log('Thinking length:', thinkingChunk?.length || 0);
+                
                 if (receivedChatId && !currentChatId) {
                     setCurrentChatId(receivedChatId);
                     window.history.replaceState(null, '', `/agent/${receivedChatId}`);
@@ -402,17 +413,23 @@ const AgentChat = () => {
                     const lastMsg = updated[updated.length - 1];
                     if (lastMsg && lastMsg.role === 'assistant') {
                         lastMsg.content = chunk;
+                        if (thinkingChunk !== undefined) {
+                            console.log('=== COMPONENT: Setting thinking on message ===', thinkingChunk.substring(0, 50) + '...');
+                            lastMsg.thinking = thinkingChunk;
+                        }
                     }
+                    console.log('=== COMPONENT: Updated messages, last message thinking length:', updated[updated.length - 1].thinking?.length || 0);
                     return updated;
                 });
             },
             () => {
+                console.log('=== COMPONENT: Stream complete ===');
                 setIsStreaming(false);
                 abortControllerRef.current = null;
                 loadChats();
             },
             (error) => {
-                console.error('Chat error:', error);
+                console.error('=== COMPONENT: Stream error ===', error);
                 setIsStreaming(false);
                 setMessages(prev => {
                     if (prev.length === 0) return prev;
@@ -628,33 +645,75 @@ const AgentChat = () => {
                         </EmptyState>
                     ) : (
                         <MessagesContainer>
-                            {messages.filter(msg => msg && msg.content).map((msg, idx) => (
-                                <MessageBubble key={idx} $role={msg.role}>
-                                    <ReactMarkdown
-                                        remarkPlugins={[remarkGfm, remarkMath]}
-                                        rehypePlugins={[rehypeKatex]}
-                                        components={{
-                                            code({ node, inline, className, children, ...props }: any) {
-                                                const match = /language-(\w+)/.exec(className || '');
-                                                return !inline && match ? (
-                                                    <SyntaxHighlighter
-                                                        style={vscDarkPlus as any}
-                                                        language={match[1]}
-                                                        PreTag="div"
-                                                    >
-                                                        {String(children).replace(/\n$/, '')}
-                                                    </SyntaxHighlighter>
-                                                ) : (
-                                                    <code className={className} {...props}>
-                                                        {children}
-                                                    </code>
-                                                );
-                                            },
-                                        }}
-                                    >
-                                        {msg.content}
-                                    </ReactMarkdown>
-                                </MessageBubble>
+                            {messages.filter(msg => msg && (msg.content || msg.thinking)).map((msg, idx) => (
+                                <MessageWrapper key={idx} $role={msg.role}>
+                                    {/* Thinking Block - Only show if thinking exists */}
+                                    {msg.thinking && msg.role === 'assistant' && (
+                                        <ThinkingBlock $expanded={expandedThinking.has(idx)}>
+                                            <ThinkingHeader
+                                                onClick={() => {
+                                                    const newExpanded = new Set(expandedThinking);
+                                                    if (newExpanded.has(idx)) {
+                                                        newExpanded.delete(idx);
+                                                    } else {
+                                                        newExpanded.add(idx);
+                                                    }
+                                                    setExpandedThinking(newExpanded);
+                                                }}
+                                            >
+                                                <span 
+                                                    className="material-symbols-outlined"
+                                                    style={{
+                                                        transform: expandedThinking.has(idx) ? 'rotate(90deg)' : 'rotate(0deg)'
+                                                    }}
+                                                >
+                                                    chevron_right
+                                                </span>
+                                                <span>Thinking</span>
+                                                {isStreaming && idx === messages.length - 1 && (
+                                                    <ThinkingDots>
+                                                        <span className="dot"></span>
+                                                        <span className="dot"></span>
+                                                        <span className="dot"></span>
+                                                    </ThinkingDots>
+                                                )}
+                                            </ThinkingHeader>
+                                            <ThinkingContent $expanded={expandedThinking.has(idx)}>
+                                                {msg.thinking}
+                                            </ThinkingContent>
+                                        </ThinkingBlock>
+                                    )}
+                                    
+                                    {/* Message Bubble - Only show if content exists */}
+                                    {msg.content && (
+                                        <MessageBubble $role={msg.role}>
+                                            <ReactMarkdown
+                                                remarkPlugins={[remarkGfm, remarkMath]}
+                                                rehypePlugins={[rehypeKatex]}
+                                                components={{
+                                                    code({ node, inline, className, children, ...props }: any) {
+                                                        const match = /language-(\w+)/.exec(className || '');
+                                                        return !inline && match ? (
+                                                            <SyntaxHighlighter
+                                                                style={vscDarkPlus as any}
+                                                                language={match[1]}
+                                                                PreTag="div"
+                                                            >
+                                                                {String(children).replace(/\n$/, '')}
+                                                            </SyntaxHighlighter>
+                                                        ) : (
+                                                            <code className={className} {...props}>
+                                                                {children}
+                                                            </code>
+                                                        );
+                                                    },
+                                                }}
+                                            >
+                                                {msg.content}
+                                            </ReactMarkdown>
+                                        </MessageBubble>
+                                    )}
+                                </MessageWrapper>
                             ))}
                             <div ref={messagesEndRef} />
                         </MessagesContainer>
