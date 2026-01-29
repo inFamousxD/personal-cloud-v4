@@ -1308,3 +1308,48 @@ export const WaitingIndicator = styled.div`
         margin: 0 12px 12px 12px;
     }
 `;
+
+export const ThinkingToggle = styled.button<{ $enabled: boolean }>`
+    background: ${props => props.$enabled ? darkTheme.accent : 'transparent'};
+    border: 1px solid ${props => props.$enabled ? darkTheme.accent : darkTheme.border};
+    border-radius: 6px;
+    color: ${props => props.$enabled ? 'white' : darkTheme.text.color};
+    cursor: pointer;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-family: inherit;
+    transition: all 0.2s;
+    white-space: nowrap;
+
+    .material-symbols-outlined {
+        font-size: 18px;
+    }
+
+    .label {
+        font-weight: 500;
+        font-size: 11px;
+        letter-spacing: 0.3px;
+    }
+
+    &:hover {
+        opacity: 0.9;
+        background: ${props => props.$enabled ? darkTheme.accent : `${darkTheme.accent}20`};
+        border-color: ${darkTheme.accent};
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    @media (max-width: 768px) {
+        padding: 6px 8px;
+        
+        .label {
+            display: none;
+        }
+    }
+`;

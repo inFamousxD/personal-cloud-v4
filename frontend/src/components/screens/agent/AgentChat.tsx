@@ -59,6 +59,7 @@ import {
     ThinkingContent,
     ThinkingDots,
     MessageWrapper,
+    ThinkingToggle,
 } from './AgentChat.styles';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
@@ -120,6 +121,33 @@ const AgentChat = () => {
 
     // Detect if user is on mobile
     const [isMobile, setIsMobile] = useState(false);
+
+    const [enableThinking, setEnableThinking] = useState(false);
+    const [modelSupportsThinking, setModelSupportsThinking] = useState(false);
+    
+    // Check model capabilities when model changes
+    useEffect(() => {
+        const checkModelCapabilities = async () => {
+            if (!selectedModel) return;
+            
+            try {
+                const modelInfo = await agentApi.getModelInfo(selectedModel);
+                console.log(modelInfo)
+                setModelSupportsThinking(modelInfo.capabilities.thinking);
+                
+                // Auto-disable thinking if model doesn't support it
+                if (!modelInfo.capabilities.thinking) {
+                    setEnableThinking(false);
+                }
+            } catch (error) {
+                console.error('Error checking model capabilities:', error);
+                setModelSupportsThinking(false);
+                setEnableThinking(false);
+            }
+        };
+        
+        checkModelCapabilities();
+    }, [selectedModel]);
 
     useEffect(() => {
         const checkMobile = () => {
@@ -244,13 +272,13 @@ const AgentChat = () => {
     const loadChat = async (id: string) => {
         try {
             setRenderError(null);
-            console.log('Loading chat:', id);
+            // console.log('Loading chat:', id);
             
             const response = await agentApi.getChat(id);
-            console.log('Chat response:', response);
+            // console.log('Chat response:', response);
             
             const { messages: chatMessages } = response;
-            console.log('Chat messages:', chatMessages);
+            // console.log('Chat messages:', chatMessages);
             
             if (!chatMessages || !Array.isArray(chatMessages)) {
                 console.error('Invalid messages format:', chatMessages);
@@ -271,7 +299,7 @@ const AgentChat = () => {
                 return isValid;
             });
 
-            console.log('Valid messages count:', validMessages.length);
+            // console.log('Valid messages count:', validMessages.length);
             setMessages(validMessages as DisplayMessage[]);
             setCurrentChatId(id);
         } catch (error: any) {
@@ -395,7 +423,7 @@ const AgentChat = () => {
 
         abortControllerRef.current = new AbortController();
 
-        console.log('=== COMPONENT: Calling streamChat ===');
+        // console.log('=== COMPONENT: Calling streamChat ===');
 
         await agentApi.streamChat(
             {
@@ -403,12 +431,12 @@ const AgentChat = () => {
                 messages: updatedMessages,
                 chatId: currentChatId || undefined,
                 contextLimit,
-                enableThinking: true,
+                enableThinking: enableThinking,
             },
             (chunk, receivedChatId, thinkingChunk) => {
-                console.log('=== COMPONENT: onChunk called ===');
-                console.log('Content length:', chunk.length);
-                console.log('Thinking length:', thinkingChunk?.length || 0);
+                // console.log('=== COMPONENT: onChunk called ===');
+                // console.log('Content length:', chunk.length);
+                // console.log('Thinking length:', thinkingChunk?.length || 0);
                 
                 if (receivedChatId && !currentChatId) {
                     setCurrentChatId(receivedChatId);
@@ -423,16 +451,16 @@ const AgentChat = () => {
                     if (lastMsg && lastMsg.role === 'assistant') {
                         lastMsg.content = chunk;
                         if (thinkingChunk !== undefined) {
-                            console.log('=== COMPONENT: Setting thinking on message ===', thinkingChunk.substring(0, 50) + '...');
+                            // console.log('=== COMPONENT: Setting thinking on message ===', thinkingChunk.substring(0, 50) + '...');
                             lastMsg.thinking = thinkingChunk;
                         }
                     }
-                    console.log('=== COMPONENT: Updated messages, last message thinking length:', updated[updated.length - 1].thinking?.length || 0);
+                    // console.log('=== COMPONENT: Updated messages, last message thinking length:', updated[updated.length - 1].thinking?.length || 0);
                     return updated;
                 });
             },
             () => {
-                console.log('=== COMPONENT: Stream complete ===');
+                // console.log('=== COMPONENT: Stream complete ===');
                 setIsStreaming(false);
                 abortControllerRef.current = null;
                 loadChats();
@@ -650,6 +678,19 @@ const AgentChat = () => {
                         <StatusIndicator $connected={isConnected}>
                             {isConnected ? '●' : '○'}
                         </StatusIndicator>
+                        
+                        {/* Thinking Toggle */}
+                        {modelSupportsThinking && (
+                            <ThinkingToggle
+                                $enabled={enableThinking}
+                                onClick={() => setEnableThinking(!enableThinking)}
+                                title={enableThinking ? 'Disable thinking mode' : 'Enable thinking mode'}
+                            >
+                                <span className="material-symbols-outlined">psychology</span>
+                                {enableThinking && <span className="label">Thinking ON</span>}
+                            </ThinkingToggle>
+                        )}
+                        
                         <ModelSelector
                             value={selectedModel}
                             onChange={(e) => setSelectedModel(e.target.value)}
@@ -659,6 +700,7 @@ const AgentChat = () => {
                                 <option key={model} value={model}>{model}</option>
                             ))}
                         </ModelSelector>
+                        
                         <SettingsButton onClick={() => setShowSettings(true)} title="Settings">
                             <span className="material-symbols-outlined">settings</span>
                         </SettingsButton>

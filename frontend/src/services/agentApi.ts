@@ -49,6 +49,17 @@ export interface GenerateNoteResponse {
     content: string;
 }
 
+export interface ModelCapabilities {
+    thinking: boolean;
+}
+
+export interface ModelInfo {
+    name: string;
+    capabilities: ModelCapabilities;
+    template?: string;
+    parameters?: string;
+}
+
 const getAuthHeader = () => {
     const user = localStorage.getItem('user');
     if (user) {
@@ -286,6 +297,14 @@ export const agentApi = {
         const response = await apiClient.get(`${API_URL}/api/agent/health`, {
             headers: getAuthHeader(),
         });
+        return response.data;
+    },
+
+    getModelInfo: async (modelName: string): Promise<ModelInfo> => {
+        const response = await apiClient.get(
+            `${API_URL}/api/agent/models/${encodeURIComponent(modelName)}/info`,
+            { headers: getAuthHeader() }
+        );
         return response.data;
     },
 };

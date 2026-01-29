@@ -281,7 +281,7 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
             model,
             messages: messagesWithSystem,
             stream: true,
-            think: true // HARDCODED FOR TESTING
+            ...(enableThinking && { think: true }) // Only add if enabled
         };
 
         // console.log('=== OLLAMA REQUEST ===');
@@ -759,6 +759,46 @@ router.get('/health', async (_req: AuthRequest, res: Response) => {
         res.status(503).json({ 
             status: 'unhealthy',
             error: 'Ollama service unavailable' 
+        });
+    }
+});
+
+// GET /api/agent/models/:name/info - Get detailed model information
+router.get('/models/:name/info', async (req: AuthRequest, res: Response) => {
+    try {
+        const { name } = req.params;
+        
+        const response = await axios.post(
+            `${OLLAMA_URL}/api/show`,
+            { name },
+            { timeout: 5000 }
+        );
+        
+        // Extract capabilities from modelfile or template
+        const modelInfo = response.data;
+        
+        // Check if model supports thinking by looking at the template or parameters
+        // Models like deepseek-r1, qwq, qwen2.5 support thinking
+        const supportsThinking = 
+            modelInfo.template?.includes('thinking') ||
+            modelInfo.parameters?.includes('think') ||
+            name.toLowerCase().includes('deepseek') ||
+            name.toLowerCase().includes('qwq') ||
+            name.toLowerCase().includes('qwen');
+        
+        res.json({
+            ...modelInfo,
+            capabilities: {
+                thinking: supportsThinking
+            }
+        });
+    } catch (error: any) {
+        console.error('Get model info error:', error);
+        res.status(500).json({ 
+            error: 'Failed to get model info',
+            capabilities: {
+                thinking: false
+            }
         });
     }
 });
