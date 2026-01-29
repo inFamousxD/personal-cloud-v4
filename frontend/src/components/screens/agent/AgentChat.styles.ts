@@ -362,13 +362,10 @@ export const MessagesArea = styled.div`
 export const MessagesContainer = styled.div`
     flex: 1;
     overflow-y: overlay;
-    padding: 24px 300px 140px 300px;
+    padding: 24px max(16px, min(300px, calc((100vw - 900px) / 2))) 140px max(16px, min(300px, calc((100vw - 900px) / 2)));
     display: flex;
     flex-direction: column;
     gap: 16px;
-    /* max-width: 900px; */
-    /* margin: 0 auto; */
-    /* width: 100%; */
 
     &::-webkit-scrollbar {
         width: 0px;
@@ -387,21 +384,6 @@ export const MessagesContainer = styled.div`
         }
     }
 
-    @media (max-width: 1600px) {
-        padding: 16px 160px 140px 160px;
-        gap: 12px;
-    }
-
-    @media (max-width: 1280px) {
-        padding: 16px 80px 140px 80px;
-        gap: 12px;
-    }
-
-    @media (max-width: 1024px) {
-        padding: 16px 40px 140px 40px;
-        gap: 12px;
-    }
-    
     @media (max-width: 768px) {
         padding: 16px 0px 140px 0px;
         gap: 12px;
@@ -409,17 +391,18 @@ export const MessagesContainer = styled.div`
 `;
 
 export const ThinkingBlock = styled.div<{ $expanded: boolean }>`
-    margin-bottom: 12px;
-    border: 1px solid ${darkTheme.border};
+    border: 0.5px solid ${darkTheme.border};
     border-radius: 6px;
     background: ${darkTheme.backgroundDarkest};
     overflow: hidden;
-    max-width: 750px;
+    /* width: ${props => props.$expanded ? '782px' : '200px'}; */
+    max-width: ${props => props.$expanded ? '782px' : '200px'};
     align-self: flex-start;
+    transition: max-width 0.3s ease-in-out, margin 0.3s ease-in-out;
 
     @media (max-width: 768px) {
-        max-width: calc(100vw - 54px);
-        margin: 0px 12px 12px 12px;
+        max-width: ${props => props.$expanded ? 'calc(100vw - 24px)' : '200px'};
+        margin: 0px 12px;
     }
 `;
 
@@ -437,10 +420,19 @@ export const ThinkingHeader = styled.button`
     font-size: 12px;
     opacity: 0.7;
     transition: opacity 0.2s;
+    outline: none;
 
     &:hover {
         opacity: 1;
         background: ${darkTheme.accent}10;
+    }
+
+    &:focus {
+        outline: none;
+    }
+
+    &:focus-visible {
+        outline: none;
     }
 
     .material-symbols-outlined {
@@ -461,16 +453,15 @@ export const ThinkingContent = styled.div<{ $expanded: boolean }>`
     max-height: ${props => props.$expanded ? '400px' : '0'};
     overflow-y: auto;
     transition: max-height 0.3s ease;
-    padding: ${props => props.$expanded ? '0 12px 12px 12px' : '0 12px'};
+    padding: ${props => props.$expanded ? '0 16px 12px 16px' : '0 16px'};
     font-size: 13px;
     line-height: 1.6;
     color: ${darkTheme.text.color};
     opacity: 0.8;
-    white-space: pre-wrap;
     word-wrap: break-word;
 
     &::-webkit-scrollbar {
-        width: 6px;
+        width: 0px;
     }
 
     &::-webkit-scrollbar-track {
@@ -480,6 +471,107 @@ export const ThinkingContent = styled.div<{ $expanded: boolean }>`
     &::-webkit-scrollbar-thumb {
         background: ${darkTheme.accent}40;
         border-radius: 3px;
+    }
+
+    /* Typography */
+    p {
+        margin: 0 0 8px 0;
+        white-space: pre-wrap;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        color: ${darkTheme.accent};
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+        font-weight: 600;
+        line-height: 1.3;
+
+        &:first-child {
+            margin-top: 0;
+        }
+    }
+
+    h1 { font-size: 2em; }
+    h2 { font-size: 1.5em; }
+    h3 { font-size: 1.25em; }
+    h4 { font-size: 1.1em; }
+    h5 { font-size: 1em; }
+    h6 { font-size: 0.9em; }
+
+    /* Lists */
+    ul, ol {
+        margin: 8px 0;
+        padding-left: 24px;
+    }
+
+    li {
+        margin: 4px 0;
+    }
+
+    /* Code */
+    code {
+        background: ${darkTheme.accentDark};
+        padding: 0px 6px;
+        border-radius: 4px;
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    pre {
+        margin: 0px;
+        border-radius: 8px;
+        overflow-x: auto;
+        background: #1e1e1e;
+        padding: 0px 8px;
+        max-width: 100%;
+        
+        code {
+            background: transparent;
+            padding: 0;
+            font-family: 'JetBrains Mono' !important;
+        }
+
+        ::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: ${darkTheme.backgroundDarker};
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: ${darkTheme.accent}40;
+            border-radius: 4px;
+        }
+    }
+
+    /* Blockquotes */
+    blockquote {
+        border-left: 3px solid ${darkTheme.accent};
+        margin: 12px 0;
+        padding-left: 16px;
+        opacity: 0.8;
+    }
+
+    /* Links */
+    a {
+        color: ${darkTheme.accent};
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    /* Horizontal Rule */
+    hr {
+        border: none;
+        border-top: 1px solid ${darkTheme.border};
+        opacity: 0.3;
+        margin: 1em 0;
     }
 `;
 
@@ -529,7 +621,7 @@ export const MessageBubble = styled.div<{ $role: string }>`
     line-height: 1.6;
 
     @media (max-width: 768px) {
-        max-width: calc(100vw - 54px); /* Account for container padding/margins */
+        max-width: calc(100vw - 54px);
         padding: 12px 14px;
         margin: 0px 12px;
     }
@@ -586,7 +678,7 @@ export const MessageBubble = styled.div<{ $role: string }>`
         overflow-x: auto;
         background: #1e1e1e;
         padding: 0px 8px;
-        max-width: 100%; /* Constrain to bubble width */
+        max-width: 100%;
         
         code {
             background: transparent;
@@ -624,6 +716,14 @@ export const MessageBubble = styled.div<{ $role: string }>`
         &:hover {
             text-decoration: underline;
         }
+    }
+
+    /* Horizontal Rule */
+    hr {
+        border: none;
+        border-top: 1px solid ${darkTheme.border};
+        opacity: 0.3;
+        margin: 1em 0;
     }
 
     /* KaTeX Math Styling */

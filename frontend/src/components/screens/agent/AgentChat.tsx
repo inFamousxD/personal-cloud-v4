@@ -485,6 +485,26 @@ const AgentChat = () => {
         return chats.find(c => c._id === currentChatId);
     }, [chats, currentChatId]);
 
+    // Shared markdown renderer component config
+    const markdownComponents = {
+        code({ node, inline, className, children, ...props }: any) {
+            const match = /language-(\w+)/.exec(className || '');
+            return !inline && match ? (
+                <SyntaxHighlighter
+                    style={vscDarkPlus as any}
+                    language={match[1]}
+                    PreTag="div"
+                >
+                    {String(children).replace(/\n$/, '')}
+                </SyntaxHighlighter>
+            ) : (
+                <code className={className} {...props}>
+                    {children}
+                </code>
+            );
+        },
+    };
+
     if (loading) {
         return (
             <AgentContainer>
@@ -679,7 +699,13 @@ const AgentChat = () => {
                                                 )}
                                             </ThinkingHeader>
                                             <ThinkingContent $expanded={expandedThinking.has(idx)}>
-                                                {msg.thinking}
+                                                <ReactMarkdown
+                                                    remarkPlugins={[remarkGfm, remarkMath]}
+                                                    rehypePlugins={[rehypeKatex]}
+                                                    components={markdownComponents}
+                                                >
+                                                    {msg.thinking}
+                                                </ReactMarkdown>
                                             </ThinkingContent>
                                         </ThinkingBlock>
                                     )}
@@ -690,24 +716,7 @@ const AgentChat = () => {
                                             <ReactMarkdown
                                                 remarkPlugins={[remarkGfm, remarkMath]}
                                                 rehypePlugins={[rehypeKatex]}
-                                                components={{
-                                                    code({ node, inline, className, children, ...props }: any) {
-                                                        const match = /language-(\w+)/.exec(className || '');
-                                                        return !inline && match ? (
-                                                            <SyntaxHighlighter
-                                                                style={vscDarkPlus as any}
-                                                                language={match[1]}
-                                                                PreTag="div"
-                                                            >
-                                                                {String(children).replace(/\n$/, '')}
-                                                            </SyntaxHighlighter>
-                                                        ) : (
-                                                            <code className={className} {...props}>
-                                                                {children}
-                                                            </code>
-                                                        );
-                                                    },
-                                                }}
+                                                components={markdownComponents}
                                             >
                                                 {msg.content}
                                             </ReactMarkdown>
