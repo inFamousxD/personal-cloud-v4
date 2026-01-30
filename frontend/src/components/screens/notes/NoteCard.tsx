@@ -25,7 +25,7 @@ const TagsContainer = styled.div`
 `;
 
 const TagPill = styled.span`
-    background: ${darkTheme.accent}20;
+    background: color-mix(in srgb, ${darkTheme.accent} 15%, transparent);
     color: ${darkTheme.accent};
     padding: 2px 6px;
     border-radius: 3px;
@@ -81,10 +81,12 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onView, onEdit, onDelete }) =
         const titleLength = (note.title || 'Untitled Note').length;
         const totalLength = contentLength + titleLength;
 
-        if (totalLength <= 100) return 1;
-        if (totalLength <= 250) return 2;
-        if (totalLength <= 500) return 3;
-        return 4;
+        if (totalLength <= 50) return 1;
+        if (totalLength <= 200) return 2;
+        if (totalLength <= 400) return 3;
+        if (totalLength <= 600) return 4;
+        if (totalLength <= 900) return 5;
+        return 6;
     }, [note.content, note.title]);
 
     const handleCardClick = (e: React.MouseEvent) => {
@@ -149,6 +151,14 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onView, onEdit, onDelete }) =
                                     </code>
                                 );
                             },
+                            a: ({node, ...props}: any) => (
+                                <a 
+                                    {...props} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => { e.stopPropagation() }}
+                                />
+                            ),
                         }}
                     >
                         {note.content}

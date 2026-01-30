@@ -28,7 +28,7 @@ const Tag = styled.div`
     display: flex;
     align-items: center;
     gap: 4px;
-    background: ${darkTheme.accent}30;
+    background: color-mix(in srgb, ${darkTheme.accent} 15%, transparent);
     color: ${darkTheme.accent};
     padding: 4px 8px;
     border-radius: 4px;

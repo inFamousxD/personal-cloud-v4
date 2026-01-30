@@ -27,7 +27,7 @@ const TagsContainer = styled.div`
 `;
 
 const TagPill = styled.span`
-    background: ${darkTheme.accent}30;
+    background: color-mix(in srgb, ${darkTheme.accent} 15%, transparent);
     color: ${darkTheme.accent};
     padding: 4px 10px;
     border-radius: 4px;
@@ -36,8 +36,10 @@ const TagPill = styled.span`
 `;
 
 const PinToggle = styled.span<{ $isPinned: boolean }>`
-    color: ${props => props.$isPinned ? darkTheme.accent : darkTheme.text.color};
-    opacity: ${props => props.$isPinned ? 1 : 0.5};
+    color: ${props => props.$isPinned ? darkTheme.backgroundDarker : darkTheme.text.color} !important;
+    background-color: ${props => props.$isPinned ? darkTheme.accent : 'transparent'};
+    border-radius: 6px;
+    opacity: 1 !important;
     cursor: pointer;
     
     &:hover {
