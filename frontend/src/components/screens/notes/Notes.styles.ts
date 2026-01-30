@@ -366,19 +366,19 @@ export const NotesBody = styled.div`
 
 export const NotesGrid = styled.div`
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    grid-auto-rows: 200px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-auto-rows: 250px;
     grid-auto-flow: dense;
     gap: 12px;
     width: 100%;
 
     @media (max-width: 1200px) {
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     }
 
     @media (max-width: 768px) {
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-        grid-auto-rows: 180px;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        grid-auto-rows: 200px;
         gap: 10px;
     }
 
