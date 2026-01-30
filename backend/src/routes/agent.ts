@@ -465,7 +465,7 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
 // POST /api/agent/generate-note - Generate note from transcription
 router.post('/generate-note', async (req: AuthRequest, res: Response) => {
     try {
-        const { transcription, model = 'llama3.2:1b' } = req.body;
+        const { transcription, model = 'gemma3:4b' } = req.body;
         const userId = req.userId;
 
         if (!userId) {
