@@ -301,7 +301,7 @@ export const ActionButton = styled.button<{ $variant?: 'primary' | 'danger' | 's
 
     ${props => props.$variant === 'primary' ? `
         background: ${darkTheme.accent};
-        color: white;
+        color: ${darkTheme.text.accentAlt};
 
         &:hover:not(:disabled) {
             opacity: 0.9;

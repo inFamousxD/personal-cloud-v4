@@ -67,7 +67,7 @@ export const TrackerCount = styled.span`
 
 export const CreateButton = styled.button`
     background: ${darkTheme.accent};
-    color: white;
+    color: ${darkTheme.text.accentAlt};
     border: 1px solid ${darkTheme.accent};
     border-radius: 4px;
     padding: 5.5px 12px;
@@ -97,7 +97,7 @@ export const RefreshButton = styled.div`
     user-select: none;
     cursor: pointer;
     background: transparent;
-    color: ${darkTheme.text.color};
+    color: ${darkTheme.accent};
     border: none;
     border-radius: 4px;
     padding: 6px 12px;

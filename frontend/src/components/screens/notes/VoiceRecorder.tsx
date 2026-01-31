@@ -20,7 +20,7 @@ const VoiceButton = styled.button<{ $isRecording?: boolean; $isProcessing?: bool
         props.$isRecording ? '#e74c3c' : 
         props.$isProcessing ? darkTheme.accentOrange : 
         darkTheme.accent};
-    color: white;
+    color: ${darkTheme.text.accentAlt};
     border-radius: ${props => props.$isRecording ? '4px 0 0 4px' : '4px'};
     padding: 6px 12px;
     font-size: 13px;

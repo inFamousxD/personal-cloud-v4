@@ -374,7 +374,7 @@ export const ActionButton = styled.button<{ $variant?: 'primary' | 'danger' | 's
             default:
                 return `
                     background: ${darkTheme.accent};
-                    color: white;
+                    color: ${darkTheme.text.accentAlt};
                 `;
         }
     }}

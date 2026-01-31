@@ -70,7 +70,7 @@ export const ButtonGroup = styled.div`
 
 export const AdminButton = styled.button`
     background: ${darkTheme.accent};
-    color: white;
+    color: ${darkTheme.text.accentAlt};
     border: 1px solid ${darkTheme.accent};
     border-radius: 4px;
     padding: 5.5px 12px;

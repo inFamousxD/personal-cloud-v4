@@ -104,7 +104,7 @@ export const ActionButton = styled.button<{ $variant?: 'primary' | 'secondary' |
             default: return 'transparent';
         }
     }};
-    color: ${props => props.$variant ? 'white' : darkTheme.text.color};
+    color: ${props => props.$variant ? darkTheme.text.accentAlt : darkTheme.text.color};
     border: ${props => props.$variant ? 'none' : `1px solid ${darkTheme.border}`};
     border-radius: 4px;
     padding: 6px 12px;

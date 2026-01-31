@@ -44,7 +44,7 @@ export const ServerTitle = styled.div`
 
 export const RefreshButton = styled.button`
     background: ${darkTheme.accent};
-    color: white;
+    color: ${darkTheme.text.accentAlt};
     border: none;
     border-radius: 4px;
     padding: 6px 12px;

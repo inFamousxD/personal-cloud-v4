@@ -285,7 +285,7 @@ export const ActionButton = styled.button<{ $variant?: 'primary' | 'danger' }>`
 
     ${props => props.$variant === 'primary' ? `
         background: ${darkTheme.accent};
-        color: white;
+        color: ${darkTheme.text.accentAlt};
 
         &:hover:not(:disabled) {
             opacity: 0.9;
@@ -349,7 +349,7 @@ export const ModeButton = styled.button<{ $active: boolean }>`
     font-family: inherit;
     transition: all 0.2s;
     background: ${props => props.$active ? darkTheme.accent : 'transparent'};
-    color: ${props => props.$active ? 'white' : darkTheme.text.color};
+    color: ${props => props.$active ? darkTheme.text.accentAlt : darkTheme.text.color};
     opacity: ${props => props.$active ? 1 : 0.6};
 
     &:hover {

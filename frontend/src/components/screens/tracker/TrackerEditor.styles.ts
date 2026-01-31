@@ -323,7 +323,7 @@ export const EditorButton = styled.button<{ variant?: 'primary' | 'secondary' }>
 
     ${props => props.variant === 'primary' ? `
         background: ${darkTheme.accent};
-        color: white;
+        color: ${darkTheme.text.accentAlt};
 
         &:hover:not(:disabled) {
             opacity: 0.9;

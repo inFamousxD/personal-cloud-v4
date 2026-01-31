@@ -9,7 +9,8 @@ export const darkTheme = {
     text: {
         color: 'var(--theme-text-color)',
         fontSize: 'var(--theme-text-fontSize)',
-        fontWeightSemiBold: 'var(--theme-text-fontWeightSemiBold)'
+        fontWeightSemiBold: 'var(--theme-text-fontWeightSemiBold)',
+        accentAlt: 'var(--theme-text-accentAlt)'
     },
     accent: 'var(--theme-accent)',
     accentDark: 'var(--theme-accentDark)',

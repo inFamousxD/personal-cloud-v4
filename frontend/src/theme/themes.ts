@@ -3,6 +3,7 @@ export interface ThemeText {
     color: string;
     fontSize: string;
     fontWeightSemiBold: string;
+    accentAlt: string;
 }
 
 export interface ThemeValues {
@@ -186,7 +187,8 @@ export const defaultDarkTheme: AppTheme = {
         text: {
             color: 'azure',
             fontSize: '14px',
-            fontWeightSemiBold: '600'
+            fontWeightSemiBold: '600',
+            accentAlt: 'azure'
         },
         accent: '#0b6aa8',
         accentDark: '#063554',
@@ -208,7 +210,8 @@ export const nordTheme: AppTheme = {
         text: {
             color: '#eceff4',
             fontSize: '14px',
-            fontWeightSemiBold: '600'
+            fontWeightSemiBold: '600',
+            accentAlt: '#eceff4'
         },
         accent: '#88c0d0',
         accentDark: '#5e81ac',
@@ -230,7 +233,8 @@ export const oneDarkTheme: AppTheme = {
         text: {
             color: '#abb2bf',
             fontSize: '14px',
-            fontWeightSemiBold: '600'
+            fontWeightSemiBold: '600',
+            accentAlt: '#abb2bf'
         },
         accent: '#61afef',
         accentDark: '#528bce',
@@ -252,7 +256,8 @@ export const vscodeDarkTheme: AppTheme = {
         text: {
             color: '#d4d4d4',
             fontSize: '14px',
-            fontWeightSemiBold: '600'
+            fontWeightSemiBold: '600',
+            accentAlt: '#d4d4d4'
         },
         accent: '#569cd6',
         accentDark: '#264f78',
@@ -274,7 +279,8 @@ export const tokyoNightTheme: AppTheme = {
         text: {
             color: '#a9b1d6',
             fontSize: '14px',
-            fontWeightSemiBold: '600'
+            fontWeightSemiBold: '600',
+            accentAlt: '#a9b1d6'
         },
         accent: '#7aa2f7',
         accentDark: '#3d59a1',
@@ -296,7 +302,8 @@ export const catppuccinMochaTheme: AppTheme = {
         text: {
             color: '#cdd6f4',
             fontSize: '14px',
-            fontWeightSemiBold: '600'
+            fontWeightSemiBold: '600',
+            accentAlt: '#cdd6f4'
         },
         accent: '#cba6f7',
         accentDark: '#9399b2',
@@ -318,7 +325,8 @@ export const githubDarkDimmedTheme: AppTheme = {
         text: {
             color: '#adbac7',
             fontSize: '14px',
-            fontWeightSemiBold: '600'
+            fontWeightSemiBold: '600',
+            accentAlt: '#adbac7'
         },
         accent: '#539bf5',
         accentDark: '#316dca',
@@ -340,7 +348,8 @@ export const gruvboxDarkTheme: AppTheme = {
         text: {
             color: '#ebdbb2',
             fontSize: '14px',
-            fontWeightSemiBold: '600'
+            fontWeightSemiBold: '600',
+            accentAlt: '#ebdbb2'
         },
         accent: '#83a598',
         accentDark: '#458588',
@@ -362,7 +371,8 @@ export const ayuDarkTheme: AppTheme = {
         text: {
             color: '#bfbdb6',
             fontSize: '14px',
-            fontWeightSemiBold: '600'
+            fontWeightSemiBold: '600',
+            accentAlt: '#bfbdb6'
         },
         accent: '#39bae6',
         accentDark: '#59c2ff',
@@ -384,7 +394,8 @@ export const palenightTheme: AppTheme = {
         text: {
             color: '#a6accd',
             fontSize: '14px',
-            fontWeightSemiBold: '600'
+            fontWeightSemiBold: '600',
+            accentAlt: '#a6accd'
         },
         accent: '#82aaff',
         accentDark: '#6182b8',
@@ -408,7 +419,8 @@ export const lightDefaultTheme: AppTheme = {
         text: {
             color: '#1a1a1a',
             fontSize: '14px',
-            fontWeightSemiBold: '600'
+            fontWeightSemiBold: '600',
+            accentAlt: '#1a1a1a'
         },
         accent: '#0066cc',
         accentDark: '#004499',
@@ -430,7 +442,8 @@ export const solarizedLightTheme: AppTheme = {
         text: {
             color: '#657b83',
             fontSize: '14px',
-            fontWeightSemiBold: '600'
+            fontWeightSemiBold: '600',
+            accentAlt: '#657b83'
         },
         accent: '#268bd2',
         accentDark: '#1a5a8a',
@@ -452,7 +465,8 @@ export const githubLightTheme: AppTheme = {
         text: {
             color: '#1f2328',
             fontSize: '14px',
-            fontWeightSemiBold: '600'
+            fontWeightSemiBold: '600',
+            accentAlt: '#1f2328'
         },
         accent: '#0969da',
         accentDark: '#0550ae',
@@ -474,7 +488,8 @@ export const paperTheme: AppTheme = {
         text: {
             color: '#3d3833',
             fontSize: '14px',
-            fontWeightSemiBold: '600'
+            fontWeightSemiBold: '600',
+            accentAlt: '#3d3833'
         },
         accent: '#8b6914',
         accentDark: '#5c4610',
@@ -496,7 +511,8 @@ export const nordLightTheme: AppTheme = {
         text: {
             color: '#2e3440',
             fontSize: '14px',
-            fontWeightSemiBold: '600'
+            fontWeightSemiBold: '600',
+            accentAlt: '#2e3440'
         },
         accent: '#5e81ac',
         accentDark: '#4c6a91',
@@ -518,7 +534,8 @@ export const oneLightTheme: AppTheme = {
         text: {
             color: '#383a42',
             fontSize: '14px',
-            fontWeightSemiBold: '600'
+            fontWeightSemiBold: '600',
+            accentAlt: '#383a42'
         },
         accent: '#4078f2',
         accentDark: '#2b5fc8',
@@ -540,13 +557,250 @@ export const catppuccinLatteTheme: AppTheme = {
         text: {
             color: '#4c4f69',
             fontSize: '14px',
-            fontWeightSemiBold: '600'
+            fontWeightSemiBold: '600',
+            accentAlt: '#4c4f69'
         },
         accent: '#8839ef',
         accentDark: '#7287fd',
         panelBorder: '#bcc0cc',
         accentGreen: '#40a02b',
         accentOrange: '#fe640b'
+    }
+};
+
+// ============ DARK PAPER-LIKE THEMES ============
+
+// Dark Paper - Warm dark theme with paper-like warmth
+export const darkPaperTheme: AppTheme = {
+    id: 'dark-paper',
+    name: 'Dark Paper',
+    isCustom: false,
+    values: {
+        backgroundDarker: '#1a1816',
+        backgroundDarkest: '#0f0e0d',
+        border: '#3d3833',
+        text: {
+            color: '#e8e0d5',
+            fontSize: '14px',
+            fontWeightSemiBold: '600',
+            accentAlt: '#1a1816'
+        },
+        accent: '#b8945f',
+        accentDark: '#8b6914',
+        panelBorder: '#2d2a26',
+        accentGreen: '#6b8f4a',
+        accentOrange: '#d4825f'
+    }
+};
+
+// Parchment Dark - Aged paper aesthetic
+export const parchmentDarkTheme: AppTheme = {
+    id: 'parchment-dark',
+    name: 'Parchment Dark',
+    isCustom: false,
+    values: {
+        backgroundDarker: '#1c1813',
+        backgroundDarkest: '#121010',
+        border: '#3a342c',
+        text: {
+            color: '#d9ceb8',
+            fontSize: '14px',
+            fontWeightSemiBold: '600',
+            accentAlt: '#d9ceb8'
+        },
+        accent: '#a88854',
+        accentDark: '#7a5f3a',
+        panelBorder: '#2b2620',
+        accentGreen: '#7a9b65',
+        accentOrange: '#c47d4f'
+    }
+};
+
+// Sepia Dark - Vintage photograph feel
+export const sepiaDarkTheme: AppTheme = {
+    id: 'sepia-dark',
+    name: 'Sepia Dark',
+    isCustom: false,
+    values: {
+        backgroundDarker: '#1b1612',
+        backgroundDarkest: '#110f0c',
+        border: '#3c362f',
+        text: {
+            color: '#e0d2c0',
+            fontSize: '14px',
+            fontWeightSemiBold: '600',
+            accentAlt: '#e0d2c0'
+        },
+        accent: '#b89968',
+        accentDark: '#8b7355',
+        panelBorder: '#2e2822',
+        accentGreen: '#6d8a5f',
+        accentOrange: '#c9865d'
+    }
+};
+
+// ============ MINIMALIST DARK THEMES ============
+
+// Minimal Dark - Pure minimalist dark
+export const minimalDarkTheme: AppTheme = {
+    id: 'minimal-dark',
+    name: 'Minimal Dark',
+    isCustom: false,
+    values: {
+        backgroundDarker: '#0a0a0a',
+        backgroundDarkest: '#000000',
+        border: '#2a2a2a',
+        text: {
+            color: '#e5e5e5',
+            fontSize: '14px',
+            fontWeightSemiBold: '600',
+            accentAlt: '#e5e5e5'
+        },
+        accent: '#ffffff',
+        accentDark: '#808080',
+        panelBorder: '#1a1a1a',
+        accentGreen: '#b0b0b0',
+        accentOrange: '#d0d0d0'
+    }
+};
+
+// Obsidian - Sleek minimal dark
+export const obsidianTheme: AppTheme = {
+    id: 'obsidian',
+    name: 'Obsidian',
+    isCustom: false,
+    values: {
+        backgroundDarker: '#0d0d0d',
+        backgroundDarkest: '#050505',
+        border: '#252525',
+        text: {
+            color: '#d4d4d4',
+            fontSize: '14px',
+            fontWeightSemiBold: '600',
+            accentAlt: '#d4d4d4'
+        },
+        accent: '#909090',
+        accentDark: '#606060',
+        panelBorder: '#1c1c1c',
+        accentGreen: '#a0a0a0',
+        accentOrange: '#b8b8b8'
+    }
+};
+
+// Charcoal - Subtle minimal dark
+export const charcoalTheme: AppTheme = {
+    id: 'charcoal',
+    name: 'Charcoal',
+    isCustom: false,
+    values: {
+        backgroundDarker: '#1a1a1a',
+        backgroundDarkest: '#0e0e0e',
+        border: '#333333',
+        text: {
+            color: '#e0e0e0',
+            fontSize: '14px',
+            fontWeightSemiBold: '600',
+            accentAlt: '#e0e0e0'
+        },
+        accent: '#999999',
+        accentDark: '#666666',
+        panelBorder: '#242424',
+        accentGreen: '#a8a8a8',
+        accentOrange: '#c0c0c0'
+    }
+};
+
+// ============ MINIMALIST LIGHT THEMES ============
+
+// Minimal Light - Pure minimalist light
+export const minimalLightTheme: AppTheme = {
+    id: 'minimal-light',
+    name: 'Minimal Light',
+    isCustom: false,
+    values: {
+        backgroundDarker: '#f8f8f8',
+        backgroundDarkest: '#ffffff',
+        border: '#e0e0e0',
+        text: {
+            color: '#1a1a1a',
+            fontSize: '14px',
+            fontWeightSemiBold: '600',
+            accentAlt: '#1a1a1a'
+        },
+        accent: '#000000',
+        accentDark: '#404040',
+        panelBorder: '#d0d0d0',
+        accentGreen: '#505050',
+        accentOrange: '#606060'
+    }
+};
+
+// Snow - Clean minimal light
+export const snowTheme: AppTheme = {
+    id: 'snow',
+    name: 'Snow',
+    isCustom: false,
+    values: {
+        backgroundDarker: '#fafafa',
+        backgroundDarkest: '#ffffff',
+        border: '#e8e8e8',
+        text: {
+            color: '#2d2d2d',
+            fontSize: '14px',
+            fontWeightSemiBold: '600',
+            accentAlt: '#2d2d2d'
+        },
+        accent: '#4a4a4a',
+        accentDark: '#2a2a2a',
+        panelBorder: '#d8d8d8',
+        accentGreen: '#5a5a5a',
+        accentOrange: '#6a6a6a'
+    }
+};
+
+// Ivory - Warm minimal light
+export const ivoryTheme: AppTheme = {
+    id: 'ivory',
+    name: 'Ivory',
+    isCustom: false,
+    values: {
+        backgroundDarker: '#f7f5f2',
+        backgroundDarkest: '#fefdfb',
+        border: '#e5e2dd',
+        text: {
+            color: '#2a2725',
+            fontSize: '14px',
+            fontWeightSemiBold: '600',
+            accentAlt: '#2a2725'
+        },
+        accent: '#5a5651',
+        accentDark: '#3a3632',
+        panelBorder: '#d8d5d0',
+        accentGreen: '#6a6560',
+        accentOrange: '#7a7570'
+    }
+};
+
+// Mist - Soft minimal light
+export const mistTheme: AppTheme = {
+    id: 'mist',
+    name: 'Mist',
+    isCustom: false,
+    values: {
+        backgroundDarker: '#f4f4f6',
+        backgroundDarkest: '#fafbfc',
+        border: '#e1e3e5',
+        text: {
+            color: '#33353a',
+            fontSize: '14px',
+            fontWeightSemiBold: '600',
+            accentAlt: '#33353a'
+        },
+        accent: '#595d66',
+        accentDark: '#404449',
+        panelBorder: '#d4d6d9',
+        accentGreen: '#696d76',
+        accentOrange: '#797d86'
     }
 };
 
@@ -563,6 +817,14 @@ export const presetThemes: AppTheme[] = [
     gruvboxDarkTheme,
     ayuDarkTheme,
     palenightTheme,
+    // Dark paper-like themes
+    darkPaperTheme,
+    parchmentDarkTheme,
+    sepiaDarkTheme,
+    // Minimalist dark themes
+    minimalDarkTheme,
+    obsidianTheme,
+    charcoalTheme,
     // Light themes
     lightDefaultTheme,
     solarizedLightTheme,
@@ -570,7 +832,12 @@ export const presetThemes: AppTheme[] = [
     paperTheme,
     nordLightTheme,
     oneLightTheme,
-    catppuccinLatteTheme
+    catppuccinLatteTheme,
+    // Minimalist light themes
+    minimalLightTheme,
+    snowTheme,
+    ivoryTheme,
+    mistTheme
 ];
 
 // Create a blank custom theme template
@@ -627,6 +894,7 @@ export interface ThemeFieldMeta {
 
 // Extract theme fields metadata for auto-generating settings UI
 export const getThemeFieldsMeta = (values: ThemeValues, path: string[] = []): ThemeFieldMeta[] => {
+    console.log(values)
     const fields: ThemeFieldMeta[] = [];
     
     for (const [key, value] of Object.entries(values)) {
