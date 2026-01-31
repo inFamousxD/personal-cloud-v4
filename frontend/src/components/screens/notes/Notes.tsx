@@ -33,65 +33,16 @@ import {
     DeleteConfirmModal,
     DeleteConfirmContent,
     DeleteConfirmActions,
-    RefreshButton
+    RefreshButton,
+    NotificationBannerContainer,
+    NotificationBanner,
+    BannerText,
+    BannerButton,
+    BannerClose
 } from './Notes.styles';
 import { useSelector } from 'react-redux';
 import { RootState } from "../../../redux/store";
 import VoiceRecorder from './VoiceRecorder';
-import styled from 'styled-components';
-import { darkTheme } from '../../../theme/dark.colors';
-
-const NotificationBanner = styled.div<{ $show: boolean }>`
-    display: ${props => props.$show ? 'flex' : 'none'};
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 12px;
-    background: ${darkTheme.accentOrange}20;
-    border: 1px solid ${darkTheme.accentOrange};
-    border-radius: 4px;
-    margin: 8px 12px 0;
-    gap: 8px;
-`;
-
-const BannerText = styled.div`
-    color: ${darkTheme.text.color};
-    font-size: 12px;
-    flex: 1;
-`;
-
-const BannerButton = styled.button`
-    background: ${darkTheme.accentOrange};
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 6px 12px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: inherit;
-    white-space: nowrap;
-
-    &:hover {
-        opacity: 0.9;
-    }
-`;
-
-const BannerClose = styled.button`
-    background: transparent;
-    border: none;
-    color: ${darkTheme.text.color};
-    cursor: pointer;
-    padding: 4px;
-    opacity: 0.5;
-
-    &:hover {
-        opacity: 1;
-    }
-
-    .material-symbols-outlined {
-        font-size: 16px;
-    }
-`;
 
 type SortOrder = 'newest' | 'oldest';
 
@@ -159,7 +110,7 @@ const Notes = () => {
         
         // Show banner if notifications are not granted or not subscribed
         if (permission !== 'granted' || !isSubscribed) {
-            setShowNotificationBanner(true);
+            // setShowNotificationBanner(true);
         }
     };
 
@@ -417,17 +368,23 @@ const Notes = () => {
 
     return (
         <NotesContainer>
-            <NotificationBanner $show={showNotificationBanner}>
-                <BannerText>
-                    Enable notifications to receive reminders for your pinned notes
-                </BannerText>
-                <BannerButton onClick={handleEnableNotifications}>
-                    Enable
-                </BannerButton>
-                <BannerClose onClick={() => setShowNotificationBanner(false)}>
-                    <span className="material-symbols-outlined">close</span>
-                </BannerClose>
-            </NotificationBanner>
+            {
+                showNotificationBanner && (
+                    <NotificationBannerContainer>
+                    <NotificationBanner>
+                        <BannerText>
+                            Enable notifications to receive reminders for your pinned notes
+                        </BannerText>
+                        <BannerButton onClick={handleEnableNotifications}>
+                            Enable
+                        </BannerButton>
+                        <BannerClose onClick={() => setShowNotificationBanner(false)}>
+                            <span className="material-symbols-outlined">close</span>
+                        </BannerClose>
+                    </NotificationBanner>
+                    </NotificationBannerContainer>
+                )
+            }
 
             <NotesHeader>
                 <NotesHeaderTop>

@@ -642,3 +642,72 @@ export const TagCount = styled.span`
     font-weight: 700;
     flex-shrink: 0;
 `;
+
+export const NotificationBannerContainer = styled.div`
+    position: fixed;
+    top: 0px;
+    background: color-mix(in srgb, ${darkTheme.backgroundDarker} 100%, transparent);
+    z-index: 999;
+    margin: 12px 12px;
+
+    width: calc(100% - 24px);
+`
+
+export const NotificationBanner = styled.div`
+    display: flex;
+    
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 12px;
+    background: repeating-linear-gradient(
+        -45deg,
+        color-mix(in srgb, ${darkTheme.backgroundDarker} 100%, transparent) 0px,
+        color-mix(in srgb, ${darkTheme.backgroundDarker} 100%, transparent) 10px,
+        color-mix(in srgb, ${darkTheme.accentOrange} 50%, transparent) 10px,
+        color-mix(in srgb, ${darkTheme.accentOrange} 50%, transparent) 20px
+    );
+    border: 1px solid ${darkTheme.accentOrange};
+    border-radius: 4px;
+    gap: 8px;
+`;
+
+export const BannerText = styled.div`
+    color: ${darkTheme.text.color};
+    font-size: 12px;
+    flex: 1;
+`;
+
+export const BannerButton = styled.button`
+    background: color-mix(in srgb, ${darkTheme.accent} 80%, transparent);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    margin-left: 24px;
+
+    &:hover {
+        opacity: 0.9;
+    }
+`;
+
+export const BannerClose = styled.button`
+    background: transparent;
+    border: none;
+    color: ${darkTheme.text.color};
+    cursor: pointer;
+    padding: 4px;
+    opacity: 0.5;
+
+    &:hover {
+        opacity: 1;
+    }
+
+    .material-symbols-outlined {
+        font-size: 16px;
+    }
+`;
