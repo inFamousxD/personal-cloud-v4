@@ -161,7 +161,7 @@ const AddButton = styled.button`
     gap: 6px;
     padding: 8px 12px;
     background: ${darkTheme.accent};
-    color: white;
+    color: ${darkTheme.text.accentAlt};
     border: none;
     border-radius: 4px;
     font-size: 12px;

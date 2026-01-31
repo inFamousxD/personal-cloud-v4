@@ -208,7 +208,7 @@ const Button = styled.button<{ $variant?: 'primary' | 'secondary' }>`
 
     ${props => props.$variant === 'primary' ? `
         background: ${darkTheme.accent};
-        color: white;
+        color: ${darkTheme.text.accentAlt};
 
         &:hover {
             opacity: 0.9;
