@@ -43,13 +43,13 @@ export const NavigationDockStyled = styled.div`
         &#selected {
             background: ${darkTheme.accent};
             border-radius: 4px;
-            color: ${ darkTheme.backgroundDarkest };
+            color: ${ darkTheme.text.accentAlt };
         }
         
         &:hover {
             background: ${darkTheme.accent};
             border-radius: 4px;
-            color: ${ darkTheme.backgroundDarkest };
+            color: ${ darkTheme.text.accentAlt };
         }
     }
 
