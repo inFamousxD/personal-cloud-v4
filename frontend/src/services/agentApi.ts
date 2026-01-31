@@ -13,6 +13,7 @@ export interface Chat {
     _id: string;
     userId: string;
     title: string;
+    agentId: string; // NEW: Model/agent locked to this chat
     systemPrompt?: string;
     createdAt: Date;
     updatedAt: Date;
@@ -36,6 +37,7 @@ export interface AgentSettings {
     _id?: string;
     userId: string;
     defaultSystemPrompt: string;
+    defaultAgentId?: string; // NEW: Default agent for new chats
     updatedAt: Date;
 }
 
@@ -151,11 +153,13 @@ export const agentApi = {
             });
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorData = await response.json();
+                throw { response: { status: response.status, data: errorData } };
             }
 
             const chatId = response.headers.get('X-Chat-Id');
-            console.log('=== FRONTEND: Stream started, chatId:', chatId);
+            const agentId = response.headers.get('X-Agent-Id'); // NEW: Get locked agent
+            console.log('=== FRONTEND: Stream started, chatId:', chatId, 'agentId:', agentId);
 
             const reader = response.body?.getReader();
             const decoder = new TextDecoder();
@@ -171,7 +175,7 @@ export const agentApi = {
                 const { done, value } = await reader.read();
                 
                 if (done) {
-                    console.log('=== FRONTEND: Stream done ===');
+                    // console.log('=== FRONTEND: Stream done ===');
                     onComplete();
                     break;
                 }
@@ -190,23 +194,23 @@ export const agentApi = {
                         
                         // LOG EVERY CHUNK
                         if (chunkCount <= 5 || json.thinking?.content || json.done) {
-                            console.log(`=== FRONTEND CHUNK #${chunkCount} ===`);
-                            console.log('Has thinking:', !!json.thinking?.content);
-                            console.log('Has content:', !!json.message?.content);
+                            // console.log(`=== FRONTEND CHUNK #${chunkCount} ===`);
+                            // console.log('Has thinking:', !!json.thinking?.content);
+                            // console.log('Has content:', !!json.message?.content);
                             if (json.thinking?.content) {
-                                console.log('Thinking length:', json.thinking.content.length);
-                                console.log('Thinking preview:', json.thinking.content.substring(0, 50) + '...');
+                                // console.log('Thinking length:', json.thinking.content.length);
+                                // console.log('Thinking preview:', json.thinking.content.substring(0, 50) + '...');
                             }
                             if (json.message?.content) {
-                                console.log('Content length:', json.message.content.length);
-                                console.log('Content preview:', json.message.content.substring(0, 50) + '...');
+                                // console.log('Content length:', json.message.content.length);
+                                // console.log('Content preview:', json.message.content.substring(0, 50) + '...');
                             }
                         }
                         
                         if (json.message?.content !== undefined) {
-                            console.log('=== FRONTEND: Calling onChunk ===');
-                            console.log('Content:', json.message.content.substring(0, 50) + '...');
-                            console.log('Thinking:', json.thinking?.content?.substring(0, 50) || 'none');
+                            // console.log('=== FRONTEND: Calling onChunk ===');
+                            // console.log('Content:', json.message.content.substring(0, 50) + '...');
+                            // console.log('Thinking:', json.thinking?.content?.substring(0, 50) || 'none');
                             
                             onChunk(
                                 json.message.content,
@@ -215,7 +219,7 @@ export const agentApi = {
                             );
                         }
                         if (json.done) {
-                            console.log('=== FRONTEND: Done flag received ===');
+                            // console.log('=== FRONTEND: Done flag received ===');
                             onComplete();
                             return;
                         }
@@ -257,10 +261,11 @@ export const agentApi = {
         return response.data;
     },
 
-    createChat: async (): Promise<Chat> => {
+    // NEW: Updated to accept optional agentId
+    createChat: async (agentId?: string): Promise<Chat> => {
         const response = await apiClient.post(
             `${API_URL}/api/agent/chats`,
-            {},
+            agentId ? { agentId } : {},
             { headers: getAuthHeader() }
         );
         return response.data;

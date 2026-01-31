@@ -112,14 +112,14 @@ export const SidebarBody = styled.div`
     }
 
     &::-webkit-scrollbar-track {
-        background: ${darkTheme.backgroundDarker};
+        background: ${darkTheme.backgroundDarkest};
     }
 
     &::-webkit-scrollbar-thumb {
-        background: ${darkTheme.accent}40;
+        background: ${darkTheme.accent};
 
         &:hover {
-            background: ${darkTheme.accent}60;
+            background: ${darkTheme.accent};
         }
     }
 `;
@@ -371,7 +371,7 @@ export const MessagesContainer = styled.div`
     width: 100%;
 
     &::-webkit-scrollbar {
-        width: 0px;
+        width: 3px;
     }
 
     &::-webkit-scrollbar-track {
@@ -379,11 +379,11 @@ export const MessagesContainer = styled.div`
     }
 
     &::-webkit-scrollbar-thumb {
-        background: ${darkTheme.accent}40;
-        border-radius: 0px;
+        background: color-mix(in srgb, ${darkTheme.accent}, transparent 80%);
+        border-radius: 2px;
 
         &:hover {
-            background: ${darkTheme.accent}60;
+            background: ${darkTheme.accent};
         }
     }
 
@@ -399,9 +399,9 @@ export const ThinkingBlock = styled.div<{ $expanded: boolean }>`
     background: ${darkTheme.backgroundDarkest};
     overflow: hidden;
     /* width: ${props => props.$expanded ? '743px' : '200px'}; */
-    max-width: ${props => props.$expanded ? '743px' : '200px'};
+    max-width: ${props => props.$expanded ? '780px' : '200px'};
     align-self: flex-start;
-    transition: max-width 0.3s ease-in-out, margin 0.3s ease-in-out;
+    transition: max-width 0.2s ease-in-out, margin 0.2s ease-in-out;
 
     @media (max-width: 768px) {
         max-width: ${props => props.$expanded ? 'calc(100vw - 27px)' : '200px'};

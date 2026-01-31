@@ -16,6 +16,7 @@ router.use(authenticateToken);
 
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
 const DEFAULT_SYSTEM_PROMPT = "You are a helpful AI assistant. Be concise but thorough in your responses.";
+const DEFAULT_AGENT_ID = 'gemma3:4b';
 
 // Store active cancel tokens for stream abortion
 const activeStreams = new Map<string, CancelTokenSource>();
@@ -40,6 +41,7 @@ router.get('/settings', async (req: AuthRequest, res: Response) => {
             const newSettings: AgentSettings = {
                 userId,
                 defaultSystemPrompt: DEFAULT_SYSTEM_PROMPT,
+                defaultAgentId: DEFAULT_AGENT_ID,
                 updatedAt: new Date()
             };
             const result = await db.collection<AgentSettings>('agent_settings').insertOne(newSettings);
@@ -64,19 +66,28 @@ router.put('/settings', async (req: AuthRequest, res: Response) => {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        const { defaultSystemPrompt } = req.body;
+        const { defaultSystemPrompt, defaultAgentId } = req.body;
 
-        if (!defaultSystemPrompt || typeof defaultSystemPrompt !== 'string') {
-            return res.status(400).json({ error: 'Invalid system prompt' });
+        const updateData: any = { updatedAt: new Date() };
+        
+        if (defaultSystemPrompt !== undefined) {
+            if (typeof defaultSystemPrompt !== 'string') {
+                return res.status(400).json({ error: 'Invalid system prompt' });
+            }
+            updateData.defaultSystemPrompt = defaultSystemPrompt;
+        }
+
+        if (defaultAgentId !== undefined) {
+            if (typeof defaultAgentId !== 'string') {
+                return res.status(400).json({ error: 'Invalid agent ID' });
+            }
+            updateData.defaultAgentId = defaultAgentId;
         }
 
         const result = await db.collection<AgentSettings>('agent_settings').findOneAndUpdate(
             { userId },
             { 
-                $set: { 
-                    defaultSystemPrompt,
-                    updatedAt: new Date()
-                },
+                $set: updateData,
                 $setOnInsert: { userId }
             },
             { 
@@ -161,22 +172,29 @@ async function generateChatTitle(messages: { role: string; content: string }[], 
     }
 }
 
+// Helper function to check if model exists
+async function validateModel(agentId: string): Promise<boolean> {
+    try {
+        const response = await axios.get(`${OLLAMA_URL}/api/tags`, { timeout: 5000 });
+        const models = response.data.models || [];
+        return models.some((m: any) => m.name === agentId);
+    } catch (error) {
+        console.error('Model validation error:', error);
+        return false;
+    }
+}
+
 // POST /api/agent/chat - Send message and stream response
 router.post('/chat', async (req: AuthRequest, res: Response) => {
     try {
         const { 
-            model = 'gemma3:4b', 
+            model, // This is the agentId being requested
             messages, 
             chatId, 
             contextLimit = 20,
             enableThinking = false
         } = req.body;
         const userId = req.userId;
-
-        // console.log('=== CHAT REQUEST START ===');
-        // console.log('Model:', model);
-        // console.log('EnableThinking:', enableThinking);
-        // console.log('ChatId:', chatId);
 
         if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
@@ -186,13 +204,18 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ error: 'Messages array required' });
         }
 
+        if (!model) {
+            return res.status(400).json({ error: 'Model/agentId required' });
+        }
+
         // Mark session as active
         activeSessions.set(userId, { chatId: chatId || 'new', startTime: new Date() });
 
         let currentChatId = chatId;
         let systemPrompt = DEFAULT_SYSTEM_PROMPT;
+        let agentId = model;
         
-        // Get user's default system prompt
+        // Get user's default system prompt and agent
         const settings = await db.collection<AgentSettings>('agent_settings').findOne({ userId });
         if (settings?.defaultSystemPrompt) {
             systemPrompt = settings.defaultSystemPrompt;
@@ -200,11 +223,22 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
         
         // Create new chat if not provided
         if (!currentChatId) {
-            const title = await generateChatTitle(messages, model);
+            // Validate model exists before creating chat
+            const modelExists = await validateModel(agentId);
+            if (!modelExists) {
+                activeSessions.delete(userId);
+                return res.status(400).json({ 
+                    error: 'Model not available',
+                    agentId 
+                });
+            }
+
+            const title = await generateChatTitle(messages, agentId);
             const now = new Date();
             const newChat: AgentChat = {
                 userId,
                 title: title.length === 50 ? title + '...' : title,
+                agentId, // Lock to this agent
                 systemPrompt,
                 createdAt: now,
                 updatedAt: now
@@ -212,6 +246,7 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
             const result = await db.collection<AgentChat>('agent_chats').insertOne(newChat);
             currentChatId = result.insertedId.toString();
         } else {
+            // Existing chat - validate and enforce agent lock
             if (!ObjectId.isValid(currentChatId)) {
                 activeSessions.delete(userId);
                 return res.status(400).json({ error: 'Invalid chat ID' });
@@ -227,6 +262,30 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
                 return res.status(404).json({ error: 'Chat not found' });
             }
 
+            // ENFORCE AGENT LOCK - cannot change agent for existing chat
+            if (chat.agentId !== model) {
+                activeSessions.delete(userId);
+                return res.status(400).json({ 
+                    error: 'Agent mismatch',
+                    message: `This chat is locked to agent: ${chat.agentId}`,
+                    chatAgentId: chat.agentId,
+                    requestedAgentId: model
+                });
+            }
+
+            // Validate that the locked agent still exists
+            const modelExists = await validateModel(chat.agentId);
+            if (!modelExists) {
+                activeSessions.delete(userId);
+                return res.status(503).json({ 
+                    error: 'Agent not available',
+                    message: `The agent "${chat.agentId}" for this chat is not currently available`,
+                    agentId: chat.agentId
+                });
+            }
+
+            agentId = chat.agentId;
+            
             if (chat.systemPrompt) {
                 systemPrompt = chat.systemPrompt;
             }
@@ -275,20 +334,15 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
         res.setHeader('Connection', 'keep-alive');
         res.setHeader('X-Chat-Id', currentChatId);
         res.setHeader('X-Stream-Id', streamId);
+        res.setHeader('X-Agent-Id', agentId); // Send back the locked agent
 
         // Prepare Ollama request
         const ollamaRequest = {
-            model,
+            model: agentId,
             messages: messagesWithSystem,
             stream: true,
-            ...(enableThinking && { think: true }) // Only add if enabled
+            ...(enableThinking && { think: true })
         };
-
-        // console.log('=== OLLAMA REQUEST ===');
-        // console.log('URL:', `${OLLAMA_URL}/api/chat`);
-        // console.log('Model:', ollamaRequest.model);
-        // console.log('Think:', ollamaRequest.think);
-        // console.log('Messages count:', ollamaRequest.messages.length);
 
         const response = await axios.post(
             `${OLLAMA_URL}/api/chat`,
@@ -300,12 +354,9 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
             }
         );
 
-        // console.log('=== OLLAMA RESPONSE STARTED ===');
-
         let fullText = '';
         let fullThinking = '';
         let isComplete = false;
-        let chunkCount = 0;
 
         response.data.on('data', (chunk: Buffer) => {
             const lines = chunk.toString().split('\n').filter(line => line.trim());
@@ -313,59 +364,37 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
             for (const line of lines) {
                 try {
                     const json = JSON.parse(line);
-                    chunkCount++;
-                    
-                    // LOG EVERY CHUNK FROM OLLAMA
-                    if (chunkCount <= 5 || json.message?.thinking || json.done) {
-                        // console.log(`=== CHUNK #${chunkCount} ===`);
-                        // console.log('Has thinking:', !!json.message?.thinking);
-                        // console.log('Has content:', !!json.message?.content);
-                        // console.log('Done:', json.done);
-                        if (json.message?.thinking) {
-                            // console.log('Thinking preview:', json.message.thinking.substring(0, 50) + '...');
-                        }
-                        if (json.message?.content) {
-                            // console.log('Content preview:', json.message.content.substring(0, 50) + '...');
-                        }
-                    }
                     
                     // Handle thinking from Ollama
                     if (json.message?.thinking) {
                         fullThinking += json.message.thinking;
-                        // console.log(`=== SENDING THINKING TO CLIENT (length: ${fullThinking.length}) ===`);
                         
                         const payload = { 
                             thinking: { content: fullThinking },
                             message: { content: fullText },
                             done: false,
-                            chatId: currentChatId
+                            chatId: currentChatId,
+                            agentId
                         };
-                        // console.log('Payload thinking length:', payload.thinking.content.length);
                         res.write(JSON.stringify(payload) + '\n');
                     }
                     
                     // Handle content
                     if (json.message?.content) {
                         fullText += json.message.content;
-                        // console.log(`=== SENDING CONTENT TO CLIENT (length: ${fullText.length}) ===`);
                         
                         const payload = { 
                             thinking: fullThinking ? { content: fullThinking } : undefined,
                             message: { content: fullText },
                             done: json.done,
-                            chatId: currentChatId
+                            chatId: currentChatId,
+                            agentId
                         };
-                        if (fullThinking) {
-                            // console.log('Payload includes thinking, length:', payload.thinking?.content.length);
-                        }
                         res.write(JSON.stringify(payload) + '\n');
                     }
                     
                     if (json.done) {
                         isComplete = true;
-                        // console.log('=== STREAM COMPLETE ===');
-                        // console.log('Final thinking length:', fullThinking.length);
-                        // console.log('Final content length:', fullText.length);
                     }
                 } catch (e) {
                     console.error('Failed to parse Ollama chunk:', e);
@@ -374,10 +403,6 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
         });
 
         response.data.on('end', async () => {
-            // console.log('=== RESPONSE END ===');
-            // console.log('Saving to DB - Thinking length:', fullThinking.length);
-            // console.log('Saving to DB - Content length:', fullText.length);
-            
             if (fullText || fullThinking) {
                 const assistantMessage: AgentMessage = {
                     chatId: currentChatId!,
@@ -399,7 +424,7 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
         });
 
         response.data.on('error', async (error: Error) => {
-            console.error('=== STREAM ERROR ===', error);
+            console.error('Stream error:', error);
             
             if (fullText || fullThinking) {
                 const assistantMessage: AgentMessage = {
@@ -418,7 +443,6 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
         });
 
         req.on('close', async () => {
-            console.log('=== CLIENT DISCONNECT ===');
             if (!isComplete && (fullText || fullThinking)) {
                 const assistantMessage: AgentMessage = {
                     chatId: currentChatId!,
@@ -439,7 +463,7 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
         });
 
     } catch (error: any) {
-        console.error('=== AGENT CHAT ERROR ===', error);
+        console.error('Agent chat error:', error);
         
         if (req.userId) {
             activeSessions.delete(req.userId);
@@ -465,7 +489,7 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
 // POST /api/agent/generate-note - Generate note from transcription
 router.post('/generate-note', async (req: AuthRequest, res: Response) => {
     try {
-        const { transcription, model = 'gemma3:4b' } = req.body;
+        const { transcription, model = DEFAULT_AGENT_ID } = req.body;
         const userId = req.userId;
 
         if (!userId) {
@@ -604,6 +628,17 @@ router.get('/chats/:id', async (req: AuthRequest, res: Response) => {
             return res.status(404).json({ error: 'Chat not found' });
         }
 
+        // Validate that the agent is available
+        const modelExists = await validateModel(chat.agentId);
+        if (!modelExists) {
+            return res.status(503).json({ 
+                error: 'Agent not available',
+                message: `The agent "${chat.agentId}" for this chat is not currently available`,
+                agentId: chat.agentId,
+                chat 
+            });
+        }
+
         const messages = await db.collection<AgentMessage>('agent_messages')
             .find({ chatId })
             .sort({ timestamp: 1 })
@@ -620,22 +655,40 @@ router.get('/chats/:id', async (req: AuthRequest, res: Response) => {
 router.post('/chats', async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.userId;
+        const { agentId }: { agentId?: string } = req.body;
         
         if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        // Get user's default system prompt
+        // Get user's defaults
         let systemPrompt = DEFAULT_SYSTEM_PROMPT;
+        let selectedAgentId = agentId || DEFAULT_AGENT_ID;
+        
         const settings = await db.collection<AgentSettings>('agent_settings').findOne({ userId });
-        if (settings?.defaultSystemPrompt) {
-            systemPrompt = settings.defaultSystemPrompt;
+        if (settings) {
+            if (settings.defaultSystemPrompt) {
+                systemPrompt = settings.defaultSystemPrompt;
+            }
+            if (!agentId && settings.defaultAgentId) {
+                selectedAgentId = settings.defaultAgentId;
+            }
+        }
+
+        // Validate agent exists
+        const modelExists = await validateModel(selectedAgentId);
+        if (!modelExists) {
+            return res.status(400).json({ 
+                error: 'Agent not available',
+                agentId: selectedAgentId 
+            });
         }
 
         const now = new Date();
         const newChat: AgentChat = {
             userId,
             title: 'New Chat',
+            agentId: selectedAgentId,
             systemPrompt,
             createdAt: now,
             updatedAt: now
@@ -691,7 +744,7 @@ router.delete('/chats/:id', async (req: AuthRequest, res: Response) => {
     }
 });
 
-// PATCH /api/agent/chats/:id - Update chat
+// PATCH /api/agent/chats/:id - Update chat (title and system prompt only, NOT agentId)
 router.patch('/chats/:id', async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.userId;
@@ -706,13 +759,15 @@ router.patch('/chats/:id', async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ error: 'Invalid chat ID' });
         }
 
-        if (!title && !systemPrompt) {
+        if (!title && systemPrompt === undefined) {
             return res.status(400).json({ error: 'Nothing to update' });
         }
 
         const updateData: Partial<AgentChat> = { updatedAt: new Date() };
         if (title) updateData.title = title.trim();
         if (systemPrompt !== undefined) updateData.systemPrompt = systemPrompt;
+
+        // Note: agentId is intentionally excluded from updates
 
         const result = await db.collection<AgentChat>('agent_chats').findOneAndUpdate(
             { 
@@ -774,11 +829,9 @@ router.get('/models/:name/info', async (req: AuthRequest, res: Response) => {
             { timeout: 5000 }
         );
         
-        // Extract capabilities from modelfile or template
         const modelInfo = response.data;
         
-        // Check if model supports thinking by looking at the template or parameters
-        // Models like deepseek-r1, qwq, qwen2.5 support thinking
+        // Check if model supports thinking
         const supportsThinking = 
             modelInfo.template?.includes('thinking') ||
             modelInfo.parameters?.includes('think') ||

@@ -80,12 +80,13 @@ const AgentChat = () => {
     const [input, setInput] = useState('');
     const [isStreaming, setIsStreaming] = useState(false);
     const [models, setModels] = useState<string[]>([]);
-    const [selectedModel, setSelectedModel] = useState('llama3.2');
+    const [selectedModel, setSelectedModel] = useState('');
     const [isConnected, setIsConnected] = useState(false);
     const [loading, setLoading] = useState(true);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
     const [currentChatId, setCurrentChatId] = useState<string | null>(null);
     const [renderError, setRenderError] = useState<string | null>(null);
+    const [chatAgentId, setChatAgentId] = useState<string | null>(null); // The agent locked to current chat
 
     // Settings
     const [showSettings, setShowSettings] = useState(false);
@@ -132,7 +133,6 @@ const AgentChat = () => {
             
             try {
                 const modelInfo = await agentApi.getModelInfo(selectedModel);
-                console.log(modelInfo)
                 setModelSupportsThinking(modelInfo.capabilities.thinking);
                 
                 // Auto-disable thinking if model doesn't support it
@@ -168,10 +168,19 @@ const AgentChat = () => {
         if (chatId) {
             loadChat(chatId);
         } else {
+            // No chat selected - reset to default
             setMessages([]);
             setCurrentChatId(null);
+            setChatAgentId(null);
+            
+            // Set to user's default agent or first available
+            if (settings?.defaultAgentId && models.includes(settings.defaultAgentId)) {
+                setSelectedModel(settings.defaultAgentId);
+            } else if (models.length > 0 && !selectedModel) {
+                setSelectedModel(models[0]);
+            }
         }
-    }, [chatId]);
+    }, [chatId, settings, models]);
 
     // Focus rename input when renaming starts
     useEffect(() => {
@@ -243,7 +252,9 @@ const AgentChat = () => {
             const data = await agentApi.getModels();
             const modelNames = data.map((m: any) => m.name);
             setModels(modelNames);
-            if (modelNames.length > 0 && !modelNames.includes(selectedModel)) {
+            
+            // Only set initial model if none selected
+            if (modelNames.length > 0 && !selectedModel) {
                 setSelectedModel(modelNames[0]);
             }
         } catch (error) {
@@ -272,13 +283,26 @@ const AgentChat = () => {
     const loadChat = async (id: string) => {
         try {
             setRenderError(null);
-            // console.log('Loading chat:', id);
             
             const response = await agentApi.getChat(id);
-            // console.log('Chat response:', response);
+            const { chat, messages: chatMessages } = response;
             
-            const { messages: chatMessages } = response;
-            // console.log('Chat messages:', chatMessages);
+            if (!chat || !chat.agentId) {
+                throw new Error('Invalid chat data - missing agentId');
+            }
+            
+            // Check if agent is available
+            if (!models.includes(chat.agentId)) {
+                setRenderError(`Agent "${chat.agentId}" is not currently available. Please ensure the model is installed.`);
+                setMessages([]);
+                setCurrentChatId(null);
+                setChatAgentId(null);
+                return;
+            }
+            
+            // Set the locked agent for this chat
+            setChatAgentId(chat.agentId);
+            setSelectedModel(chat.agentId);
             
             if (!chatMessages || !Array.isArray(chatMessages)) {
                 console.error('Invalid messages format:', chatMessages);
@@ -299,22 +323,58 @@ const AgentChat = () => {
                 return isValid;
             });
 
-            // console.log('Valid messages count:', validMessages.length);
             setMessages(validMessages as DisplayMessage[]);
             setCurrentChatId(id);
         } catch (error: any) {
             console.error('Error loading chat:', error);
-            setRenderError(error.message || 'Failed to load chat');
+            
+            // Handle agent unavailable error from backend
+            if (error.response?.status === 503 && error.response?.data?.agentId) {
+                setRenderError(`Agent "${error.response.data.agentId}" is not currently available. Please ensure the model is installed.`);
+            } else {
+                setRenderError(error.message || 'Failed to load chat');
+            }
+            
             setMessages([]);
             setCurrentChatId(null);
+            setChatAgentId(null);
         }
     };
 
     const handleNewChat = async () => {
         try {
+            // Simply navigate to /agent - this will reset state
             navigate(`/agent`);
+            
+            // Reset chat-specific state
+            setMessages([]);
+            setCurrentChatId(null);
+            setChatAgentId(null);
+            
+            // Set to user's default or first available model
+            if (settings?.defaultAgentId && models.includes(settings.defaultAgentId)) {
+                setSelectedModel(settings.defaultAgentId);
+            } else if (models.length > 0) {
+                setSelectedModel(models[0]);
+            }
         } catch (error) {
-            console.error('Error creating chat:', error);
+            console.error('Error creating new chat:', error);
+        }
+    };
+
+    const handleModelChange = async (newModel: string) => {
+        // If there's an active chat and user tries to change model
+        if (currentChatId && chatAgentId && newModel !== chatAgentId) {
+            // Create a new chat with the new model
+            try {
+                const newChat = await agentApi.createChat(newModel);
+                navigate(`/agent/${newChat._id}`);
+            } catch (error) {
+                console.error('Error creating chat with new model:', error);
+            }
+        } else if (!currentChatId) {
+            // No active chat - just change the selected model
+            setSelectedModel(newModel);
         }
     };
 
@@ -396,6 +456,17 @@ const AgentChat = () => {
         }
     };
 
+    const handleSaveDefaultAgent = async (agentId: string) => {
+        try {
+            const updated = await agentApi.updateSettings({
+                defaultAgentId: agentId
+            });
+            setSettings(updated);
+        } catch (error) {
+            console.error('Error saving default agent:', error);
+        }
+    };
+
     const handleSend = async () => {
         if (!input.trim() || isStreaming || !isConnected) return;
 
@@ -423,23 +494,18 @@ const AgentChat = () => {
 
         abortControllerRef.current = new AbortController();
 
-        // console.log('=== COMPONENT: Calling streamChat ===');
-
         await agentApi.streamChat(
             {
-                model: selectedModel,
+                model: selectedModel, // This is the agentId
                 messages: updatedMessages,
                 chatId: currentChatId || undefined,
                 contextLimit,
                 enableThinking: enableThinking,
             },
             (chunk, receivedChatId, thinkingChunk) => {
-                // console.log('=== COMPONENT: onChunk called ===');
-                // console.log('Content length:', chunk.length);
-                // console.log('Thinking length:', thinkingChunk?.length || 0);
-                
                 if (receivedChatId && !currentChatId) {
                     setCurrentChatId(receivedChatId);
+                    setChatAgentId(selectedModel); // Lock to this agent
                     window.history.replaceState(null, '', `/agent/${receivedChatId}`);
                     loadChats();
                 }
@@ -451,32 +517,53 @@ const AgentChat = () => {
                     if (lastMsg && lastMsg.role === 'assistant') {
                         lastMsg.content = chunk;
                         if (thinkingChunk !== undefined) {
-                            // console.log('=== COMPONENT: Setting thinking on message ===', thinkingChunk.substring(0, 50) + '...');
                             lastMsg.thinking = thinkingChunk;
                         }
                     }
-                    // console.log('=== COMPONENT: Updated messages, last message thinking length:', updated[updated.length - 1].thinking?.length || 0);
                     return updated;
                 });
             },
             () => {
-                // console.log('=== COMPONENT: Stream complete ===');
                 setIsStreaming(false);
                 abortControllerRef.current = null;
                 loadChats();
             },
-            (error) => {
-                console.error('=== COMPONENT: Stream error ===', error);
+            (error: any) => {
+                console.error('Stream error:', error);
                 setIsStreaming(false);
-                setMessages(prev => {
-                    if (prev.length === 0) return prev;
-                    const updated = [...prev];
-                    const lastMsg = updated[updated.length - 1];
-                    if (lastMsg && lastMsg.role === 'assistant' && !lastMsg.content) {
-                        lastMsg.content = '❌ Error: Failed to get response';
-                    }
-                    return updated;
-                });
+                
+                // Handle agent mismatch error
+                if (error.response?.status === 400 && error.response?.data?.error === 'Agent mismatch') {
+                    setMessages(prev => {
+                        if (prev.length === 0) return prev;
+                        const updated = [...prev];
+                        const lastMsg = updated[updated.length - 1];
+                        if (lastMsg && lastMsg.role === 'assistant') {
+                            lastMsg.content = `❌ Error: This chat is locked to agent "${error.response.data.chatAgentId}". Please create a new chat to use a different agent.`;
+                        }
+                        return updated;
+                    });
+                } else if (error.response?.status === 503 && error.response?.data?.error === 'Agent not available') {
+                    setMessages(prev => {
+                        if (prev.length === 0) return prev;
+                        const updated = [...prev];
+                        const lastMsg = updated[updated.length - 1];
+                        if (lastMsg && lastMsg.role === 'assistant') {
+                            lastMsg.content = `❌ Error: Agent "${error.response.data.agentId}" is not currently available. Please ensure the model is installed.`;
+                        }
+                        return updated;
+                    });
+                } else {
+                    setMessages(prev => {
+                        if (prev.length === 0) return prev;
+                        const updated = [...prev];
+                        const lastMsg = updated[updated.length - 1];
+                        if (lastMsg && lastMsg.role === 'assistant' && !lastMsg.content) {
+                            lastMsg.content = '❌ Error: Failed to get response';
+                        }
+                        return updated;
+                    });
+                }
                 abortControllerRef.current = null;
             },
             abortControllerRef.current
@@ -541,6 +628,8 @@ const AgentChat = () => {
             );
         },
     };
+
+    const isAgentLocked = currentChatId !== null && chatAgentId !== null;
 
     if (loading) {
         return (
@@ -627,7 +716,9 @@ const AgentChat = () => {
                                 <span className="material-symbols-outlined">chat</span>
                                 <ChatInfo>
                                     <ChatTitle>{chat.title}</ChatTitle>
-                                    <ChatDate>{formatDate(chat.updatedAt)}</ChatDate>
+                                    <ChatDate>
+                                        {chat.agentId && <span style={{ opacity: 0.5, fontSize: '10px' }}>[{chat.agentId}]</span>} {formatDate(chat.updatedAt)}
+                                    </ChatDate>
                                 </ChatInfo>
                                 <ChatActions className="chat-actions">
                                     <button onClick={(e) => handleDeleteChat(chat._id, e)} title="Delete">
@@ -685,6 +776,7 @@ const AgentChat = () => {
                                 $enabled={enableThinking}
                                 onClick={() => setEnableThinking(!enableThinking)}
                                 title={enableThinking ? 'Disable thinking mode' : 'Enable thinking mode'}
+                                disabled={isStreaming}
                             >
                                 <span className="material-symbols-outlined">psychology</span>
                                 {enableThinking && <span className="label">Thinking ON</span>}
@@ -693,11 +785,15 @@ const AgentChat = () => {
                         
                         <ModelSelector
                             value={selectedModel}
-                            onChange={(e) => setSelectedModel(e.target.value)}
-                            disabled={isStreaming}
+                            onChange={(e) => handleModelChange(e.target.value)}
+                            disabled={isStreaming || isAgentLocked}
+                            title={isAgentLocked ? `This chat is locked to ${chatAgentId}` : 'Select model'}
                         >
                             {models.map(model => (
-                                <option key={model} value={model}>{model}</option>
+                                <option key={model} value={model}>
+                                    {model}
+                                    {isAgentLocked && model === chatAgentId ? ' [locked]' : ''}
+                                </option>
                             ))}
                         </ModelSelector>
                         
@@ -803,7 +899,7 @@ const AgentChat = () => {
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyDown={handleKeyDown}
-                                placeholder={chats.length > 1 ? `Reply to ${selectedModel}...` : `Ask ${selectedModel}...`}
+                                placeholder={messages.length > 0 ? `Reply to ${selectedModel}...` : `Ask ${selectedModel}...`}
                                 disabled={isStreaming || !isConnected}
                                 rows={1}
                                 onInput={(e) => {
@@ -851,8 +947,32 @@ const AgentChat = () => {
                                 onChange={(e) => setContextLimit(Number(e.target.value))}
                             />
                             <p style={{ fontSize: '0.85em', opacity: 0.7, marginTop: '8px' }}>
-                                Number of previous messages to include as context. 
-                                Default: 20 (recommended for Gemma 4B).
+                                Number of previous messages to include as context.
+                            </p>
+                        </SettingGroup>
+
+                        <SettingGroup>
+                            <label>Default Agent (for new chats)</label>
+                            <select
+                                value={settings?.defaultAgentId || ''}
+                                onChange={(e) => handleSaveDefaultAgent(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '8px 12px',
+                                    background: 'var(--background-darker)',
+                                    border: '1px solid var(--border)',
+                                    borderRadius: '4px',
+                                    color: 'var(--text-color)',
+                                    fontSize: '14px',
+                                    fontFamily: 'inherit'
+                                }}
+                            >
+                                {models.map(model => (
+                                    <option key={model} value={model}>{model}</option>
+                                ))}
+                            </select>
+                            <p style={{ fontSize: '0.85em', opacity: 0.7, marginTop: '8px' }}>
+                                This agent will be selected automatically when starting new chats
                             </p>
                         </SettingGroup>
 
@@ -874,9 +994,23 @@ const AgentChat = () => {
                         </SettingGroup>
 
                         <SettingGroup>
-                            <label>Current Model</label>
+                            <label>Current Chat Agent</label>
                             <p style={{ fontSize: '0.9em', opacity: 0.8 }}>
-                                {selectedModel}
+                                {currentChat ? (
+                                    <>
+                                        {currentChat.agentId} 
+                                        <span style={{ opacity: 0.6, fontSize: '0.85em', marginLeft: '8px' }}>
+                                            (locked to this chat)
+                                        </span>
+                                    </>
+                                ) : (
+                                    <>
+                                        {selectedModel}
+                                        <span style={{ opacity: 0.6, fontSize: '0.85em', marginLeft: '8px' }}>
+                                            (will lock on first message)
+                                        </span>
+                                    </>
+                                )}
                             </p>
                         </SettingGroup>
 
