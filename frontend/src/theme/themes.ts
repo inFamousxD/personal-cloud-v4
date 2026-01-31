@@ -894,7 +894,6 @@ export interface ThemeFieldMeta {
 
 // Extract theme fields metadata for auto-generating settings UI
 export const getThemeFieldsMeta = (values: ThemeValues, path: string[] = []): ThemeFieldMeta[] => {
-    console.log(values)
     const fields: ThemeFieldMeta[] = [];
     
     for (const [key, value] of Object.entries(values)) {

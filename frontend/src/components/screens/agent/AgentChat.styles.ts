@@ -245,12 +245,16 @@ export const ChatHeader = styled.div`
     gap: 12px;
     flex-shrink: 0;
     min-height: 32px;
+    min-width: 0;
 `;
 
 export const HeaderLeft = styled.div`
     display: flex;
     align-items: center;
     gap: 8px;
+    min-width: 0; // Allow this to shrink
+    flex: 1; // Take available space but can shrink
+    overflow: hidden; // Prevent overflow
 `;
 
 export const ToggleSidebarButton = styled.button`
@@ -281,10 +285,12 @@ export const ChatTitleDisplay = styled.div`
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 300px;
+    flex: 1; // Take available space
+    min-width: 0; // Allow shrinking below content size
+    max-width: 100%; // Remove hardcoded max-width
 
     @media (max-width: 768px) {
-        max-width: 150px;
+        font-size: 0.9em;
     }
 `;
 
@@ -292,6 +298,7 @@ export const HeaderRight = styled.div`
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-shrink: 0; // Never shrink the right side
 `;
 
 export const StatusIndicator = styled.span<{ $connected: boolean }>`
@@ -690,15 +697,15 @@ export const MessageBubble = styled.div<{ $role: string }>`
         }
 
         ::-webkit-scrollbar {
-            height: 8px;
+            height: 2px;
         }
 
         ::-webkit-scrollbar-track {
-            background: ${darkTheme.backgroundDarker};
+            
         }
 
         ::-webkit-scrollbar-thumb {
-            background: ${darkTheme.accent}40;
+            background: color-mix(in srgb, ${darkTheme.accent} 40%, transparent);
             border-radius: 4px;
         }
     }
@@ -758,12 +765,20 @@ export const MessageBubble = styled.div<{ $role: string }>`
         border-collapse: collapse;
         width: 100%;
         margin: 1em 0;
-    }
 
+    }
+    
     th, td {
         border: 1px solid ${darkTheme.border};
         padding: 8px 12px;
         text-align: left;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+        hyphens: auto;
+
+        -ms-hyphens: auto;
+        -moz-hyphens: auto;
+        -webkit-hyphens: auto;
     }
 
     th {
@@ -1217,16 +1232,19 @@ export const DeleteConfirmActions = styled.div`
     }
 `;
 
-// Rename Chat Styles (for header title)
 export const RenameChatWrapper = styled.div`
     display: flex;
     align-items: center;
     gap: 6px;
+    min-width: 0; // Allow shrinking
+    flex: 1; // Take available space
+    overflow: hidden; // Prevent overflow
 
     .rename-button {
         opacity: 0.2;
         padding: 4px;
         transition: opacity 0.2s;
+        flex-shrink: 0; // Don't shrink the button
 
         .material-symbols-outlined {
             font-size: 16px;
@@ -1251,16 +1269,16 @@ export const RenameChatInput = styled.input`
     font-size: 0.95em;
     font-weight: 500;
     font-family: inherit;
-    max-width: 500px;
     outline: none;
-    width: 70vw;
+    flex: 1; // Take available space
+    min-width: 0; // Allow shrinking
+    width: 100%; // Remove hardcoded width
 
     &:focus {
         border-color: ${darkTheme.accent};
     }
 
     @media (max-width: 768px) {
-        max-width: 150px;
         font-size: 0.9em;
     }
 `;
