@@ -317,7 +317,7 @@ ${defaultDate}
         }
         saveTimeoutRef.current = setTimeout(() => {
             handleSaveRef.current();
-        }, 1500);
+        }, 8000);
     };
 
     const handleContentChange = (value: string) => {
