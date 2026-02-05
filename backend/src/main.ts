@@ -6,6 +6,7 @@ import cors from 'cors';
 import notesRouter from './routes/notes.js';
 import journalsRouter from './routes/journals.js';
 import listsRouter from './routes/lists.js';
+import drawingsRouter from './routes/drawings.js';
 import serverRouter from './routes/server.js';
 import whisperRouter from './routes/whisper.js';
 import trackersRouter from './routes/trackers.js';
@@ -33,8 +34,8 @@ app.use(cors({
     credentials: true,
 }));
 
-app.use(express.json()); 
-app.use(express.urlencoded({ extended: true })); 
+app.use(express.json({ limit: '200mb' })); 
+app.use(express.urlencoded({ limit: '200mb', extended: true }));
 
 app.get('/', (_req: Request, res: Response) => {
     res.send('hello');
@@ -59,6 +60,7 @@ const withFeature = (feature: string, router: Router): Router => {
 app.use('/api/notes', withFeature('notes', notesRouter));
 app.use('/api/journals', withFeature('journal', journalsRouter));
 app.use('/api/lists', withFeature('lists', listsRouter));
+app.use('/api/drawings', withFeature('drawings', drawingsRouter));
 app.use('/api/trackers', withFeature('tracker', trackersRouter));
 app.use('/api/server', withFeature('server', serverRouter));
 app.use('/api/agent', agentRouter);

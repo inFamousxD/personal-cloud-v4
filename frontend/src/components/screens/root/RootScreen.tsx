@@ -5,6 +5,7 @@ import { Outlet, Route, Routes } from "react-router-dom";
 import Notes from "../notes/Notes";
 import Journal from "../journal/Journal";
 import Lists from "../lists/Lists";
+import Drawings from "../drawings/Drawings";
 import Server from "../server/Server";
 import Settings from "../settings/Settings";
 import ProtectedRoute from "../../ProtectedRoute";
@@ -96,6 +97,22 @@ export const RootScreen: React.FC = () => {
                                 element={
                                     <RestrictedRoute feature="lists">
                                         <Lists />
+                                    </RestrictedRoute>
+                                }
+                            />
+                            <Route
+                                path="/drawings"
+                                element={
+                                    <RestrictedRoute feature="drawings">
+                                        <Drawings />
+                                    </RestrictedRoute>
+                                }
+                            />
+                            <Route
+                                path="/drawings/:drawingId"
+                                element={
+                                    <RestrictedRoute feature="drawings">
+                                        <Drawings />
                                     </RestrictedRoute>
                                 }
                             />

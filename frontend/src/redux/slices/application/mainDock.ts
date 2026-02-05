@@ -35,6 +35,12 @@ const mainDockInitialState: MainDockState = {
             feature: "lists"
         },
         {
+            id: "drawings",
+            icon: "draw",
+            navigatesTo: "/drawings",
+            feature: "drawings"
+        },
+        {
             id: "tracker",
             icon: "track_changes",
             navigatesTo: "/tracker",
@@ -60,12 +66,6 @@ const mainDockInitialState: MainDockState = {
             navigatesTo: "/server",
             feature: "server"  // Restricted by default
         },
-        // {
-        //     id: "admin",
-        //     icon: "admin_panel_settings",
-        //     navigatesTo: "/admin",
-        //     feature: "admin"  // Admin only - handled specially in Navigation
-        // },
         {
             id: "settings",
             icon: "settings",
