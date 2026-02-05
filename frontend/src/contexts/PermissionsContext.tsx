@@ -39,7 +39,7 @@ const DEFAULT_PERMISSIONS: EffectivePermissions = {
     userId: '',
     isAdmin: false,
     deniedFeatures: ['agent', 'terminal', 'server'],
-    allowedFeatures: ['notes', 'journal', 'lists', 'tracker', 'settings'],
+    allowedFeatures: ['notes', 'journal', 'lists', 'tracker', 'settings', 'drawings'],
     useDefaults: true,
 };
 
