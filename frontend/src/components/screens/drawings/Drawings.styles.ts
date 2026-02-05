@@ -191,10 +191,10 @@ export const DrawingItem = styled.div<{ $selected?: boolean, $nested?: boolean }
 
 export const DrawingThumbnail = styled.div`
     width: 100%;
-    height: 80px;
+    max-height: 120px;
     border-radius: 4px;
     background: ${darkTheme.backgroundDarker};
-    border: 1px solid ${darkTheme.border};
+    /* border: 1px solid ${darkTheme.border}; */
     display: flex;
     align-items: center;
     justify-content: center;
