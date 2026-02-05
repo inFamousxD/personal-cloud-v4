@@ -194,7 +194,7 @@ export const DrawingThumbnail = styled.div`
     max-height: 120px;
     border-radius: 4px;
     background: ${darkTheme.backgroundDarker};
-    /* border: 1px solid ${darkTheme.border}; */
+    border: 1px solid ${darkTheme.border};
     display: flex;
     align-items: center;
     justify-content: center;
