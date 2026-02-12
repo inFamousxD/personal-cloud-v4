@@ -21,7 +21,11 @@ export const ServerHeader = styled.div`
     @media (max-width: 768px) {
         flex-direction: column;
         gap: 8px;
-        align-items: flex-start;
+        align-items: stretch;
+        
+        > div {
+            width: 100%;
+        }
     }
 `;
 
@@ -56,6 +60,8 @@ export const RefreshButton = styled.button`
     gap: 4px;
     font-family: inherit;
     transition: opacity 0.2s;
+    flex: 1;
+    justify-content: center;
 
     &:hover:not(:disabled) {
         opacity: 0.9;
@@ -68,11 +74,6 @@ export const RefreshButton = styled.button`
 
     .material-symbols-outlined {
         font-size: 16px;
-    }
-
-    @media (max-width: 768px) {
-        width: 100%;
-        justify-content: center;
     }
 `;
 
@@ -90,6 +91,8 @@ export const ClearCacheButton = styled.button`
     gap: 4px;
     font-family: inherit;
     transition: opacity 0.2s;
+    flex: 1;
+    justify-content: center;
 
     &:hover:not(:disabled) {
         opacity: 0.9;
@@ -102,11 +105,6 @@ export const ClearCacheButton = styled.button`
 
     .material-symbols-outlined {
         font-size: 16px;
-    }
-
-    @media (max-width: 768px) {
-        width: 100%;
-        justify-content: center;
     }
 `;
 

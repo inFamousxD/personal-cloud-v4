@@ -213,7 +213,7 @@ const Server = () => {
                         </PingIndicator>
                     )}
                 </ServerTitle>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
                     <ClearCacheButton 
                         onClick={handleClearCache} 
                         disabled={actionLoading === 'cache'}
@@ -229,21 +229,40 @@ const Server = () => {
             </ServerHeader>
 
             <ServerBody>
-                {/* Affine Server Section */}
-                {affineStatus && (
-                    <>
-                        <AffineSection>
-                            <StatCardHeader>
-                                <span className="material-symbols-outlined">deployed_code</span>
-                                Affine Server
-                                <StatusBadge $status={affineStatus.running ? 'healthy' : 'unhealthy'}>
-                                    <span className="material-symbols-outlined">
-                                        {affineStatus.running ? 'check_circle' : 'cancel'}
-                                    </span>
-                                    {affineStatus.running ? 'Running' : 'Stopped'}
-                                </StatusBadge>
-                            </StatCardHeader>
-                            
+                {/* Affine Server Section - Always show if we attempted to fetch */}
+                <AffineSection>
+                    <StatCardHeader>
+                        <span className="material-symbols-outlined">deployed_code</span>
+                        Affine Server
+                        {affineStatus && (
+                            <StatusBadge $status={affineStatus.running ? 'healthy' : 'unhealthy'}>
+                                <span className="material-symbols-outlined">
+                                    {affineStatus.running ? 'check_circle' : 'cancel'}
+                                </span>
+                                {affineStatus.running ? 'Running' : 'Stopped'}
+                            </StatusBadge>
+                        )}
+                        {!affineStatus && (
+                            <StatusBadge $status="unhealthy">
+                                <span className="material-symbols-outlined">help</span>
+                                Unknown
+                            </StatusBadge>
+                        )}
+                    </StatCardHeader>
+                    
+                    {!affineStatus && (
+                        <div style={{ marginTop: '12px', fontSize: '13px', opacity: 0.7 }}>
+                            Could not connect to Affine. Make sure:
+                            <ul style={{ marginTop: '8px', marginLeft: '20px' }}>
+                                <li>Affine directory exists at ../affine</li>
+                                <li>Docker is installed and running</li>
+                                <li>Backend has permissions to execute Docker commands</li>
+                            </ul>
+                        </div>
+                    )}
+                    
+                    {affineStatus && (
+                        <>
                             <AffineControls>
                                 <ActionButton 
                                     onClick={handleAffineStart}
@@ -286,52 +305,52 @@ const Server = () => {
                                     ))}
                                 </div>
                             )}
-                        </AffineSection>
+                        </>
+                    )}
+                </AffineSection>
 
-                        {/* Affine Container Stats */}
-                        {affineStats && affineStats.running && affineStats.containers.length > 0 && (
-                            <>
-                                <SectionDivider>Affine Resource Usage</SectionDivider>
-                                <StatsGrid>
-                                    {affineStats.containers.map((container) => (
-                                        <StatCard key={container.containerId}>
-                                            <StatCardHeader>
-                                                <span className="material-symbols-outlined">inventory_2</span>
-                                                {container.name}
-                                            </StatCardHeader>
-                                            <StatCardBody>
-                                                <StatRow>
-                                                    <span>CPU</span>
-                                                    <span>{container.cpuPercent}</span>
-                                                </StatRow>
-                                                <StatRow>
-                                                    <span>Memory</span>
-                                                    <span>{container.memUsage} / {container.memLimit}</span>
-                                                </StatRow>
-                                                <ProgressBar>
-                                                    <ProgressFill 
-                                                        $percent={parseMemoryPercent(container.memPercent)}
-                                                        $color={getMemoryColor(parseMemoryPercent(container.memPercent))}
-                                                    />
-                                                </ProgressBar>
-                                                <StatRow>
-                                                    <span>Network I/O</span>
-                                                    <span style={{ fontSize: '10px' }}>{container.netIO}</span>
-                                                </StatRow>
-                                                <StatRow>
-                                                    <span>Block I/O</span>
-                                                    <span style={{ fontSize: '10px' }}>{container.blockIO}</span>
-                                                </StatRow>
-                                            </StatCardBody>
-                                        </StatCard>
-                                    ))}
-                                </StatsGrid>
-                            </>
-                        )}
-
-                        <SectionDivider>System Stats</SectionDivider>
+                {/* Affine Container Stats */}
+                {affineStats && affineStats.running && affineStats.containers.length > 0 && (
+                    <>
+                        <SectionDivider>Affine Resource Usage</SectionDivider>
+                        <StatsGrid>
+                            {affineStats.containers.map((container) => (
+                                <StatCard key={container.containerId}>
+                                    <StatCardHeader>
+                                        <span className="material-symbols-outlined">inventory_2</span>
+                                        {container.name}
+                                    </StatCardHeader>
+                                    <StatCardBody>
+                                        <StatRow>
+                                            <span>CPU</span>
+                                            <span>{container.cpuPercent}</span>
+                                        </StatRow>
+                                        <StatRow>
+                                            <span>Memory</span>
+                                            <span>{container.memUsage} / {container.memLimit}</span>
+                                        </StatRow>
+                                        <ProgressBar>
+                                            <ProgressFill 
+                                                $percent={parseMemoryPercent(container.memPercent)}
+                                                $color={getMemoryColor(parseMemoryPercent(container.memPercent))}
+                                            />
+                                        </ProgressBar>
+                                        <StatRow>
+                                            <span>Network I/O</span>
+                                            <span style={{ fontSize: '10px' }}>{container.netIO}</span>
+                                        </StatRow>
+                                        <StatRow>
+                                            <span>Block I/O</span>
+                                            <span style={{ fontSize: '10px' }}>{container.blockIO}</span>
+                                        </StatRow>
+                                    </StatCardBody>
+                                </StatCard>
+                            ))}
+                        </StatsGrid>
                     </>
                 )}
+
+                <SectionDivider>System Stats</SectionDivider>
 
                 <StatsGrid>
                     {/* Health Status */}
