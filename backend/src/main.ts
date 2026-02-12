@@ -14,6 +14,7 @@ import agentRouter from './routes/agent.js';
 import adminRouter from './routes/admin.js';
 import settingsRouter from './routes/settings.js';
 import pushRouter from './routes/push.js';
+import affineRouter from './routes/affine.js';
 import terminalRouter, { initTerminalWebSocket } from './routes/terminal.js';
 import { client, connectDB } from './db.js';
 import { authenticateToken } from './middleware/auth.js';
@@ -63,6 +64,7 @@ app.use('/api/lists', withFeature('lists', listsRouter));
 app.use('/api/drawings', withFeature('drawings', drawingsRouter));
 app.use('/api/trackers', withFeature('tracker', trackersRouter));
 app.use('/api/server', withFeature('server', serverRouter));
+app.use('/api/affine', withFeature('server', affineRouter));
 app.use('/api/agent', agentRouter);
 app.use('/api/terminal', withFeature('terminal', terminalRouter));
 

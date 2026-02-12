@@ -76,6 +76,40 @@ export const RefreshButton = styled.button`
     }
 `;
 
+export const ClearCacheButton = styled.button`
+    background: ${darkTheme.accentOrange};
+    color: ${darkTheme.text.accentAlt};
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: inherit;
+    transition: opacity 0.2s;
+
+    &:hover:not(:disabled) {
+        opacity: 0.9;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .material-symbols-outlined {
+        font-size: 16px;
+    }
+
+    @media (max-width: 768px) {
+        width: 100%;
+        justify-content: center;
+    }
+`;
+
 export const ServerBody = styled.div`
     flex: 1;
     overflow-y: auto;
@@ -100,6 +134,74 @@ export const ServerBody = styled.div`
     @media (max-width: 768px) {
         padding: 10px;
     }
+`;
+
+export const AffineSection = styled.div`
+    background: ${darkTheme.backgroundDarkest};
+    border: 1px solid ${darkTheme.accent};
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 16px;
+`;
+
+export const AffineControls = styled.div`
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+
+    @media (max-width: 768px) {
+        flex-direction: column;
+    }
+`;
+
+export const ActionButton = styled.button<{ $variant?: 'success' | 'error' | 'warning' }>`
+    background: ${props => {
+        if (props.$variant === 'success') return darkTheme.accentGreen;
+        if (props.$variant === 'error') return '#e74c3c';
+        if (props.$variant === 'warning') return darkTheme.accentOrange;
+        return darkTheme.accent;
+    }};
+    color: ${darkTheme.text.accentAlt};
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+    transition: opacity 0.2s;
+    flex: 1;
+    justify-content: center;
+
+    &:hover:not(:disabled) {
+        opacity: 0.9;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .material-symbols-outlined {
+        font-size: 18px;
+    }
+
+    @media (max-width: 768px) {
+        width: 100%;
+    }
+`;
+
+export const SectionDivider = styled.div`
+    color: ${darkTheme.accent};
+    font-size: 14px;
+    font-weight: 600;
+    margin: 20px 0 12px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid ${darkTheme.border};
 `;
 
 export const StatsGrid = styled.div`

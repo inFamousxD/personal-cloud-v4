@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { serverApi, HealthResponse, ServerStats, PingResponse } from '../../../services/serverApi';
+import affineApi, { AffineStatus, AffineStats } from '../../../services/affineApi';
 import {
     ServerContainer,
     ServerHeader,
@@ -16,16 +17,24 @@ import {
     StatusBadge,
     LoadingState,
     ErrorState,
-    PingIndicator
+    PingIndicator,
+    AffineSection,
+    AffineControls,
+    ActionButton,
+    ClearCacheButton,
+    SectionDivider
 } from './Server.styles';
 
 const Server = () => {
     const [health, setHealth] = useState<HealthResponse | null>(null);
     const [stats, setStats] = useState<ServerStats | null>(null);
     const [ping, setPing] = useState<PingResponse | null>(null);
+    const [affineStatus, setAffineStatus] = useState<AffineStatus | null>(null);
+    const [affineStats, setAffineStats] = useState<AffineStats | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [actionLoading, setActionLoading] = useState<string | null>(null);
 
     useEffect(() => {
         loadServerData();
@@ -40,21 +49,85 @@ const Server = () => {
             const isInitialLoad = loading;
             if (!isInitialLoad) setRefreshing(true);
 
-            const [healthData, statsData, pingData] = await Promise.all([
+            const [healthData, statsData, pingData, affineStatusData, affineStatsData] = await Promise.all([
                 serverApi.getHealth(),
                 serverApi.getStats(),
-                serverApi.ping()
+                serverApi.ping(),
+                affineApi.getStatus().catch(() => null),
+                affineApi.getStats().catch(() => null)
             ]);
 
             setHealth(healthData);
             setStats(statsData);
             setPing(pingData);
+            setAffineStatus(affineStatusData);
+            setAffineStats(affineStatsData);
         } catch (error) {
             console.error('Error loading server data:', error);
             setError('Failed to load server data. Please try again.');
         } finally {
             setLoading(false);
             setRefreshing(false);
+        }
+    };
+
+    const handleAffineStart = async () => {
+        try {
+            setActionLoading('start');
+            await affineApi.start();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await loadServerData();
+        } catch (error) {
+            console.error('Error starting Affine:', error);
+            alert('Failed to start Affine server');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleAffineStop = async () => {
+        if (!confirm('Are you sure you want to stop the Affine server?')) return;
+        
+        try {
+            setActionLoading('stop');
+            await affineApi.stop();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await loadServerData();
+        } catch (error) {
+            console.error('Error stopping Affine:', error);
+            alert('Failed to stop Affine server');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleAffineRestart = async () => {
+        try {
+            setActionLoading('restart');
+            await affineApi.restart();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await loadServerData();
+        } catch (error) {
+            console.error('Error restarting Affine:', error);
+            alert('Failed to restart Affine server');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleClearCache = async () => {
+        if (!confirm('Clear system cache? This will free up memory.')) return;
+        
+        try {
+            setActionLoading('cache');
+            const result = await affineApi.clearCache();
+            alert(`Cache cleared successfully!\n\nBefore:\n${result.before}\n\nAfter:\n${result.after}`);
+            await loadServerData();
+        } catch (error: any) {
+            console.error('Error clearing cache:', error);
+            alert(`Failed to clear cache: ${error.response?.data?.message || error.message}`);
+        } finally {
+            setActionLoading(null);
         }
     };
 
@@ -80,6 +153,10 @@ const Server = () => {
         if (percent < 70) return '#27AE60';
         if (percent < 85) return '#B95A1A';
         return '#e74c3c';
+    };
+
+    const parseMemoryPercent = (percentStr: string): number => {
+        return parseFloat(percentStr.replace('%', ''));
     };
 
     if (loading) {
@@ -136,13 +213,126 @@ const Server = () => {
                         </PingIndicator>
                     )}
                 </ServerTitle>
-                <RefreshButton onClick={loadServerData} disabled={refreshing}>
-                    <span className="material-symbols-outlined">refresh</span>
-                    {refreshing ? 'Refreshing...' : 'Refresh'}
-                </RefreshButton>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <ClearCacheButton 
+                        onClick={handleClearCache} 
+                        disabled={actionLoading === 'cache'}
+                    >
+                        <span className="material-symbols-outlined">cleaning_services</span>
+                        {actionLoading === 'cache' ? 'Clearing...' : 'Clear Cache'}
+                    </ClearCacheButton>
+                    <RefreshButton onClick={loadServerData} disabled={refreshing}>
+                        <span className="material-symbols-outlined">refresh</span>
+                        {refreshing ? 'Refreshing...' : 'Refresh'}
+                    </RefreshButton>
+                </div>
             </ServerHeader>
 
             <ServerBody>
+                {/* Affine Server Section */}
+                {affineStatus && (
+                    <>
+                        <AffineSection>
+                            <StatCardHeader>
+                                <span className="material-symbols-outlined">deployed_code</span>
+                                Affine Server
+                                <StatusBadge $status={affineStatus.running ? 'healthy' : 'unhealthy'}>
+                                    <span className="material-symbols-outlined">
+                                        {affineStatus.running ? 'check_circle' : 'cancel'}
+                                    </span>
+                                    {affineStatus.running ? 'Running' : 'Stopped'}
+                                </StatusBadge>
+                            </StatCardHeader>
+                            
+                            <AffineControls>
+                                <ActionButton 
+                                    onClick={handleAffineStart}
+                                    disabled={affineStatus.running || actionLoading !== null}
+                                    $variant="success"
+                                >
+                                    <span className="material-symbols-outlined">play_arrow</span>
+                                    {actionLoading === 'start' ? 'Starting...' : 'Start'}
+                                </ActionButton>
+                                <ActionButton 
+                                    onClick={handleAffineStop}
+                                    disabled={!affineStatus.running || actionLoading !== null}
+                                    $variant="error"
+                                >
+                                    <span className="material-symbols-outlined">stop</span>
+                                    {actionLoading === 'stop' ? 'Stopping...' : 'Stop'}
+                                </ActionButton>
+                                <ActionButton 
+                                    onClick={handleAffineRestart}
+                                    disabled={!affineStatus.running || actionLoading !== null}
+                                    $variant="warning"
+                                >
+                                    <span className="material-symbols-outlined">restart_alt</span>
+                                    {actionLoading === 'restart' ? 'Restarting...' : 'Restart'}
+                                </ActionButton>
+                            </AffineControls>
+
+                            {affineStatus.containers.length > 0 && (
+                                <div style={{ marginTop: '12px' }}>
+                                    <div style={{ fontSize: '12px', opacity: 0.7, marginBottom: '8px' }}>
+                                        Containers ({affineStatus.runningContainers}/{affineStatus.totalContainers} running)
+                                    </div>
+                                    {affineStatus.containers.map((container, idx) => (
+                                        <StatRow key={idx}>
+                                            <span>{container.name}</span>
+                                            <StatusBadge $status={container.state === 'running' ? 'healthy' : 'unhealthy'}>
+                                                {container.state}
+                                            </StatusBadge>
+                                        </StatRow>
+                                    ))}
+                                </div>
+                            )}
+                        </AffineSection>
+
+                        {/* Affine Container Stats */}
+                        {affineStats && affineStats.running && affineStats.containers.length > 0 && (
+                            <>
+                                <SectionDivider>Affine Resource Usage</SectionDivider>
+                                <StatsGrid>
+                                    {affineStats.containers.map((container) => (
+                                        <StatCard key={container.containerId}>
+                                            <StatCardHeader>
+                                                <span className="material-symbols-outlined">inventory_2</span>
+                                                {container.name}
+                                            </StatCardHeader>
+                                            <StatCardBody>
+                                                <StatRow>
+                                                    <span>CPU</span>
+                                                    <span>{container.cpuPercent}</span>
+                                                </StatRow>
+                                                <StatRow>
+                                                    <span>Memory</span>
+                                                    <span>{container.memUsage} / {container.memLimit}</span>
+                                                </StatRow>
+                                                <ProgressBar>
+                                                    <ProgressFill 
+                                                        $percent={parseMemoryPercent(container.memPercent)}
+                                                        $color={getMemoryColor(parseMemoryPercent(container.memPercent))}
+                                                    />
+                                                </ProgressBar>
+                                                <StatRow>
+                                                    <span>Network I/O</span>
+                                                    <span style={{ fontSize: '10px' }}>{container.netIO}</span>
+                                                </StatRow>
+                                                <StatRow>
+                                                    <span>Block I/O</span>
+                                                    <span style={{ fontSize: '10px' }}>{container.blockIO}</span>
+                                                </StatRow>
+                                            </StatCardBody>
+                                        </StatCard>
+                                    ))}
+                                </StatsGrid>
+                            </>
+                        )}
+
+                        <SectionDivider>System Stats</SectionDivider>
+                    </>
+                )}
+
                 <StatsGrid>
                     {/* Health Status */}
                     <StatCard $status={health?.status === 'healthy' ? 'success' : 'error'}>
