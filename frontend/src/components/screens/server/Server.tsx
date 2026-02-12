@@ -18,8 +18,8 @@ import {
     LoadingState,
     ErrorState,
     PingIndicator,
-    AffineSection,
-    AffineControls,
+    DockerSection,
+    DockerControls,
     ActionButton,
     ClearCacheButton,
     SectionDivider
@@ -229,11 +229,11 @@ const Server = () => {
             </ServerHeader>
 
             <ServerBody>
-                {/* Affine Server Section - Always show if we attempted to fetch */}
-                <AffineSection>
+                {/* Docker Compose Control Station */}
+                <DockerSection>
                     <StatCardHeader>
                         <span className="material-symbols-outlined">deployed_code</span>
-                        Affine Server
+                        Docker Compose Server
                         {affineStatus && (
                             <StatusBadge $status={affineStatus.running ? 'healthy' : 'unhealthy'}>
                                 <span className="material-symbols-outlined">
@@ -250,69 +250,65 @@ const Server = () => {
                         )}
                     </StatCardHeader>
                     
+                    <DockerControls>
+                        <ActionButton 
+                            onClick={handleAffineStart}
+                            disabled={actionLoading !== null || (affineStatus?.running === true)}
+                            $variant="success"
+                        >
+                            <span className="material-symbols-outlined">play_arrow</span>
+                            {actionLoading === 'start' ? 'Starting...' : 'Start Server'}
+                        </ActionButton>
+                        <ActionButton 
+                            onClick={handleAffineStop}
+                            disabled={actionLoading !== null || !affineStatus?.running}
+                            $variant="error"
+                        >
+                            <span className="material-symbols-outlined">stop</span>
+                            {actionLoading === 'stop' ? 'Stopping...' : 'Stop Server'}
+                        </ActionButton>
+                        <ActionButton 
+                            onClick={handleAffineRestart}
+                            disabled={actionLoading !== null || !affineStatus?.running}
+                            $variant="warning"
+                        >
+                            <span className="material-symbols-outlined">restart_alt</span>
+                            {actionLoading === 'restart' ? 'Restarting...' : 'Restart Server'}
+                        </ActionButton>
+                    </DockerControls>
+
+                    {affineStatus && affineStatus.containers.length > 0 && (
+                        <div style={{ marginTop: '12px' }}>
+                            <div style={{ fontSize: '12px', opacity: 0.7, marginBottom: '8px' }}>
+                                Containers ({affineStatus.runningContainers}/{affineStatus.totalContainers} running)
+                            </div>
+                            {affineStatus.containers.map((container, idx) => (
+                                <StatRow key={idx}>
+                                    <span>{container.name}</span>
+                                    <StatusBadge $status={container.state === 'running' ? 'healthy' : 'unhealthy'}>
+                                        {container.state}
+                                    </StatusBadge>
+                                </StatRow>
+                            ))}
+                        </div>
+                    )}
+                    
                     {!affineStatus && (
                         <div style={{ marginTop: '12px', fontSize: '13px', opacity: 0.7 }}>
-                            Could not connect to Affine. Make sure:
-                            <ul style={{ marginTop: '8px', marginLeft: '20px' }}>
-                                <li>Affine directory exists at ../affine</li>
+                            Could not connect to Docker. Make sure:
+                            <ul style={{ marginTop: '8px', marginLeft: '20px', marginBottom: 0 }}>
+                                <li>Docker Compose directory exists at ../affine</li>
                                 <li>Docker is installed and running</li>
                                 <li>Backend has permissions to execute Docker commands</li>
                             </ul>
                         </div>
                     )}
-                    
-                    {affineStatus && (
-                        <>
-                            <AffineControls>
-                                <ActionButton 
-                                    onClick={handleAffineStart}
-                                    disabled={affineStatus.running || actionLoading !== null}
-                                    $variant="success"
-                                >
-                                    <span className="material-symbols-outlined">play_arrow</span>
-                                    {actionLoading === 'start' ? 'Starting...' : 'Start'}
-                                </ActionButton>
-                                <ActionButton 
-                                    onClick={handleAffineStop}
-                                    disabled={!affineStatus.running || actionLoading !== null}
-                                    $variant="error"
-                                >
-                                    <span className="material-symbols-outlined">stop</span>
-                                    {actionLoading === 'stop' ? 'Stopping...' : 'Stop'}
-                                </ActionButton>
-                                <ActionButton 
-                                    onClick={handleAffineRestart}
-                                    disabled={!affineStatus.running || actionLoading !== null}
-                                    $variant="warning"
-                                >
-                                    <span className="material-symbols-outlined">restart_alt</span>
-                                    {actionLoading === 'restart' ? 'Restarting...' : 'Restart'}
-                                </ActionButton>
-                            </AffineControls>
+                </DockerSection>
 
-                            {affineStatus.containers.length > 0 && (
-                                <div style={{ marginTop: '12px' }}>
-                                    <div style={{ fontSize: '12px', opacity: 0.7, marginBottom: '8px' }}>
-                                        Containers ({affineStatus.runningContainers}/{affineStatus.totalContainers} running)
-                                    </div>
-                                    {affineStatus.containers.map((container, idx) => (
-                                        <StatRow key={idx}>
-                                            <span>{container.name}</span>
-                                            <StatusBadge $status={container.state === 'running' ? 'healthy' : 'unhealthy'}>
-                                                {container.state}
-                                            </StatusBadge>
-                                        </StatRow>
-                                    ))}
-                                </div>
-                            )}
-                        </>
-                    )}
-                </AffineSection>
-
-                {/* Affine Container Stats */}
+                {/* Docker Container Stats */}
                 {affineStats && affineStats.running && affineStats.containers.length > 0 && (
                     <>
-                        <SectionDivider>Affine Resource Usage</SectionDivider>
+                        <SectionDivider>Container Resource Usage</SectionDivider>
                         <StatsGrid>
                             {affineStats.containers.map((container) => (
                                 <StatCard key={container.containerId}>

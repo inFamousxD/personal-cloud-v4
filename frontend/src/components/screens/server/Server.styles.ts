@@ -60,7 +60,6 @@ export const RefreshButton = styled.button`
     gap: 4px;
     font-family: inherit;
     transition: opacity 0.2s;
-    flex: 1;
     justify-content: center;
 
     &:hover:not(:disabled) {
@@ -74,6 +73,10 @@ export const RefreshButton = styled.button`
 
     .material-symbols-outlined {
         font-size: 16px;
+    }
+
+    @media (max-width: 768px) {
+        flex: 1;
     }
 `;
 
@@ -91,7 +94,6 @@ export const ClearCacheButton = styled.button`
     gap: 4px;
     font-family: inherit;
     transition: opacity 0.2s;
-    flex: 1;
     justify-content: center;
 
     &:hover:not(:disabled) {
@@ -105,6 +107,10 @@ export const ClearCacheButton = styled.button`
 
     .material-symbols-outlined {
         font-size: 16px;
+    }
+
+    @media (max-width: 768px) {
+        flex: 1;
     }
 `;
 
@@ -134,7 +140,7 @@ export const ServerBody = styled.div`
     }
 `;
 
-export const AffineSection = styled.div`
+export const DockerSection = styled.div`
     background: ${darkTheme.backgroundDarkest};
     border: 1px solid ${darkTheme.accent};
     border-radius: 4px;
@@ -142,7 +148,7 @@ export const AffineSection = styled.div`
     margin-bottom: 16px;
 `;
 
-export const AffineControls = styled.div`
+export const DockerControls = styled.div`
     display: flex;
     gap: 8px;
     margin-top: 12px;
