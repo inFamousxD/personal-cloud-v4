@@ -10,8 +10,8 @@ const router = Router();
 // Apply authentication middleware to all routes
 router.use(authenticateToken);
 
-// Path to affine directory (relative to project root)
-const AFFINE_DIR = path.join(process.cwd(), '..', 'affine');
+// Path to affine directory (absolute path from project root)
+const AFFINE_DIR = path.resolve(process.cwd(), '..', 'affine');
 
 interface DockerStats {
     containerId: string;
@@ -26,16 +26,21 @@ interface DockerStats {
 
 // Helper function to execute docker commands in affine directory
 async function executeDockerCommand(command: string): Promise<string> {
-    const { stdout, stderr } = await execAsync(command, {
-        cwd: AFFINE_DIR,
-        timeout: 30000 // 30 second timeout
-    });
-    
-    if (stderr && !stderr.includes('WARNING')) {
-        console.error('Docker command stderr:', stderr);
+    try {
+        const { stdout, stderr } = await execAsync(command, {
+            cwd: AFFINE_DIR,
+            timeout: 30000 // 30 second timeout
+        });
+        
+        if (stderr && !stderr.includes('WARNING') && !stderr.includes('WARN')) {
+            console.error('Docker command stderr:', stderr);
+        }
+        
+        return stdout.trim();
+    } catch (error: any) {
+        console.error('Docker command error:', error);
+        throw new Error(`Docker command failed: ${error.message}`);
     }
-    
-    return stdout.trim();
 }
 
 // GET affine server status
@@ -44,6 +49,15 @@ router.get('/status', async (_req: AuthRequest, res: Response) => {
         // Check if containers are running
         const psOutput = await executeDockerCommand('docker compose ps --format json');
         
+        if (!psOutput) {
+            return res.json({
+                running: false,
+                containers: [],
+                totalContainers: 0,
+                runningContainers: 0
+            });
+        }
+
         const containers = psOutput
             .split('\n')
             .filter(line => line.trim())
@@ -126,10 +140,11 @@ router.get('/stats', async (_req: AuthRequest, res: Response) => {
 // POST start affine server
 router.post('/start', async (_req: AuthRequest, res: Response) => {
     try {
+        console.log('Starting Affine server in directory:', AFFINE_DIR);
         const output = await executeDockerCommand('docker compose up -d');
         
         // Wait a moment for containers to start
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 3000));
         
         // Get status after starting
         const psOutput = await executeDockerCommand('docker compose ps --format json');
@@ -140,7 +155,7 @@ router.post('/start', async (_req: AuthRequest, res: Response) => {
         
         res.json({
             success: true,
-            message: 'Affine server started',
+            message: 'Affine server started successfully',
             output,
             containers: containers.map(c => ({
                 name: c.Service,
@@ -152,7 +167,8 @@ router.post('/start', async (_req: AuthRequest, res: Response) => {
         console.error('Error starting Affine:', error);
         res.status(500).json({ 
             error: 'Failed to start Affine server',
-            message: error.message
+            message: error.message,
+            details: `Make sure Docker is running and the compose file exists at ${AFFINE_DIR}`
         });
     }
 });
@@ -160,11 +176,12 @@ router.post('/start', async (_req: AuthRequest, res: Response) => {
 // POST stop affine server
 router.post('/stop', async (_req: AuthRequest, res: Response) => {
     try {
+        console.log('Stopping Affine server in directory:', AFFINE_DIR);
         const output = await executeDockerCommand('docker compose down');
         
         res.json({
             success: true,
-            message: 'Affine server stopped',
+            message: 'Affine server stopped successfully',
             output
         });
     } catch (error: any) {
@@ -179,14 +196,15 @@ router.post('/stop', async (_req: AuthRequest, res: Response) => {
 // POST restart affine server
 router.post('/restart', async (_req: AuthRequest, res: Response) => {
     try {
+        console.log('Restarting Affine server in directory:', AFFINE_DIR);
         const output = await executeDockerCommand('docker compose restart');
         
         // Wait a moment for containers to restart
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 3000));
         
         res.json({
             success: true,
-            message: 'Affine server restarted',
+            message: 'Affine server restarted successfully',
             output
         });
     } catch (error: any) {
@@ -205,16 +223,31 @@ router.post('/clear-cache', async (_req: AuthRequest, res: Response) => {
         const { stdout: beforeMem } = await execAsync('free -h');
         
         // Clear page cache, dentries and inodes
-        // Using sh -c to handle the sudo and piping correctly
+        // First sync to flush file system buffers
         await execAsync('sync');
-        await execAsync('echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null');
+        
+        // Try to clear cache (this requires sudo access)
+        try {
+            // Method 1: Try with sudo
+            await execAsync('echo 3 | sudo tee /proc/sys/vm/drop_caches');
+        } catch (sudoError) {
+            try {
+                // Method 2: Try without sudo (if user has permissions)
+                await execAsync('echo 3 > /proc/sys/vm/drop_caches');
+            } catch (directError) {
+                throw new Error('Insufficient permissions. Configure passwordless sudo for drop_caches or run backend as root.');
+            }
+        }
+        
+        // Small delay to let the cache clear
+        await new Promise(resolve => setTimeout(resolve, 500));
         
         // Get memory stats after clearing
         const { stdout: afterMem } = await execAsync('free -h');
         
         res.json({
             success: true,
-            message: 'System cache cleared',
+            message: 'System cache cleared successfully',
             before: beforeMem,
             after: afterMem
         });
@@ -223,7 +256,7 @@ router.post('/clear-cache', async (_req: AuthRequest, res: Response) => {
         res.status(500).json({ 
             error: 'Failed to clear system cache',
             message: error.message,
-            details: 'Make sure the user has sudo permissions for /proc/sys/vm/drop_caches'
+            details: 'Configure passwordless sudo: echo "username ALL=(ALL) NOPASSWD: /usr/bin/tee /proc/sys/vm/drop_caches" | sudo tee /etc/sudoers.d/drop_caches'
         });
     }
 });

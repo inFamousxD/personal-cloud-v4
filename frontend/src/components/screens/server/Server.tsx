@@ -75,11 +75,11 @@ const Server = () => {
         try {
             setActionLoading('start');
             await affineApi.start();
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 2000));
             await loadServerData();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error starting Affine:', error);
-            alert('Failed to start Affine server');
+            alert(`Failed to start Affine server: ${error.response?.data?.message || error.message}`);
         } finally {
             setActionLoading(null);
         }
@@ -91,11 +91,11 @@ const Server = () => {
         try {
             setActionLoading('stop');
             await affineApi.stop();
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 2000));
             await loadServerData();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error stopping Affine:', error);
-            alert('Failed to stop Affine server');
+            alert(`Failed to stop Affine server: ${error.response?.data?.message || error.message}`);
         } finally {
             setActionLoading(null);
         }
@@ -105,18 +105,18 @@ const Server = () => {
         try {
             setActionLoading('restart');
             await affineApi.restart();
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 2000));
             await loadServerData();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error restarting Affine:', error);
-            alert('Failed to restart Affine server');
+            alert(`Failed to restart Affine server: ${error.response?.data?.message || error.message}`);
         } finally {
             setActionLoading(null);
         }
     };
 
     const handleClearCache = async () => {
-        if (!confirm('Clear system cache? This will free up memory.')) return;
+        if (!confirm('Clear system cache? This will free up memory but may temporarily slow down applications.')) return;
         
         try {
             setActionLoading('cache');
@@ -125,7 +125,8 @@ const Server = () => {
             await loadServerData();
         } catch (error: any) {
             console.error('Error clearing cache:', error);
-            alert(`Failed to clear cache: ${error.response?.data?.message || error.message}`);
+            const errorMsg = error.response?.data?.details || error.response?.data?.message || error.message;
+            alert(`Failed to clear cache:\n\n${errorMsg}`);
         } finally {
             setActionLoading(null);
         }
@@ -213,7 +214,7 @@ const Server = () => {
                         </PingIndicator>
                     )}
                 </ServerTitle>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     <ClearCacheButton 
                         onClick={handleClearCache} 
                         disabled={actionLoading === 'cache'}
@@ -233,7 +234,7 @@ const Server = () => {
                 <DockerSection>
                     <StatCardHeader>
                         <span className="material-symbols-outlined">deployed_code</span>
-                        Docker Compose Server
+                        Affine Docker Compose Server
                         {affineStatus && (
                             <StatusBadge $status={affineStatus.running ? 'healthy' : 'unhealthy'}>
                                 <span className="material-symbols-outlined">

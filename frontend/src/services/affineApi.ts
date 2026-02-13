@@ -37,60 +37,84 @@ export interface CacheClearResult {
     after: string;
 }
 
+// Helper function to get auth header - matches notesApi.ts pattern
+const getAuthHeader = () => {
+    const user = localStorage.getItem('user');
+    if (user) {
+        const { token } = JSON.parse(user);
+        return { Authorization: `Bearer ${token}` };
+    }
+    return {};
+};
+
+// Create axios instance with interceptor for handling auth errors
+const createApiClient = () => {
+    const client = axios.create();
+
+    client.interceptors.response.use(
+        (response) => response,
+        (error) => {
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                console.error('Authentication failed - token invalid or expired');
+                localStorage.removeItem('user');
+                window.location.href = '/login';
+            }
+            return Promise.reject(error);
+        }
+    );
+
+    return client;
+};
+
+const apiClient = createApiClient();
+
 const affineApi = {
     getStatus: async (): Promise<AffineStatus> => {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${API_URL}/api/affine/status`, {
-            headers: { Authorization: `Bearer ${token}` }
+        const response = await apiClient.get(`${API_URL}/api/affine/status`, {
+            headers: getAuthHeader()
         });
         return response.data;
     },
 
     getStats: async (): Promise<AffineStats> => {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${API_URL}/api/affine/stats`, {
-            headers: { Authorization: `Bearer ${token}` }
+        const response = await apiClient.get(`${API_URL}/api/affine/stats`, {
+            headers: getAuthHeader()
         });
         return response.data;
     },
 
     start: async () => {
-        const token = localStorage.getItem('token');
-        const response = await axios.post(`${API_URL}/api/affine/start`, {}, {
-            headers: { Authorization: `Bearer ${token}` }
+        const response = await apiClient.post(`${API_URL}/api/affine/start`, {}, {
+            headers: getAuthHeader()
         });
         return response.data;
     },
 
     stop: async () => {
-        const token = localStorage.getItem('token');
-        const response = await axios.post(`${API_URL}/api/affine/stop`, {}, {
-            headers: { Authorization: `Bearer ${token}` }
+        const response = await apiClient.post(`${API_URL}/api/affine/stop`, {}, {
+            headers: getAuthHeader()
         });
         return response.data;
     },
 
     restart: async () => {
-        const token = localStorage.getItem('token');
-        const response = await axios.post(`${API_URL}/api/affine/restart`, {}, {
-            headers: { Authorization: `Bearer ${token}` }
+        const response = await apiClient.post(`${API_URL}/api/affine/restart`, {}, {
+            headers: getAuthHeader()
         });
         return response.data;
     },
 
     clearCache: async (): Promise<CacheClearResult> => {
-        const token = localStorage.getItem('token');
-        const response = await axios.post(`${API_URL}/api/affine/clear-cache`, {}, {
-            headers: { Authorization: `Bearer ${token}` }
+        const response = await apiClient.post(`${API_URL}/api/affine/clear-cache`, {}, {
+            headers: getAuthHeader()
         });
         return response.data;
     },
 
     getLogs: async (lines: number = 100) => {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${API_URL}/api/affine/logs`, {
+        const response = await apiClient.get(`${API_URL}/api/affine/logs`, {
             params: { lines },
-            headers: { Authorization: `Bearer ${token}` }
+            headers: getAuthHeader()
         });
         return response.data;
     }
