@@ -140,6 +140,189 @@ export const ServerBody = styled.div`
     }
 `;
 
+export const SystemOverview = styled.div`
+    background: ${darkTheme.backgroundDarkest};
+    border: 1px solid ${darkTheme.accent};
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 16px;
+    font-family: 'JetBrains Mono', monospace;
+
+    @media (max-width: 768px) {
+        > div {
+            grid-template-columns: 1fr !important;
+        }
+    }
+`;
+
+export const ResourceBar = styled.div`
+    width: 100%;
+    height: 20px;
+    background: ${darkTheme.backgroundDarker};
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid ${darkTheme.border};
+`;
+
+export const ResourceLabel = styled.div`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    font-size: 12px;
+    color: ${darkTheme.text.color};
+    
+    span:first-child {
+        font-weight: 600;
+    }
+`;
+
+export const ResourceValue = styled.span`
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+`;
+
+export const ProcessTable = styled.div`
+    background: ${darkTheme.backgroundDarkest};
+    border: 1px solid ${darkTheme.accent};
+    border-radius: 4px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin-bottom: 16px;
+    font-family: 'JetBrains Mono', monospace;
+
+    /* Webkit scrollbar styling */
+    &::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: ${darkTheme.backgroundDarker};
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: ${darkTheme.accent}40;
+        border-radius: 4px;
+
+        &:hover {
+            background: ${darkTheme.accent}60;
+        }
+    }
+
+    @media (max-width: 768px) {
+        overflow-x: scroll;
+        -webkit-overflow-scrolling: touch;
+    }
+`;
+
+export const ProcessTableHeader = styled.div`
+    display: flex;
+    background: ${darkTheme.accent}20;
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    color: ${darkTheme.accent};
+    border-bottom: 1px solid ${darkTheme.accent};
+    letter-spacing: 0.5px;
+    min-width: 900px;
+
+    @media (max-width: 768px) {
+        min-width: 1000px;
+    }
+`;
+
+export const ProcessTableRow = styled.div`
+    display: flex;
+    padding: 10px 12px;
+    border-bottom: 1px solid ${darkTheme.border};
+    font-size: 12px;
+    transition: background 0.15s;
+    min-width: 900px;
+
+    &:hover {
+        background: ${darkTheme.accent}10;
+    }
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    @media (max-width: 768px) {
+        min-width: 1000px;
+    }
+`;
+
+export const ProcessTableCell = styled.div`
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: ${darkTheme.text.color};
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 0 4px;
+    overflow: hidden;
+    text-align: center;
+`;
+
+export const SortButton = styled.button<{ $active?: boolean }>`
+    background: none;
+    border: none;
+    color: ${props => props.$active ? darkTheme.accent : 'inherit'};
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    padding: 0;
+    transition: color 0.2s;
+    width: 100%;
+    justify-content: inherit;
+
+    &:hover {
+        color: ${darkTheme.accent};
+    }
+
+    .material-symbols-outlined {
+        font-size: 12px;
+        opacity: ${props => props.$active ? 1 : 0.3};
+        transition: opacity 0.2s;
+    }
+
+    &:hover .material-symbols-outlined {
+        opacity: 1;
+    }
+`;
+
+export const ProcessName = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    
+    .material-symbols-outlined {
+        color: ${darkTheme.accent};
+    }
+`;
+
+export const ProcessStats = styled.span<{ $value: number; $type: 'cpu' | 'memory' }>`
+    font-weight: 600;
+    color: ${props => {
+        if (props.$type === 'cpu') {
+            if (props.$value < 50) return darkTheme.accentGreen;
+            if (props.$value < 80) return darkTheme.accentOrange;
+            return '#e74c3c';
+        } else {
+            if (props.$value < 70) return darkTheme.accentGreen;
+            if (props.$value < 85) return darkTheme.accentOrange;
+            return '#e74c3c';
+        }
+    }};
+`;
+
 export const DockerSection = styled.div`
     background: ${darkTheme.backgroundDarkest};
     border: 1px solid ${darkTheme.accent};
@@ -169,13 +352,13 @@ export const ActionButton = styled.button<{ $variant?: 'success' | 'error' | 'wa
     color: ${darkTheme.text.accentAlt};
     border: none;
     border-radius: 4px;
-    padding: 8px 16px;
-    font-size: 13px;
+    padding: 6px 12px;
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     font-family: inherit;
     transition: opacity 0.2s;
     flex: 1;
@@ -191,7 +374,7 @@ export const ActionButton = styled.button<{ $variant?: 'success' | 'error' | 'wa
     }
 
     .material-symbols-outlined {
-        font-size: 18px;
+        font-size: 16px;
     }
 
     @media (max-width: 768px) {
@@ -402,5 +585,32 @@ export const PingIndicator = styled.div<{ $latency: number }>`
 
     .material-symbols-outlined {
         font-size: 14px;
+    }
+`;
+
+export const SearchBar = styled.input`
+    background: ${darkTheme.backgroundDarkest};
+    border: 1px solid ${darkTheme.border};
+    border-radius: 4px;
+    padding: 8px 12px;
+    color: ${darkTheme.text.color};
+    font-size: 13px;
+    font-family: inherit;
+    width: 300px;
+    transition: all 0.2s;
+
+    &:focus {
+        outline: none;
+        border-color: ${darkTheme.accent};
+        box-shadow: 0 0 0 2px ${darkTheme.accent}20;
+    }
+
+    &::placeholder {
+        color: ${darkTheme.text.color};
+        opacity: 0.4;
+    }
+
+    @media (max-width: 768px) {
+        width: 100%;
     }
 `;

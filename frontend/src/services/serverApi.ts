@@ -42,12 +42,30 @@ export interface ServerStats {
     } | null;
 }
 
+export interface ProcessInfo {
+    pid: number;
+    name: string;
+    cpu: number;
+    memory: number;
+    memoryMB: number;
+    user: string;
+    status: string;
+    command: string;
+}
+
+export interface ProcessesResponse {
+    processes: ProcessInfo[];
+    timestamp: string;
+    count: number;
+}
+
 export interface PingResponse {
     pong: boolean;
     timestamp: string;
     responseTime: number;
 }
 
+// Helper function to get auth header - matches notesApi.ts pattern
 const getAuthHeader = () => {
     const user = localStorage.getItem('user');
     if (user) {
@@ -57,7 +75,7 @@ const getAuthHeader = () => {
     return {};
 };
 
-// Create axios instance with interceptor
+// Create axios instance with interceptor for handling auth errors
 const createApiClient = () => {
     const client = axios.create();
 
@@ -88,6 +106,13 @@ export const serverApi = {
 
     getStats: async (): Promise<ServerStats> => {
         const response = await apiClient.get(`${API_URL}/api/server/stats`, {
+            headers: getAuthHeader(),
+        });
+        return response.data;
+    },
+
+    getProcesses: async (): Promise<ProcessesResponse> => {
+        const response = await apiClient.get(`${API_URL}/api/server/processes`, {
             headers: getAuthHeader(),
         });
         return response.data;

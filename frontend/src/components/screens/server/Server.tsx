@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { serverApi, HealthResponse, ServerStats, PingResponse } from '../../../services/serverApi';
+import { serverApi, HealthResponse, ServerStats, PingResponse, ProcessInfo } from '../../../services/serverApi';
 import affineApi, { AffineStatus, AffineStats } from '../../../services/affineApi';
 import {
     ServerContainer,
@@ -12,18 +12,32 @@ import {
     StatCardHeader,
     StatCardBody,
     StatRow,
-    ProgressBar,
+    // ProgressBar,
     ProgressFill,
     StatusBadge,
     LoadingState,
     ErrorState,
     PingIndicator,
-    DockerSection,
     DockerControls,
     ActionButton,
     ClearCacheButton,
-    SectionDivider
+    SectionDivider,
+    ProcessTable,
+    ProcessTableHeader,
+    ProcessTableRow,
+    ProcessTableCell,
+    SystemOverview,
+    ResourceBar,
+    ResourceLabel,
+    ResourceValue,
+    ProcessName,
+    ProcessStats,
+    SearchBar,
+    SortButton
 } from './Server.styles';
+
+type SortField = 'pid' | 'user' | 'name' | 'cpu' | 'memory' | 'memoryMB' | 'status';
+type SortOrder = 'asc' | 'desc';
 
 const Server = () => {
     const [health, setHealth] = useState<HealthResponse | null>(null);
@@ -31,6 +45,11 @@ const Server = () => {
     const [ping, setPing] = useState<PingResponse | null>(null);
     const [affineStatus, setAffineStatus] = useState<AffineStatus | null>(null);
     const [affineStats, setAffineStats] = useState<AffineStats | null>(null);
+    const [processes, setProcesses] = useState<ProcessInfo[]>([]);
+    const [filteredProcesses, setFilteredProcesses] = useState<ProcessInfo[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [sortField, setSortField] = useState<SortField>('cpu');
+    const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -38,10 +57,58 @@ const Server = () => {
 
     useEffect(() => {
         loadServerData();
-        // Auto-refresh every 30 seconds
         const interval = setInterval(loadServerData, 30000);
+        console.log(affineStats)
         return () => clearInterval(interval);
     }, []);
+
+    useEffect(() => {
+        // Filter processes based on search query
+        let filtered = processes;
+        
+        if (searchQuery.trim() !== '') {
+            const query = searchQuery.toLowerCase();
+            filtered = processes.filter(proc => 
+                proc.name.toLowerCase().includes(query) ||
+                proc.command.toLowerCase().includes(query) ||
+                proc.user.toLowerCase().includes(query) ||
+                proc.pid.toString().includes(query)
+            );
+        }
+
+        // Sort processes
+        filtered.sort((a, b) => {
+            let aVal: any = a[sortField];
+            let bVal: any = b[sortField];
+
+            // For numeric fields, compare as numbers
+            if (sortField === 'pid' || sortField === 'cpu' || sortField === 'memory' || sortField === 'memoryMB') {
+                aVal = Number(aVal);
+                bVal = Number(bVal);
+            } else {
+                // Convert strings to lowercase for case-insensitive sorting
+                if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+                if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+            }
+
+            if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
+            if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
+            return 0;
+        });
+
+        setFilteredProcesses(filtered);
+    }, [searchQuery, processes, sortField, sortOrder]);
+
+    const handleSort = (field: SortField) => {
+        if (sortField === field) {
+            // Toggle order if clicking the same field
+            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+        } else {
+            // New field, default to descending for numbers, ascending for strings
+            setSortField(field);
+            setSortOrder(field === 'user' || field === 'name' || field === 'status' ? 'asc' : 'desc');
+        }
+    };
 
     const loadServerData = async () => {
         try {
@@ -49,10 +116,11 @@ const Server = () => {
             const isInitialLoad = loading;
             if (!isInitialLoad) setRefreshing(true);
 
-            const [healthData, statsData, pingData, affineStatusData, affineStatsData] = await Promise.all([
+            const [healthData, statsData, pingData, processesData, affineStatusData, affineStatsData] = await Promise.all([
                 serverApi.getHealth(),
                 serverApi.getStats(),
                 serverApi.ping(),
+                serverApi.getProcesses(),
                 affineApi.getStatus().catch(() => null),
                 affineApi.getStats().catch(() => null)
             ]);
@@ -60,6 +128,7 @@ const Server = () => {
             setHealth(healthData);
             setStats(statsData);
             setPing(pingData);
+            setProcesses(processesData.processes);
             setAffineStatus(affineStatusData);
             setAffineStats(affineStatsData);
         } catch (error) {
@@ -156,9 +225,15 @@ const Server = () => {
         return '#e74c3c';
     };
 
-    const parseMemoryPercent = (percentStr: string): number => {
-        return parseFloat(percentStr.replace('%', ''));
+    const getCpuColor = (percent: number): string => {
+        if (percent < 50) return '#27AE60';
+        if (percent < 80) return '#B95A1A';
+        return '#e74c3c';
     };
+
+    // const parseMemoryPercent = (percentStr: string): number => {
+    //     return parseFloat(percentStr.replace('%', ''));
+    // };
 
     if (loading) {
         return (
@@ -202,7 +277,7 @@ const Server = () => {
             <ServerHeader>
                 <ServerTitle>
                     <span className="material-symbols-outlined">dns</span>
-                    Server Status
+                    System Monitor
                     {ping && (
                         <PingIndicator $latency={ping.responseTime}>
                             <span className="material-symbols-outlined">
@@ -230,125 +305,230 @@ const Server = () => {
             </ServerHeader>
 
             <ServerBody>
-                {/* Docker Compose Control Station */}
-                <DockerSection>
-                    <StatCardHeader>
-                        <span className="material-symbols-outlined">deployed_code</span>
-                        Affine Docker Compose Server
-                        {affineStatus && (
-                            <StatusBadge $status={affineStatus.running ? 'healthy' : 'unhealthy'}>
-                                <span className="material-symbols-outlined">
-                                    {affineStatus.running ? 'check_circle' : 'cancel'}
+                {/* System Overview */}
+                <SystemOverview>
+                    <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr', gap: '16px' }}>
+                        {/* Left column - System info */}
+                        <div>
+                            <StatRow style={{ marginBottom: '8px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: 600 }}>
+                                    {stats?.system.hostname || 'System'} | Uptime: {stats?.system ? formatUptime(stats.system.uptime) : 'N/A'}
                                 </span>
-                                {affineStatus.running ? 'Running' : 'Stopped'}
-                            </StatusBadge>
-                        )}
-                        {!affineStatus && (
-                            <StatusBadge $status="unhealthy">
-                                <span className="material-symbols-outlined">help</span>
-                                Unknown
-                            </StatusBadge>
-                        )}
-                    </StatCardHeader>
-                    
-                    <DockerControls>
-                        <ActionButton 
-                            onClick={handleAffineStart}
-                            disabled={actionLoading !== null || (affineStatus?.running === true)}
-                            $variant="success"
-                        >
-                            <span className="material-symbols-outlined">play_arrow</span>
-                            {actionLoading === 'start' ? 'Starting...' : 'Start Server'}
-                        </ActionButton>
-                        <ActionButton 
-                            onClick={handleAffineStop}
-                            disabled={actionLoading !== null || !affineStatus?.running}
-                            $variant="error"
-                        >
-                            <span className="material-symbols-outlined">stop</span>
-                            {actionLoading === 'stop' ? 'Stopping...' : 'Stop Server'}
-                        </ActionButton>
-                        <ActionButton 
-                            onClick={handleAffineRestart}
-                            disabled={actionLoading !== null || !affineStatus?.running}
-                            $variant="warning"
-                        >
-                            <span className="material-symbols-outlined">restart_alt</span>
-                            {actionLoading === 'restart' ? 'Restarting...' : 'Restart Server'}
-                        </ActionButton>
-                    </DockerControls>
+                            </StatRow>
+                            
+                            {/* CPU Usage */}
+                            {stats?.system && (
+                                <div style={{ marginBottom: '12px' }}>
+                                    <ResourceLabel>
+                                        <span>CPU [{stats.system.cpuCount} cores]</span>
+                                        <ResourceValue>{stats.system.cpuUsagePercent.toFixed(1)}%</ResourceValue>
+                                    </ResourceLabel>
+                                    <ResourceBar>
+                                        <ProgressFill 
+                                            $percent={stats.system.cpuUsagePercent}
+                                            $color={getCpuColor(stats.system.cpuUsagePercent)}
+                                        />
+                                    </ResourceBar>
+                                </div>
+                            )}
 
-                    {affineStatus && affineStatus.containers.length > 0 && (
-                        <div style={{ marginTop: '12px' }}>
-                            <div style={{ fontSize: '12px', opacity: 0.7, marginBottom: '8px' }}>
-                                Containers ({affineStatus.runningContainers}/{affineStatus.totalContainers} running)
-                            </div>
-                            {affineStatus.containers.map((container, idx) => (
-                                <StatRow key={idx}>
-                                    <span>{container.name}</span>
-                                    <StatusBadge $status={container.state === 'running' ? 'healthy' : 'unhealthy'}>
-                                        {container.state}
+                            {/* Memory Usage */}
+                            {stats?.system && (
+                                <div style={{ marginBottom: '12px' }}>
+                                    <ResourceLabel>
+                                        <span>Memory</span>
+                                        <ResourceValue>
+                                            {formatBytes(stats.system.usedMemory)} / {formatBytes(stats.system.totalMemory)}
+                                        </ResourceValue>
+                                    </ResourceLabel>
+                                    <ResourceBar>
+                                        <ProgressFill 
+                                            $percent={parseFloat(stats.system.memoryUsagePercent)}
+                                            $color={getMemoryColor(parseFloat(stats.system.memoryUsagePercent))}
+                                        />
+                                    </ResourceBar>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Right column - Docker controls */}
+                        <div>
+                            <StatRow style={{ marginBottom: '8px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: 600 }}>
+                                    Affine Docker Compose Server
+                                </span>
+                                {affineStatus && (
+                                    <StatusBadge $status={affineStatus.running ? 'healthy' : 'unhealthy'}>
+                                        <span className="material-symbols-outlined">
+                                            {affineStatus.running ? 'check_circle' : 'cancel'}
+                                        </span>
+                                        {affineStatus.running ? 'Running' : 'Stopped'}
                                     </StatusBadge>
-                                </StatRow>
-                            ))}
+                                )}
+                            </StatRow>
+                            
+                            <DockerControls style={{ marginTop: '8px', flexDirection: 'column' }}>
+                                <ActionButton 
+                                    onClick={handleAffineStart}
+                                    disabled={actionLoading !== null || (affineStatus?.running === true)}
+                                    $variant="success"
+                                >
+                                    <span className="material-symbols-outlined">play_arrow</span>
+                                    Start
+                                </ActionButton>
+                                <ActionButton 
+                                    onClick={handleAffineStop}
+                                    disabled={actionLoading !== null || !affineStatus?.running}
+                                    $variant="error"
+                                >
+                                    <span className="material-symbols-outlined">stop</span>
+                                    Stop
+                                </ActionButton>
+                                <ActionButton 
+                                    onClick={handleAffineRestart}
+                                    disabled={actionLoading !== null || !affineStatus?.running}
+                                    $variant="warning"
+                                >
+                                    <span className="material-symbols-outlined">restart_alt</span>
+                                    Restart
+                                </ActionButton>
+                            </DockerControls>
+
+                            {affineStatus && affineStatus.containers.length > 0 && (
+                                <div style={{ marginTop: '8px', fontSize: '11px', opacity: 0.7 }}>
+                                    {affineStatus.runningContainers}/{affineStatus.totalContainers} containers running
+                                </div>
+                            )}
                         </div>
+                    </div>
+                </SystemOverview>
+
+                {/* Process Table */}
+                <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <SectionDivider style={{ margin: 0, border: 'none', paddingBottom: 0 }}>
+                        Processes ({filteredProcesses.length})
+                    </SectionDivider>
+                    <SearchBar
+                        type="text"
+                        placeholder="Search processes..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
+
+                <ProcessTable>
+                    <ProcessTableHeader>
+                        <ProcessTableCell style={{ width: '7%' }}>
+                            <SortButton onClick={() => handleSort('pid')} $active={sortField === 'pid'}>
+                                PID
+                                <span className="material-symbols-outlined">
+                                    {sortField === 'pid' && sortOrder === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+                                </span>
+                            </SortButton>
+                        </ProcessTableCell>
+                        <ProcessTableCell style={{ width: '10%' }}>
+                            <SortButton onClick={() => handleSort('user')} $active={sortField === 'user'}>
+                                USER
+                                <span className="material-symbols-outlined">
+                                    {sortField === 'user' && sortOrder === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+                                </span>
+                            </SortButton>
+                        </ProcessTableCell>
+                        <ProcessTableCell style={{ width: '38%' }}>
+                            <SortButton onClick={() => handleSort('name')} $active={sortField === 'name'}>
+                                PROCESS
+                                <span className="material-symbols-outlined">
+                                    {sortField === 'name' && sortOrder === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+                                </span>
+                            </SortButton>
+                        </ProcessTableCell>
+                        <ProcessTableCell style={{ width: '10%' }}>
+                            <SortButton onClick={() => handleSort('cpu')} $active={sortField === 'cpu'}>
+                                CPU %
+                                <span className="material-symbols-outlined">
+                                    {sortField === 'cpu' && sortOrder === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+                                </span>
+                            </SortButton>
+                        </ProcessTableCell>
+                        <ProcessTableCell style={{ width: '10%' }}>
+                            <SortButton onClick={() => handleSort('memory')} $active={sortField === 'memory'}>
+                                MEM %
+                                <span className="material-symbols-outlined">
+                                    {sortField === 'memory' && sortOrder === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+                                </span>
+                            </SortButton>
+                        </ProcessTableCell>
+                        <ProcessTableCell style={{ width: '12%' }}>
+                            <SortButton onClick={() => handleSort('memoryMB')} $active={sortField === 'memoryMB'}>
+                                MEM (MB)
+                                <span className="material-symbols-outlined">
+                                    {sortField === 'memoryMB' && sortOrder === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+                                </span>
+                            </SortButton>
+                        </ProcessTableCell>
+                        <ProcessTableCell style={{ width: '13%' }}>
+                            <SortButton onClick={() => handleSort('status')} $active={sortField === 'status'}>
+                                STATUS
+                                <span className="material-symbols-outlined">
+                                    {sortField === 'status' && sortOrder === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+                                </span>
+                            </SortButton>
+                        </ProcessTableCell>
+                    </ProcessTableHeader>
+
+                    {filteredProcesses.slice(0, 50).map((proc) => (
+                        <ProcessTableRow key={proc.pid}>
+                            <ProcessTableCell style={{ width: '7%' }}>
+                                {proc.pid}
+                            </ProcessTableCell>
+                            <ProcessTableCell style={{ width: '10%' }}>
+                                {proc.user}
+                            </ProcessTableCell>
+                            <ProcessTableCell style={{ width: '38%' }}>
+                                <ProcessName>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                                        terminal
+                                    </span>
+                                    <div style={{ overflow: 'hidden' }}>
+                                        <div style={{ fontWeight: 600, fontSize: '12px' }}>{proc.name}</div>
+                                        <div style={{ fontSize: '10px', opacity: 0.5, marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {proc.command}
+                                        </div>
+                                    </div>
+                                </ProcessName>
+                            </ProcessTableCell>
+                            <ProcessTableCell style={{ width: '10%' }}>
+                                <ProcessStats $value={proc.cpu} $type="cpu">
+                                    {proc.cpu.toFixed(1)}%
+                                </ProcessStats>
+                            </ProcessTableCell>
+                            <ProcessTableCell style={{ width: '10%' }}>
+                                <ProcessStats $value={proc.memory} $type="memory">
+                                    {proc.memory.toFixed(1)}%
+                                </ProcessStats>
+                            </ProcessTableCell>
+                            <ProcessTableCell style={{ width: '12%' }}>
+                                {proc.memoryMB.toFixed(0)} MB
+                            </ProcessTableCell>
+                            <ProcessTableCell style={{ width: '13%' }}>
+                                <span style={{ fontSize: '10px', opacity: 0.6 }}>
+                                    {proc.status}
+                                </span>
+                            </ProcessTableCell>
+                        </ProcessTableRow>
+                    ))}
+
+                    {filteredProcesses.length === 0 && (
+                        <ProcessTableRow>
+                            <ProcessTableCell style={{ width: '100%', textAlign: 'center', opacity: 0.5 }}>
+                                No processes found matching "{searchQuery}"
+                            </ProcessTableCell>
+                        </ProcessTableRow>
                     )}
-                    
-                    {!affineStatus && (
-                        <div style={{ marginTop: '12px', fontSize: '13px', opacity: 0.7 }}>
-                            Could not connect to Docker. Make sure:
-                            <ul style={{ marginTop: '8px', marginLeft: '20px', marginBottom: 0 }}>
-                                <li>Docker Compose directory exists at ../affine</li>
-                                <li>Docker is installed and running</li>
-                                <li>Backend has permissions to execute Docker commands</li>
-                            </ul>
-                        </div>
-                    )}
-                </DockerSection>
+                </ProcessTable>
 
-                {/* Docker Container Stats */}
-                {affineStats && affineStats.running && affineStats.containers.length > 0 && (
-                    <>
-                        <SectionDivider>Container Resource Usage</SectionDivider>
-                        <StatsGrid>
-                            {affineStats.containers.map((container) => (
-                                <StatCard key={container.containerId}>
-                                    <StatCardHeader>
-                                        <span className="material-symbols-outlined">inventory_2</span>
-                                        {container.name}
-                                    </StatCardHeader>
-                                    <StatCardBody>
-                                        <StatRow>
-                                            <span>CPU</span>
-                                            <span>{container.cpuPercent}</span>
-                                        </StatRow>
-                                        <StatRow>
-                                            <span>Memory</span>
-                                            <span>{container.memUsage} / {container.memLimit}</span>
-                                        </StatRow>
-                                        <ProgressBar>
-                                            <ProgressFill 
-                                                $percent={parseMemoryPercent(container.memPercent)}
-                                                $color={getMemoryColor(parseMemoryPercent(container.memPercent))}
-                                            />
-                                        </ProgressBar>
-                                        <StatRow>
-                                            <span>Network I/O</span>
-                                            <span style={{ fontSize: '10px' }}>{container.netIO}</span>
-                                        </StatRow>
-                                        <StatRow>
-                                            <span>Block I/O</span>
-                                            <span style={{ fontSize: '10px' }}>{container.blockIO}</span>
-                                        </StatRow>
-                                    </StatCardBody>
-                                </StatCard>
-                            ))}
-                        </StatsGrid>
-                    </>
-                )}
-
-                <SectionDivider>System Stats</SectionDivider>
-
+                {/* Additional Stats */}
+                <SectionDivider>System Details</SectionDivider>
                 <StatsGrid>
                     {/* Health Status */}
                     <StatCard $status={health?.status === 'healthy' ? 'success' : 'error'}>
@@ -377,46 +557,8 @@ const Server = () => {
                                     {health?.database || 'Unknown'}
                                 </StatusBadge>
                             </StatRow>
-                            <StatRow>
-                                <span>Server Uptime</span>
-                                <span>{health?.uptime ? formatUptime(health.uptime) : 'N/A'}</span>
-                            </StatRow>
                         </StatCardBody>
                     </StatCard>
-
-                    {/* System Resources */}
-                    {stats?.system && (
-                        <StatCard>
-                            <StatCardHeader>
-                                <span className="material-symbols-outlined">memory</span>
-                                System Resources
-                            </StatCardHeader>
-                            <StatCardBody>
-                                <StatRow>
-                                    <span>Memory Usage</span>
-                                    <span>{stats.system.memoryUsagePercent}%</span>
-                                </StatRow>
-                                <ProgressBar>
-                                    <ProgressFill 
-                                        $percent={parseFloat(stats.system.memoryUsagePercent)} 
-                                        $color={getMemoryColor(parseFloat(stats.system.memoryUsagePercent))}
-                                    />
-                                </ProgressBar>
-                                <StatRow>
-                                    <span>Used / Total</span>
-                                    <span>{formatBytes(stats.system.usedMemory)} / {formatBytes(stats.system.totalMemory)}</span>
-                                </StatRow>
-                                <StatRow>
-                                    <span>CPU Usage</span>
-                                    <span>{stats.system.cpuUsagePercent}%</span>
-                                </StatRow>
-                                <StatRow>
-                                    <span>CPU Cores</span>
-                                    <span>{stats.system.cpuCount}</span>
-                                </StatRow>
-                            </StatCardBody>
-                        </StatCard>
-                    )}
 
                     {/* System Info */}
                     {stats?.system && (
@@ -428,55 +570,15 @@ const Server = () => {
                             <StatCardBody>
                                 <StatRow>
                                     <span>Platform</span>
-                                    <span>{stats.system.platform}</span>
+                                    <span>{stats.system.platform} {stats.system.arch}</span>
                                 </StatRow>
                                 <StatRow>
-                                    <span>Architecture</span>
-                                    <span>{stats.system.arch}</span>
-                                </StatRow>
-                                <StatRow>
-                                    <span>Hostname</span>
-                                    <span>{stats.system.hostname}</span>
-                                </StatRow>
-                                <StatRow>
-                                    <span>System Uptime</span>
-                                    <span>{formatUptime(stats.system.uptime)}</span>
+                                    <span>CPU Model</span>
+                                    <span style={{ fontSize: '10px' }}>{stats.system.cpuModel}</span>
                                 </StatRow>
                                 <StatRow>
                                     <span>Node Version</span>
                                     <span>{stats.process.nodeVersion}</span>
-                                </StatRow>
-                            </StatCardBody>
-                        </StatCard>
-                    )}
-
-                    {/* Process Memory */}
-                    {stats?.process && (
-                        <StatCard>
-                            <StatCardHeader>
-                                <span className="material-symbols-outlined">widgets</span>
-                                Process Memory
-                            </StatCardHeader>
-                            <StatCardBody>
-                                <StatRow>
-                                    <span>RSS</span>
-                                    <span>{formatBytes(stats.process.memoryUsage.rss)}</span>
-                                </StatRow>
-                                <StatRow>
-                                    <span>Heap Total</span>
-                                    <span>{formatBytes(stats.process.memoryUsage.heapTotal)}</span>
-                                </StatRow>
-                                <StatRow>
-                                    <span>Heap Used</span>
-                                    <span>{formatBytes(stats.process.memoryUsage.heapUsed)}</span>
-                                </StatRow>
-                                <StatRow>
-                                    <span>External</span>
-                                    <span>{formatBytes(stats.process.memoryUsage.external)}</span>
-                                </StatRow>
-                                <StatRow>
-                                    <span>Process Uptime</span>
-                                    <span>{formatUptime(stats.process.uptime)}</span>
                                 </StatRow>
                             </StatCardBody>
                         </StatCard>
@@ -487,57 +589,20 @@ const Server = () => {
                         <StatCard>
                             <StatCardHeader>
                                 <span className="material-symbols-outlined">storage</span>
-                                Database Storage
+                                Database
                             </StatCardHeader>
                             <StatCardBody>
-                                <StatRow>
-                                    <span>Collections</span>
-                                    <span>{stats.database.collections}</span>
-                                </StatRow>
                                 <StatRow>
                                     <span>Data Size</span>
                                     <span>{formatBytes(stats.database.dataSize)}</span>
                                 </StatRow>
                                 <StatRow>
-                                    <span>Storage Size</span>
-                                    <span>{formatBytes(stats.database.storageSize)}</span>
+                                    <span>Collections</span>
+                                    <span>{stats.database.collections}</span>
                                 </StatRow>
                                 <StatRow>
                                     <span>Indexes</span>
                                     <span>{stats.database.indexes}</span>
-                                </StatRow>
-                                <StatRow>
-                                    <span>Index Size</span>
-                                    <span>{formatBytes(stats.database.indexSize)}</span>
-                                </StatRow>
-                            </StatCardBody>
-                        </StatCard>
-                    )}
-
-                    {/* Network */}
-                    {ping && (
-                        <StatCard $status={ping.responseTime < 100 ? 'success' : ping.responseTime < 300 ? 'warning' : 'error'}>
-                            <StatCardHeader>
-                                <span className="material-symbols-outlined">network_ping</span>
-                                Network
-                            </StatCardHeader>
-                            <StatCardBody>
-                                <StatRow>
-                                    <span>Latency</span>
-                                    <PingIndicator $latency={ping.responseTime}>
-                                        <span>{ping.responseTime}ms</span>
-                                    </PingIndicator>
-                                </StatRow>
-                                <StatRow>
-                                    <span>Status</span>
-                                    <StatusBadge $status="healthy">
-                                        <span className="material-symbols-outlined">check</span>
-                                        Connected
-                                    </StatusBadge>
-                                </StatRow>
-                                <StatRow>
-                                    <span>Last Ping</span>
-                                    <span>{new Date(ping.timestamp).toLocaleTimeString()}</span>
                                 </StatRow>
                             </StatCardBody>
                         </StatCard>
